@@ -1,131 +1,139 @@
 # Kostra Web API služby
 
----
+V tejto kapitole vytvoríte nový GitHub repozitár "ambulance-webapi" pre Golang modul. Nastavíte projektovú štruktúru, pridáte priečinok pre API špecifikáciu, a použijete framework Gin na vytvorenie HTTP servera. Automaticky načítate závislosti pomocou go mod tidy a otestujete server s príkazom curl. Nakoniec inicializujete Git repozitár a nahráte projekt na GitHub.
 
->info:>
-Šablóna pre predvytvorený kontajner ([Detaily tu](../99.Problems-Resolutions/01.development-containers.md)):
-`registry-1.docker.io/milung/wac-api-010`
+### 1. Vytvorenie a Klonovanie Repozitára na GitHub
 
----
+Prejdite na stránku [GitHub] a pod svojim účtom vytvorte nový repozitár nazvaný "ambulance-webapi". Ponechajte nastavenia prázdne.
 
-1. Prejdite na stránku [GitHub] a pod svojim účtom vytvorte nový repozitár nazvaný "ambulance-webapi". Ponechajte nastavenia prázdne.
+![Vytvorenie repozitára](img/001-01-CreateRepository.png)
 
-    ![Vytvorenie repozitára](img/001-01-CreateRepository.png)
+Po stlačení tlačidla _Create repository_ sa zobrazí stránka s návodom, ako si môžete vytvorený repozitár naklonovať na svoj počítač. Momentálne nás ale zaujíma cesta k Vášmu repozitáru, ktorá bude použitá ako idenitifikátor pre modul [Golang module](https://go.dev/doc/modules/developing) nášho projektu. V prehliadači skopírujte adresu k Vášmu repozitáru bez úvodnej schémy `https://`, to znamená reťazec v tvare `github.com/<github-id>/ambulance-webapi`.
 
-    Po stlačení tlačidla _Create repository_ sa zobrazí stránka s návodom, ako si môžete vytvorený repozitár naklonovať na svoj počítač. Momentálne nás ale zaujíma cesta k Vášmu repozitáru, ktorá bude použitá ako idenitifikátor pre modul [Golang module](https://go.dev/doc/modules/developing) nášho projektu. V prehliadači skopírujte adresu k Vášmu repozitáru bez úvodnej schémy `https://`, to znamená reťazec v tvare `github.com/<github-id>/ambulance-webapi`.
+### 2. Inicializácia Golang Modulu v Novom Priečinku
 
-2. Vytvorte priečinok `${WAC_ROOT}/ambulance-webapi` a na príkazovom riadku vykonajte v tomto adresári nasledujúci príkaz:
+Vytvorte priečinok `${WAC_ROOT}/ambulance-webapi` a na príkazovom riadku vykonajte v tomto adresári nasledujúci príkaz:
 
-    ```
-    go mod init github.com/<github-id>/ambulance-webapi
-    ```
+```
+go mod init github.com/<github-id>/ambulance-webapi
+```
 
-    Príkaz vytvorí súbor `${WAC_ROOT}/ambulance-webapi/go.mod` s obsahom v tvare:
+Príkaz vytvorí súbor `${WAC_ROOT}/ambulance-webapi/go.mod` s obsahom v tvare:
 
-    ```go
-    module github.com/<github-id>/ambulance-webapi
+```go
+module github.com/<github-id>/ambulance-webapi
 
-    go 1.21
-    ```
+go 1.22
+```
 
-3. V našom projekte sa budeme pri organizácii súborov riadiť štruktúrou priečinkov popísanou v dokumente [Standard Go Project Layout](https://github.com/golang-standards/project-layout/tree/master#readme). Našim prvým krokom bude poskytnúť používateľom našej služby prístup k špecifikácii API. Zároveň týmto spôsobom vytvoríme základný funkčný skeleton našej služby.
+### 3. Organizácia Súborov a Nastavenie API Špecifikácie
 
-   Vytvorte priečinok `${WAC_ROOT}/ambulance-webapi/api` a skopírujte do neho súbor `${WAC_ROOT}/ambulance-ufe/api/ambulance-wl.openapi.yaml}`.
+V našom projekte sa budeme pri organizácii súborov riadiť štruktúrou priečinkov popísanou v dokumente [Standard Go Project Layout](https://github.com/golang-standards/project-layout/tree/master#readme). Našim prvým krokom bude poskytnúť používateľom našej služby prístup k špecifikácii API. Zároveň týmto spôsobom vytvoríme základný funkčný skeleton našej služby.
 
-   >info:> Neskôr špecifikáciu z projektu `ambulance-ufe` odstránime, zatiaľ ju tam ale ponechajte.
+Vytvorte priečinok `${WAC_ROOT}/ambulance-webapi/api` a skopírujte do neho súbor `${WAC_ROOT}/ambulance-ufe/api/ambulance-wl.openapi.yaml}`.
 
-4. Vytvorte súbor `${WAC_ROOT}/ambulance-webapi/cmd/ambulance-api-service/main.go` a vložte do neho nasledujúci obsah:
+>info:> Neskôr špecifikáciu z projektu `ambulance-ufe` odstránime, zatiaľ ju tam ale ponechajte.
 
-   ```go
-   package main
+### 4. Vytvorenie Hlavného Súboru pre API Server s Frameworkom Gin
 
-   import (
-       "log"
-       "os"
-       "strings"
-       "github.com/gin-gonic/gin"
-       "github.com/<github-id>/ambulance-webapi/api" @_important_@
-   )
+Vytvorte súbor `${WAC_ROOT}/ambulance-webapi/cmd/ambulance-api-service/main.go` a vložte do neho nasledujúci obsah:
 
-   func main() {
-       log.Printf("Server started")
-       port := os.Getenv("AMBULANCE_API_PORT")
-       if port == "" {
-           port = "8080"
-       }
-       environment := os.Getenv("AMBULANCE_API_ENVIRONMENT")
-       if !strings.EqualFold(environment, "production") { // case insensitive comparison
-           gin.SetMode(gin.DebugMode)
-       }
-       engine := gin.New()
-       engine.Use(gin.Recovery())
-       // request routings
-       engine.GET("/openapi", api.HandleOpenApi) @_important_@
-       engine.Run(":" + port)
-   }
-   ```
+```go
+package main
 
-   Funkcia `main` v _package_ `main` slúži ako vstupný bod programu v jazyku [Go]. V našom prípade vytvorí inštanciu HTTP servera s využitím knižnice [gin-go][gin], ktorý bude počúvať na porte, ktorý je definovaný v premennej prostredia `AMBULANCE_API_PORT`. Smerovanie požiadaviek na jednotlivé funkcie sú zabezpečené pomocou funkcie `engine.GET` . V našom prípade sme zaregistrovali funkciu `api.HandleOpenApi`, ktorá bude spracovávať požiadavky na získanie špecifikácie API. Všimnite si tiež, že referencujeme balíček `github.com/<github-id>/ambulance-webapi/api` čo je vlastne odkaz na nami vytvorený priečinok `${WAC_ROOT}/ambulance-webapi/api`.
+import (
+    "log"
+    "os"
+    "strings"
+    "github.com/gin-gonic/gin"
+    "github.com/<github-id>/ambulance-webapi/api" @_important_@
+)
 
-   >info:> Odporúčame mať v  prostredí Visual Studio Code nainštalované rozšírenie [golang.go](https://marketplace.visualstudio.com/items?itemName=golang.Go). Chyby v zozname importovaných balíčkov vyriešime v nasledujúcom kroku.
-
-5. Vytvorte súbor `${WAC_ROOT}/ambulance-webapi/api/openapi.go` s nasledujúcim obsahom:
-
-    ```go
-    package api
-
-    import (
-        _ "embed"
-        "net/http"
-
-        "github.com/gin-gonic/gin"
-    )
-
-    //go:embed ambulance-wl.openapi.yaml @_important_@
-    var openapiSpec []byte
-
-    func HandleOpenApi(ctx *gin.Context) {
-        ctx.Data(http.StatusOK, "application/yaml", openapiSpec)
+func main() {
+    log.Printf("Server started")
+    port := os.Getenv("AMBULANCE_API_PORT")
+    if port == "" {
+        port = "8080"
     }
-    ```
+    environment := os.Getenv("AMBULANCE_API_ENVIRONMENT")
+    if !strings.EqualFold(environment, "production") { // case insensitive comparison
+        gin.SetMode(gin.DebugMode)
+    }
+    engine := gin.New()
+    engine.Use(gin.Recovery())
+    // request routings
+    engine.GET("/openapi", api.HandleOpenApi) @_important_@
+    engine.Run(":" + port)
+}
+```
 
-    V tomto súbore sme pridali funkcionalitu pre náš balíček - _package_ - `github.com/<github-id>/ambulance-webapi/api`. Využili sme funkcionalitu knižnice [_embed_](https://pkg.go.dev/embed), ktorá zabezpečí, že súbor `ambulance-wl.openapi.yaml` bude pribalený k binárnemu súboru nášho programu.
+Funkcia `main` v _package_ `main` slúži ako vstupný bod programu v jazyku [Go]. V našom prípade vytvorí inštanciu HTTP servera s využitím knižnice [gin-go][gin], ktorý bude počúvať na porte, ktorý je definovaný v premennej prostredia `AMBULANCE_API_PORT`. Smerovanie požiadaviek na jednotlivé funkcie sú zabezpečené pomocou funkcie `engine.GET` . V našom prípade sme zaregistrovali funkciu `api.HandleOpenApi`, ktorá bude spracovávať požiadavky na získanie špecifikácie API. Všimnite si tiež, že referencujeme balíček `github.com/<github-id>/ambulance-webapi/api` čo je vlastne odkaz na nami vytvorený priečinok `${WAC_ROOT}/ambulance-webapi/api`.
 
-6. V predchádzajúcich súboroch sme ponechali chybové hlásenia informujúce, že daný _package_ nie je dostupný. Všetky závislosti nášho modulu musia byť uvedené v súbore `${WAC_ROOT}/ambulance-webapi/go.mod` a načítané v lokálnej vyrovnávacej pamäti. Aby sme nemuseli jednotlivé závislosti pridávať ručne, využijeme príkaz `go mod tidy`, ktorý ich pridá automaticky. Uložte zmeny a v príkazovom riadku v priečinku `${WAC_ROOT}/ambulance-webapi` vykonajte nasledujúci príkaz:
+>info:> Odporúčame mať v  prostredí Visual Studio Code nainštalované rozšírenie [golang.go](https://marketplace.visualstudio.com/items?itemName=golang.Go). Chyby v zozname importovaných balíčkov vyriešime v nasledujúcom kroku.
 
-    ```ps
-    go mod tidy
-    ```
+### 5. Implementácia API Funkcionality s Použitím Embed Knižnice
 
-    Následne vykonajte príkaz, ktorý zkompiluje náš program a odovzdá riadenie jeho vstupnému bodu  - funkcii `main` v _package_ `main`:
+Vytvorte súbor `${WAC_ROOT}/ambulance-webapi/api/openapi.go` s nasledujúcim obsahom:
 
-    ```ps
-    go run ./cmd/ambulance-api-service
-    ```
+```go
+package api
 
-    Otvorte nový terminál a v príkazovom riadku zadajte príkaz:
+import (
+    _ "embed"
+    "net/http"
 
-    ```ps
-    curl http://localhost:8080/openapi
-    ```
+    "github.com/gin-gonic/gin"
+)
 
-    Odozvou bude výpis našej [OpenAPI] špecifikácie.
+//go:embed ambulance-wl.openapi.yaml @_important_@
+var openapiSpec []byte
 
-7. Vytvorte súbor `${WAC_ROOT}/ambulance-webapi/.gitignore` s nasledujúcim obsahom:
+func HandleOpenApi(ctx *gin.Context) {
+    ctx.Data(http.StatusOK, "application/yaml", openapiSpec)
+}
+```
 
-    ```text
-    *.exe
-    *.exe~
-    ./ambulance-api-service
-    ```
+V tomto súbore sme pridali funkcionalitu pre náš balíček - _package_ - `github.com/<github-id>/ambulance-webapi/api`. Využili sme funkcionalitu knižnice [_embed_](https://pkg.go.dev/embed), ktorá zabezpečí, že súbor `ambulance-wl.openapi.yaml` bude pribalený k binárnemu súboru nášho programu.
 
-    Inicializujte a archivujte git repozitár:
+### 6. Automatické Načítanie Závislostí a Spustenie API Servera
 
-    ```sh
-    git init
-    git add .
-    git commit -m "Initial commit"
-    git branch -M main
-    git remote add origin https://github.com/<github-id>/ambulance-webapi.git
-    git push -u origin main
-    ```
+V predchádzajúcich súboroch sme ponechali chybové hlásenia informujúce, že daný _package_ nie je dostupný. Všetky závislosti nášho modulu musia byť uvedené v súbore `${WAC_ROOT}/ambulance-webapi/go.mod` a načítané v lokálnej vyrovnávacej pamäti. Aby sme nemuseli jednotlivé závislosti pridávať ručne, využijeme príkaz `go mod tidy`, ktorý ich pridá automaticky. Uložte zmeny a v príkazovom riadku v priečinku `${WAC_ROOT}/ambulance-webapi` vykonajte nasledujúci príkaz:
+
+```ps
+go mod tidy
+```
+
+Následne vykonajte príkaz, ktorý zkompiluje náš program a odovzdá riadenie jeho vstupnému bodu  - funkcii `main` v _package_ `main`:
+
+```ps
+go run ./cmd/ambulance-api-service
+```
+
+Otvorte nový terminál a v príkazovom riadku zadajte príkaz:
+
+```ps
+curl http://localhost:8080/openapi
+```
+
+Odozvou bude výpis našej [OpenAPI] špecifikácie.
+
+### 7. Nastavenie Gitignore a Inicializácia Git Repozitára
+
+Vytvorte súbor `${WAC_ROOT}/ambulance-webapi/.gitignore` s nasledujúcim obsahom:
+
+```text
+*.exe
+*.exe~
+./ambulance-api-service
+```
+
+Inicializujte a archivujte git repozitár:
+
+```sh
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/<github-id>/ambulance-webapi.git
+git push -u origin main
+```
