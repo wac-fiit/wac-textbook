@@ -45,7 +45,7 @@ enablePostProcessFile: true
 additionalProperties:
   apiPath: internal/ambulance_wl
   packageName: ambulance_wl
-  interfaceOnlyt: true
+  interfaceOnly: true
 ```
 
 Vytvorte súbor `${WAC_ROOT}/ambulance-webapi/.openapi-generator-ignore` s obsahom:
@@ -175,7 +175,7 @@ func (o implAmbulanceWaitingListAPI) UpdateWaitingListEntry(c *gin.Context) {
 }
 ```
 
-Náš web server bude teraz schopný obsluhvať metódy, ktoré sme zadefinovali v OpenApi špecifikácie. No naša implementácia zatiaľ vracia iba status kód 501. Skutočnú implementáciu budeme robiť až v nasledujúcich kapitolách. Teraz potrebujeme ešte nastaviť aby gin engine používal náš vygenerovaný router.
+Náš web server bude teraz schopný obsluhvať metódy, ktoré sme zadefinovali v OpenApi špecifikácií. No naša implementácia zatiaľ vracia iba status kód 501. Skutočnú implementáciu budeme robiť až v nasledujúcich kapitolách. Teraz potrebujeme ešte nastaviť aby gin engine používal náš vygenerovaný router.
 
 Upravte obsah súboru  `${WAC_ROOT}/ambulance-webapi/cmd/ambulance-api-service/main.go`: 
 
