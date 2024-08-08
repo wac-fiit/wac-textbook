@@ -8,7 +8,7 @@ Okrem dokumentovej databázy sme mohli zvoliť [relačnú databázu](https://en.
 
 Pri použití MongoDB máme niekoľko možností. Môžme napríklad aplikáciu nainštalovať priamo na lokálny počítač alebo použiť kontajnerovú technológiu. Prípadne môžeme MongoDB nasadiť do nášho lokálneho klastra a pristúpiť k databáze prostredníctvom príkazu `kubectl proxy-forward`. Predtým si ale ukážeme ako naštartovať niekoľko kontajnerizovaných aplikácií pre lokálny vývoj s využitím nástroja [Docker Compose]. Našim cieľom je pripraviť konfiguráciu, ktorú potom môžeme jednoduchým spôsobom naštartovať v lokálnom prostredí, v ktorom je k dispozícii subsystém docker.
 
-### Nastavenie a Spustenie MongoDB a Mongo Express pomocou Docker Compose
+### 1. Nastavenie a Spustenie MongoDB a Mongo Express pomocou Docker Compose
 
 Vytvorte súbor `${WAC_ROOT}/ambulance-webapi/deployments/docker-compose/compose.yaml` s nasledujúcim obsahom:
 
@@ -66,11 +66,11 @@ Následne v prehliadači prejdite na stránku [http://localhost:8081](http://loc
 
 >info:> [Docker Compose] umožňuje vytvárať aj komplikovanejšie konfigurácie poskytujúce rôzne ďalšie parametre prostredia. V našom prípade sme sa rozhodli použiť jednoduchú konfiguráciu, ktorá nám postačuje na lokálny vývoj a zároveň je dostatočná pre zachytenie hlavnej myšlienky pri používaní docker compose.
 
-### Vytvorenie Databázy v MongoExpress
+### 2. Vytvorenie Databázy v MongoExpress
 
 V používateľskom rozhraní MongoExpress vytvorte novú databázu s názvom `<pfx>-ambulance-wl`. Do poľa _Database Name_ zadajte text `<pfx>-ambulance-wl` a stlačte tlačidlo _+ Create Database_. Následne stlačte na tlačidlo _View_ vedľa názvu `<pfx>-ambulance-wl`. Do poľa _Collection name_ zadajte hodnotu `ambulance` a stlačte tlačidlo `Create collection`. Tým máme našu databázu pripravenú pre ďalší vývoj.
 
-### Zastavenie Docker Compose a Úprava Spôsobu Spúšťania Aplikácie
+### 3. Zastavenie Docker Compose a Úprava Spôsobu Spúšťania Aplikácie
 
 Zastavte bežiaci proces, v ktorom beží mongo a zavolajte príkaz
 
@@ -115,7 +115,7 @@ switch ($command) {
 
 Príkaz `scripts/run.ps1 start` teraz štartuje našu aplikáciu a databázu. Príkaz `scripts/run.ps1 mongo` štartuje len databázu.
 
-### Uloženie a Archivácia Zmien do Git Repozitára
+### 4. Uloženie a Archivácia Zmien do Git Repozitára
 
 Zmeny uložte a archivujte ich do git repozitára. V priečinku `${WAC_ROOT}/ambulance-webapi` vykonajte príkazy:
 
