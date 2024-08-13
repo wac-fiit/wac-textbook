@@ -115,3 +115,4 @@
 [webc]:https://developer.mozilla.org/en-US/docs/Web/Web_Components
 [WireShark]:https://www.wireshark.org/
 [YAML]:https://yaml.org/
+[FetchAPI]:https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
