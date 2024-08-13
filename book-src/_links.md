@@ -2,7 +2,6 @@
 [aks]:https://azure.microsoft.com/en-us/services/kubernetes-service/
 [Angular]:https://angular.io/
 [api-first]:https://swagger.io/resources/articles/adopting-an-api-first-approach/
-[axios]:https://axios-http.com/
 [azure]:https://azure.microsoft.com/
 [azure pipelines]:https://docs.microsoft.com/en-us/azure/devops/pipelines/get-started/what-is-azure-pipelines?view=azure-devops
 [azure-devops]:https://azure.microsoft.com/en-us/services/devops/
