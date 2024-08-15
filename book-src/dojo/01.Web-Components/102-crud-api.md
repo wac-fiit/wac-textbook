@@ -410,7 +410,7 @@ render() {
   {this.waitingPatients.map((patient) => @_important_@
     <md-list-item onClick={ () => this.entryClicked.emit(patient.id)}> @_important_@
       <div slot="headline">{patient.name}</div>
-      <div slot="supporting-text">{"Predpokladaný vstup: " + this.isoDateToLocale(patient.estimatedStart)}</div>
+      <div slot="supporting-text">{"Predpokladaný vstup: " + patient.estimatedStart.toLocaleString()}</div>
         <md-icon slot="start">person</md-icon>
     </md-list-item>
   ...

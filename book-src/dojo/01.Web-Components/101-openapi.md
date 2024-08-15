@@ -358,7 +358,7 @@ render() {
         :  @_add_@
           <md-list> 
           <div slot="headline">{patient.name}</div>
-            <div slot="supporting-text">{"Predpokladaný vstup: " + this.isoDateToLocale(patient.estimatedStart?.toISOString())}</div> @_important_@
+            <div slot="supporting-text">{"Predpokladaný vstup: " + patient.estimatedStart?.toLocaleString()}</div> @_important_@
             <md-icon slot="start">person</md-icon>
           </md-list>
       }  @_add_@

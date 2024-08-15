@@ -13,10 +13,10 @@ private async getWaitingEntryAsync(): Promise<WaitingListEntry> {
     this.entry = {
     id: "@new",
     patientId: "",
-    waitingSince: new Date().toISOString(), @_important_@
+    waitingSince: new Date(Date.now()), @_important_@
     estimatedDurationMinutes: 15
     };
-    this.entry.estimatedStart = (await this.assumedEntryDateAsync()).toISOString(); @_add_@
+    this.entry.estimatedStart = await this.assumedEntryDateAsync(); @_add_@
     return this.entry;
   }
 
@@ -25,7 +25,6 @@ private async getWaitingEntryAsync(): Promise<WaitingListEntry> {
 ```
 
 Do toho istého súboru pridajte novú funkciu `assumedEntryDateAsync` a ``:
-!!! TODO: Check this function later :TODO !!!
 ```tsx
 private async getWaitingEntryAsync(): Promise<WaitingListEntry> {
   ...
@@ -42,9 +41,9 @@ private async assumedEntryDateAsync(): Promise<Date> {  @_add_@
     if (response.raw.status > 299) {  @_add_@
       return new Date();  @_add_@
     }  @_add_@
-    const lastPatientOut = await response.value()  @_add_@
+    const lastPatientOut = (await response.value())  @_add_@
       .map((_: WaitingListEntry) =>    @_add_@
-          Date.parse(_.estimatedStart)   @_add_@
+          _.estimatedStart.getTime()   @_add_@
           + _.estimatedDurationMinutes * 60 * 1000   @_add_@
       )  @_add_@
       .reduce((acc: number, value: number) => Math.max(acc, value), 0);  @_add_@

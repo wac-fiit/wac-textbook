@@ -94,22 +94,19 @@ export class <Pfx>AmbulanceWlList {
       [{  @_add_@
           name: 'Jožko Púčik',  @_add_@
           patientId: '10001',  @_add_@
-          since: new Date(Date.now() - 10 * 60).toISOString(),  @_add_@
-          estimatedStart: new Date(Date.now() + 65 * 60).toISOString(),  @_add_@
+          estimatedStart: new Date(Date.now() + 65 * 60),  @_add_@
           estimatedDurationMinutes: 15,  @_add_@
           condition: 'Kontrola'  @_add_@
       }, {  @_add_@
           name: 'Bc. August Cézar',  @_add_@
           patientId: '10096',  @_add_@
-          since: new Date(Date.now() - 30 * 60).toISOString(),  @_add_@
-          estimatedStart: new Date(Date.now() + 30 * 60).toISOString(),  @_add_@
+          estimatedStart: new Date(Date.now() + 30 * 60),  @_add_@
           estimatedDurationMinutes: 20,  @_add_@
           condition: 'Teploty'  @_add_@
       }, {  @_add_@
           name: 'Ing. Ferdinand Trety',  @_add_@
           patientId: '10028',  @_add_@
-          since: new Date(Date.now() - 72 * 60).toISOString(),  @_add_@
-          estimatedStart: new Date(Date.now() + 5 * 60).toISOString(),  @_add_@
+          estimatedStart: new Date(Date.now() + 5 * 60),  @_add_@
           estimatedDurationMinutes: 15,  @_add_@
           condition: 'Bolesti hrdla'  @_add_@
       }]  @_add_@
@@ -153,8 +150,7 @@ export class <Pfx>AmbulanceWlList {
 }
 ```
 
-Následne upravte obsah metódy `render()`, pridajte potrebné závislosti na komponenty z knižnice `@material/web`
-a pridajte pomocnú funkciu `isoDateToLocale()`, ktorá prevádza ISO formát dátumu na lokálny formát dátumu a času. Táto funkcia bude použitá pri zobrazovaní času vstupu pacienta do čakárne.
+Následne upravte obsah metódy `render()`, pridajte potrebné závislosti na komponenty z knižnice `@material/web`.
 
 ```tsx
 import { Component, Host, h } from '@stencil/core';
@@ -179,7 +175,7 @@ export class <Pfx>AmbulanceWlList {
           {this.waitingPatients.map(patient =>    @_add_@
             <md-list-item>   @_add_@
               <div slot="headline">{patient.name}</div>   @_add_@
-              <div slot="supporting-text">{"Predpokladaný vstup: " + this.isoDateToLocale(patient.estimatedStart)}</div>   @_add_@
+              <div slot="supporting-text">{"Predpokladaný vstup: " + patient.estimatedStart?.toLocaleString()}</div>   @_add_@
                 <md-icon slot="start">person</md-icon>   @_add_@
             </md-list-item>   @_add_@
           )}   @_add_@
@@ -187,11 +183,6 @@ export class <Pfx>AmbulanceWlList {
       </Host>
     );
   }
-
-  private isoDateToLocale(iso:string) {@_add_@
-    if(!iso) return '';@_add_@
-    return new Date(Date.parse(iso)).toLocaleTimeString()@_add_@
-  }@_add_@
 }
 ```
 
