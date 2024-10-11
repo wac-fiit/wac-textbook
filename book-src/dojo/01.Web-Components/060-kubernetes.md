@@ -22,7 +22,7 @@ ambulance-gitops
 |  L <pfx>-ambulance-ufe
 |
 |- infrastructure
-|  L ufe-controller
+|  L polyfea-controller
 |
 |- components
 |- clusters
@@ -175,34 +175,70 @@ spec:
 
 Tento objekt v systéme kubernetes deklaruje [sieťovú službu](https://kubernetes.io/docs/concepts/services-networking/service/), ktorá zároveň implementuje jednoduchý _load balancer_ pre distribúciu HTTP požiadaviek medzi dve repliky našej webovej služby a implementuje aj [_service discovery_](https://en.wikipedia.org/wiki/Service_discovery) založený na systéme [DNS](https://en.wikipedia.org/wiki/Domain_Name_System), to znamená, že meno služby `<pfx>-ambulance-ufe` zároveň reprezentuje DNS záznam v rámci virtuálnej siete a teda naša webová služba bude interne v rámci systému kubernetes dostupná na adrese `http://<pfx>-ambulance-ufe` v rámci toho istého _namespace_ alebo na adrese `http://<pfx>-ambulance-ufe.<namespace>` z ľuboľného [_namespace_](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/).
 
-Ďalej vytvoríme súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/webcomponent.yaml` s obsahom:
+Ďalej vytvoríme súbor, ktorý do našej obálky vloží link na náš webcomponent, `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/webcomponent-link.yaml` s obsahom:
 
 ```yaml
-apiVersion: fe.milung.eu/v1
+apiVersion: polyfea.github.io/v1alpha1
 kind: WebComponent
-metadata: 
-  name: <pfx>-ambulance-ufe
-spec:   
-  module-uri: http://<pfx>-ambulance-ufe.wac-hospital/build/ambulance-ufe.esm.js  
-                    # module web komponentu pre tento mikroFE 
-                    # - umiestnený v namespace wac-hospital
-  navigation:
-    - element: <pfx>-ambulance-wl-list    # element, ktorý bude vložený na stránku 
-                                    # pri navigácii na zoznam čakajúcich
-      path: <pfx>-ambulance-wl      # cesta, ktora sa zobrazi v address bare v prehliadaci, ked bude tento mikroFE aktívny
-      title: Zoznam čakajúcich <pfx>      # názov mikro aplikácie
-      details: Spravuje zoznam pacientov čakajúcich na vyšetrenie v ambulancii
-  preload: false                    # určuje, či má byť web komponent načítaný spolu s hlavnou stránkou
-  proxy: true                       # pre komponenty v rámci klastra, neprístupné na verejnej sieti 
-                                    # musí byť táto hodnota nastavená na true 
-  hash-suffix: v1alpha1             # voliteľný suffix pre načítanie modulu web komponentu - jeho zmenou 
-                                    # sa mení názov URL pre modul a tým je možné predísť problémom 
-                                    # s verziami vo vyrovnávacích pamätiach
+metadata:
+  name: <pfx>-ambulance-ufe-link
+spec:
+  microFrontend: polyfea-md-shell # referencia na microfrontend, z ktorého sa načíta element
+  element: polyfea-md-app # element, ktorý bude vložený na stránku
+  attributes: # atribúty elementu polyfea-md-app
+    - name: headline
+      value: Zoznam čakajúcich <pfx>
+    - name: short-headline
+      value: Zoznam čakajúcich <pfx> 
+    - name: supporting-text
+      value: |
+        Spravuje zoznam pacientov čakajúcich na vyšetrenie v ambulancii
+    - name: material-icon
+      value: home_health
+    - name: href # presmerovanie po kliknutí na element polyfea-md-app
+      value: ./<pfx>-ambulance-wl 
+  priority: 10
+  displayRules: # pravidlá, kde sa má element vložiť v obálke
+    - anyOf:
+      - context-name: applications
+      - context-name: rail-content
+      - context-name: drawer-content
 ```
 
 >warning:> Meno elementu `<pfx>-ambulance-wl-list` musí zodpovedať komponentu, ktorý sme vytvorili predtým, pozri súbor `${WAC_ROOT}\ambulance-ufe\src\components\<pfx>-ambulance-wl-list\<pfx>-ambulance-wl-list.tsx`
 
 Tento súbor je neštandardným objektom - _Custom Resource_ -  systému kubernetes. V ďalšom bode budeme vytvárať manifesty pre mikro-front-end _controller_, ktorý tieto objekty obhospodáruje. V zásade tu vykonávame registráciu mikro aplikácie - webového komponentu - do hlavnej aplikačnej obálky.
+
+Všimnite si že používame referenciu na `microFrontend: polyfea-md-shell` a `element: polyfea-md-app`. Oba sú súčasťou riadiča, ktorý si popíšeme v bode 5.
+
+Ďalej vytvoríme súbor, vďaka ktorému sa načíta obsah nášho webcomponentu, `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/webcomponent-content.yaml` s obsahom:
+
+```yaml
+apiVersion: polyfea.github.io/v1alpha1
+kind: WebComponent
+metadata:
+  name: <pfx>-ambulance-ufe-content
+spec:
+  microFrontend: <pfx>-ambulance-ufe
+  element: <pfx>-ambulance-wl-list
+  displayRules:
+    - allOf:
+      - context-name: main-content
+      - path: "^(\\.?/)?<pfx>-ambulance-wl(/.*)?$"
+```
+
+Teraz nám však chýba referencia na microfrontend pre náš nový element. Vytvoríme súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/microfrontend.yaml` s obsahom:
+
+```yaml
+apiVersion: polyfea.github.io/v1alpha1
+kind: MicroFrontend
+metadata:
+  name: <pfx>-ambulance-ufe
+spec:
+  frontendClass: fea # default obsiahnutý v základe polyfea md-shell
+  service: http://<pfx>-ambulance-ufe.wac-hospital # referencia na službu odkiaľ sa má načítať modul
+  modulePath: build/ambulance-ufe.esm.js # cesta v rámci služby kde sa modul nachádza
+```
 
 Nakoniec vytvoríme súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/kustomization.yaml`. Správa konfigurácií založená na systéme [Kustomize] využíva súbory `kustomization.yaml` ako integračný bod jednotlivých objektov deklarovaných v ostatných manifestoch. Pritom ostatné manifesty ostávajú stále použiteľné a možno ich priamo použiť ako argument aplikácie `kubectl`. Súbor `kustomization.yaml` je v zásade predpisom ako automatizovane _editovať_ originálne súbory pre nasadenie jednotlivých objektov v iných prostrediach - rozumej v iných klastroch - a tieto úpravy možno hierarchicky kumulovať. V tomto prípade ide len o vymenovanie jednotlivých manifestov a priradenie spoločných značiek.
 
@@ -210,13 +246,14 @@ Nakoniec vytvoríme súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-uf
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-resources:                  # zoznam manifestov - objektov,
-                            # ktoré sú súčasťou tejto aplikácie
+resources:
 - deployment.yaml
 - service.yaml
-- webcomponent.yaml
+- webcomponent-link.yaml
+- webcomponent-content.yaml
+- microfrontend.yaml
 
-commonLabels:               # značky priradené všetkým objektom tejt aplikácie
+commonLabels:
   app.kubernetes.io/component: <pfx>-ambulance-ufe
 ```
 
@@ -230,52 +267,43 @@ kubectl kustomize ./apps/<pfx>-ambulance-ufe/
 
 V tomto kroku pripravíme manifesty pre objekty našej _infraštruktúry_. V našom prípade sa teraz jedná najmä o radič mikro-aplikácií, teda akúsi aplikačnú obálku pre zobrazovanie jednotlivých web-komponentov. Pri skúmaní súčasného stavu sme nenašli implementáciu [micro-front-end systému][micro-fe], ktorý by vhodne kombinoval technológie [Web Components][webc], [Kubernetes] a [micro-Front-Ends][micro-fe]. Táto kombinácia sa pritom javí najvhodnejšia vzhľadom na súčasné trendy vývoja, keďže vytvára priestor na samostatný vývoj jednotlivých web komponentov založený na všeobecne uznávaných štandardoch, a ktoré je možno potom nasadiť deklaratívnym spôsobom v rôznych situáciách, čo priamo zodpovedá filozofii mikro služieb. Existujúce implementácie sú napríklad [bit], alebo [single-spa], ich integrácia ale väčšinou vyžaduje úzke previazanie mikro-front-end služieb.
 
-Aby sme využili deklaratívne princípy Kubernetes API a nezávislosť tímov vyvíjajúcich jednotlivé mikro-aplikácie, bol pre potreby cvičenia vytvorený jednoduchý [_kubernetes controller_][k8s-controller], ktorý obsluhuje neštandardné objekty systému kubernetes definované pomocou [_Custom Resource Definition_][k8s-crd]. Tento _controller_ nepretržite sleduje zmeny deklarovaných objektov - _webcomponents_ - a poskytuje ich zabudovanému webovému serveru, ktorý implementuje aplikačnú obálku. Jednotlivé webové komponenty sú potom dynamicky načítavané podľa potreby a zobrazené na základe špecifikácie v týchto neštandardných objektoch. _Controller_ je implementovaný v programovacom jazyku Prolog (back-end) a v jazyku Typescript (front-end) a jeho zdrojové súbory sú dostupné na [https://github.com/milung/ufe-controller](https://github.com/milung/ufe-controller). Slúži zároveň ako motivácia a ukážka rozšíriteľnosti [kubernetes api][k8s-api], ktoré sa zameriava na deklaratívny popis želaného stavu, namiesto procedurálneho popisu, ako želaný stav dosiahnuť. V cvičeniach budeme používať jeho kontajnerizovanú verziu `milung/ufe-controller:latest`.
+Aby sme využili deklaratívne princípy Kubernetes API a nezávislosť tímov vyvíjajúcich jednotlivé mikro-aplikácie, bol pre potreby cvičenia vytvorený jednoduchý [_kubernetes controller_][k8s-controller], ktorý obsluhuje neštandardné objekty systému kubernetes definované pomocou [_Custom Resource Definition_][k8s-crd]. Tento _controller_ nepretržite sleduje zmeny deklarovaných objektov - _webcomponents_ - a poskytuje ich zabudovanému webovému serveru, ktorý implementuje aplikačnú obálku. Jednotlivé webové komponenty sú potom dynamicky načítavané podľa potreby a zobrazené na základe špecifikácie v týchto neštandardných objektoch. _Controller_ je implementovaný v programovacom jazyku Go (back-end) a v jazyku Typescript (front-end) a jeho zdrojové súbory sú dostupné na [https://github.com/polyfea](https://github.com/polyfea). Slúži zároveň ako motivácia a ukážka rozšíriteľnosti [kubernetes api][k8s-api], ktoré sa zameriava na deklaratívny popis želaného stavu, namiesto procedurálneho popisu, ako želaný stav dosiahnuť. V cvičeniach budeme používať jeho kontajnerizovanú verziu `ghcr.io/polyfea/polyfea-controller:latest`.
 
-Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/ufe-controller/kustomization.yaml` s obsahom:
+Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/polyfea-controller/kustomization.yaml` s obsahom:
+
+!! TODO [MISO]: PROBLEM S CRD POSTUPNOST, NIEKEDY TREBA VIAC KRAT ZAVOLAT
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-resources:
-- https://github.com/milung/ufe-controller//configs/k8s/kustomize
+namespace: wac-hospital
 
-namespace: wac-hospital # chceme tieto objekty umiestniť do `wac-hospital` namespace
+resources:
+- https://github.com/polyfea/polyfea-controller//config/default
+- https://github.com/polyfea/md-shell//deploy/manifests/base
 
 commonLabels:
-  app.kubernetes.io/component: ufe-controller
+  app.kubernetes.io/component: polyfea-controller
 ```
 
-Týmto spôsobom sme vytvorili konfiguráciu založenú na vopred pripravenej konfigurácii pre _controller_. Tiež sme určili, že všetky relevantné objekty budú umiestnené do subdomény klastra `wac-hospital`.
+Týmto spôsobom sme vytvorili konfiguráciu založenú na vopred pripravenej konfigurácii pre _controller_.
 
-Obsah súborov si môžete pozrieť v repozitáry [tu](https://github.com/milung/ufe-controller/tree/master/configs/k8s/kustomize).  Súbory `deployment.yaml`, a `service.yaml` sú obdobné ako v prípade našej `ambulance-ufe` mikroslužby. Súbor `crd.yaml`  deklaruje neštandardný objekt systému kubernetes - _Custom Resource Definition_ - pre deklaráciu webových komponentov. Okrem iného určuje schému, na základe ktorej bol vytvorený súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/webcomponent.yaml`.
-
-Pod radiča potrebuje prístup k objektom typu `webcomponents`, ktoré sme definovali v predchádzajúcom súbore. Konfigurácia preto obsahuje aj definície pre [Kubernetes RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/), ktoré umožnia nášmu podu pristupovať k objektom `webcomponents.fe.milung.eu`. V súbore
-`deployment.yaml` sme pre náš pod určili `serviceAccountName: ufe-controller-account`, čo znamená, že bude používať účet `ufe-controller-account`, ktorý je definovaný v súbore `serviceaccount.yaml`. Tento účet je priradený k _ClusterRole_ `webcomponents-reader`, ktorý je definovaný v súbore `clusterrole.yaml`. Tento _ClusterRole_ je priradený k _ClusterRoleBinding_ `ufe-controller`, ktorý je definovaný v súbore `clusterrolebinding.yaml`. Týmto spôsobom sme vytvorili prístupové práva pre náš pod k objektom typu `webcomponents.fe.milung.eu`.
+Viac si o tomto riadiči viete prečítať tu: [https://github.com/polyfea/polyfea-controller/blob/main/README.md](https://github.com/polyfea/polyfea-controller/blob/main/README.md).
 
 >info:> Takáto priama závislosť na externých manifestoch, bez špecifikácie príslušnej verzie, je v praxi nežiadúca, keďže riskujeme, že dôjde k zmenám, ktoré narušia funkčnosť našej aplikácie. V praxi by sa tieto manifesty buď skopírovali do lokálneho repozitára, alebo sa určila konkrétna verzia (vetva/tag v GitHub), ktorá bude potom použitá v súbore `kustomization.yaml`.
 
 ### 6. Nasadenie aplikácie do lokálneho Kubernetes klastra s využitím Kustomize
 
-V predchádzajúcich krokoch sme vytvorili deklarácie pre našu aplikáciu `ambulance-ufe` a pre infraštrukturálnu aplikáciu `ufe-controller`. Teraz prejdeme k deklarácii konfigurácie do špecifických prostredí - klastrov. Keďže budeme nasadzovať do nášho lokálneho kubernetes klastra, potrebujeme nasadiť obe aplikácie a vytvoriť subdoménu klastra - [_namespace_](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/) - do ktorých ich umiestnime. Nasadenie do klastra rozdelíme do dvoch krokov:
+V predchádzajúcich krokoch sme vytvorili deklarácie pre našu aplikáciu `ambulance-ufe` a pre infraštrukturálnu aplikáciu `polyfea-controller`. Teraz prejdeme k deklarácii konfigurácie do špecifických prostredí - klastrov. Keďže budeme nasadzovať do nášho lokálneho kubernetes klastra, potrebujeme nasadiť obe aplikácie a vytvoriť subdoménu klastra - [_namespace_](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/) - do ktorých ich umiestnime. Nasadenie do klastra rozdelíme do dvoch krokov:
 
 Krok `prepare` - vytvorenie _namespace_ a nasadenie infraštruktúry klastra. Tu budeme nasadzovať služby, ktoré sú podmienkou na to, aby náš klaster bol pripravený na nasadenie samotnej aplikácie;
 
 Krok `install` - nasadenie služieb samotnej aplikácie/aplikácií do klastra. Ak by sme mali klaster kompletne pripravený, tak stačí nasadiť tento krok.
 
-Implicitne tiež predpokladáme, že medzi týmito krokmi existujú nejaké závislosti - napríklad objekty typu `webc` v kroku `install` predpokladajú existenciu rozšírení Kubernetes API typu `webcomponents.fe.milung.eu` z kroku `prepare`.
+Implicitne tiež predpokladáme, že medzi týmito krokmi existujú nejaké závislosti - napríklad objekty typu `webc` v kroku `install` predpokladajú existenciu rozšírení Kubernetes API typu `polyfea.github.io` z kroku `prepare`.
 
 >info:> Počet krokov sa snažíme limitovať, niekedy však môže byť potrebné rozdeliť nasadenie do viacerých krokov, aby boli splnené určité predpoklady pre nasadenie našej aplikácie - typicky dostupnosť služieb, ktoré definujú spôsob ako nasadiť iné objekty alebo objekty, ku ktorým chceme limitovať prístup pre lepšiu koordináciu jednotlivých tímov.
-
-Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/namespace.yaml` s obsahom:
-
-```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: wac-hospital
-```
 
 a ďalej vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/kustomization.yaml`
 
@@ -284,22 +312,23 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- namespace.yaml                            # namespace je tiež objektom pre tento klaster
-- ../../../infrastructure/ufe-controller       # kustomization pre ufe-controller
+- ../../../infrastructure/polyfea-controller       # kustomization pre polyfea-controller
 
 patches: 
-- path: patches/ufe-controller.service.yaml    # úprava služby ufe-controller
+- path: patches/polyfea-controller.service.yaml    # úprava služby polyfea-controller
+- path: patches/material-design.microfrontend.yaml
+- path: patches/polyfea-md-shell.microfrontend.yaml
 ```
 
-Táto "kustomization" navyše špecifikuje, že použijeme úpravu zo súboru `patches/ufe-controller.service.yaml`.
+Táto "kustomization" navyše špecifikuje, že použijeme úpravu zo súboru `patches/polyfea-controller.service.yaml`.
 
-Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/patches/ufe-controller.service.yaml` s obsahom:
+Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/patches/polyfea-controller.service.yaml` s obsahom:
 
 ```yaml
 kind: Service
 apiVersion: v1
 metadata:
-  name: ufe-controller
+  name: polyfea-controller-manager
 spec:  
   type: NodePort
   ports:
@@ -309,9 +338,35 @@ spec:
     nodePort: 30331
 ```
 
-Táto úprava mení typ služby `ufe-controller`, ktorá je pôvodne špecifikovaná v súbore `${WAC_ROOT}/ambulance-gitops/infrastructure/ufe-controller/service.yaml`. Pôvodná špecifikácia implicitne používa typ `ClusterIP`, ktorý sprístupní službu len na internej sieti kubernetes klastra. Upravená verzia používa typ `NodePort` a nastavuje parameter `nodePort: 30331`. To znamená, že k službe `ufe-controller` možno pristúpiť na porte `30331` hostiteľského počítača klastra. Tento [strategic-merge patch](https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/patches/#patch-using-path-strategic-merge) súbor nie je úplnou deklaráciou _Service_, obsahuje len identifikátory pre vyhľadanie konkrétneho záznamu (`kind`, `apiVersion`, `name`, `protocol`) a položky, ktoré majú byť upravené.
+Táto úprava mení typ služby `polyfea-controller`, ktorá je pôvodne špecifikovaná v súbore `${WAC_ROOT}/ambulance-gitops/infrastructure/polyfea-controller/service.yaml`. Pôvodná špecifikácia implicitne používa typ `ClusterIP`, ktorý sprístupní službu len na internej sieti kubernetes klastra. Upravená verzia používa typ `NodePort` a nastavuje parameter `nodePort: 30331`. To znamená, že k službe `polyfea-controller` možno pristúpiť na porte `30331` hostiteľského počítača klastra. Tento [strategic-merge patch](https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/patches/#patch-using-path-strategic-merge) súbor nie je úplnou deklaráciou _Service_, obsahuje len identifikátory pre vyhľadanie konkrétneho záznamu (`kind`, `apiVersion`, `name`, `protocol`) a položky, ktoré majú byť upravené.
 
 Ďalším typom _service_, ktorý by sme mohli použiť je typ `LoadBalancer`. Konfigurácia tohto typu je závislá od poskytovateľa klastra, v prípade [Docker Desktop][docker-desktop] by bola služba dostupná na porte 80 nášho počítača. V tomto prípade ale možno použiť iba jednu službu typu `LoadBalancer` v rámci celého klastra. (V prípade klastrov v prostredí Azure alebo AWS, sa každej službe typu `LoadBalancer` priraďuje samostatná _verejná_ IP adresa).
+
+!! TODO [MISO]: TREBA POZRET TEN SERVICE HANDLING V POLYFEA, TERAZ TO ROBI BORDEL A TREBA TO PATCHOVAT NA INY NAMESPACE.
+
+Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/patches/polyfea-md-shell.microfrontend.yaml` s obsahom:
+
+```yaml
+apiVersion: polyfea.github.io/v1alpha1
+kind: MicroFrontend
+metadata:
+  name: polyfea-md-shell
+spec:
+  service: http://polyfea-md-shell.wac-hospital.svc.cluster.local
+```
+
+a súbor `{WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/patches/material-design.microfrontend.yaml`:
+
+```yaml
+apiVersion: polyfea.github.io/v1alpha1
+kind: MicroFrontend
+metadata:
+  name: material-design
+spec:
+  service: http://polyfea-md-shell.wac-hospital.svc.cluster.local
+```
+
+Tieto úpravy obchádzajú nedostatok v Polyfea riadiči.
 
 Teraz nam zostáva nasadiť aplikáciu `ambulance-ufe` do klastra. Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/install/kustomization.yaml` s obsahom:
 
@@ -373,7 +428,7 @@ V prehliadači otvorte stránku [http://localhost:30331](http://localhost:30331)
 ### 7. Odstránenie manuálne nasadených Kubernetes objektov
 
 Nasledujúci obrázok znázorňuje deployment a komunikačnú schému nasadenej aplikácie.
-
+!! TODO [MISO]: PRINCIP PODOBNY ALE BOLO BY FAJN UPDATNUT
 ![Komunikácia medzi micro-frontend radičom a nasadeným WebComponent](./img/060-03-k8s-ufe-komunikacia.png)
 
 Overili sme, že manuálne nasadenie našej aplikácie do Kubernetes klastra
