@@ -45,7 +45,7 @@ Týmto spôsobom sme vytvorili závislosť na konkrétnom vydaní systému [Flux
 ...
 resources:
 - namespace.yaml
-- ../../../infrastructure/ufe-controller
+- ../../../infrastructure/polyfea-controller
 - ../../../infrastructure/fluxcd @_add_@
 ```
 
@@ -139,7 +139,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 commonLabels:
-app.kubernetes.io/part-of: wac-hospital
+  app.kubernetes.io/part-of: wac-hospital
 
 namespace: wac-hospital
 
@@ -270,7 +270,7 @@ Teraz nasadíme našu konfiguráciu pre klaster `localhost`. V priečinku `${WAC
 kubectl apply -k clusters/localhost
 ```
 
-Týmto príkazom sme do klastra priamo nasadili objekty z priečinku `${WAC_ROOT}/ambulance-gitops/clusters/localhost\gitops`. Pomocou objektu `gitops-repo` typu `GitRepository` vytvorí Flux lokálnu kópiu určenej vetvy nášho repozitára. Následne, v neurčenom poradí, pomocou objektu `cd` typu `Kustomization.kustomize.toolkit.fluxcd.io` aplikuje v klastri konfiguráciu z priečinka `clusters/localhost`, čím zabezpečí obnovenie konfigurácie samotného predpisu priebežného nasadenia. Zároveň pomocou objektu `prepare` tiež typu  `Kustomization.kustomize.toolkit.fluxcd.io`, nainštaluje do klastra služby, ktoré tam naša aplikácia implicitne predpokladá. V tomto prípade to je služba `ufe-controller` a samotný operátor [Flux CD][flux], ktorý môžeme takto napríklad obnoviť na novšiu verziu.
+Týmto príkazom sme do klastra priamo nasadili objekty z priečinku `${WAC_ROOT}/ambulance-gitops/clusters/localhost\gitops`. Pomocou objektu `gitops-repo` typu `GitRepository` vytvorí Flux lokálnu kópiu určenej vetvy nášho repozitára. Následne, v neurčenom poradí, pomocou objektu `cd` typu `Kustomization.kustomize.toolkit.fluxcd.io` aplikuje v klastri konfiguráciu z priečinka `clusters/localhost`, čím zabezpečí obnovenie konfigurácie samotného predpisu priebežného nasadenia. Zároveň pomocou objektu `prepare` tiež typu  `Kustomization.kustomize.toolkit.fluxcd.io`, nainštaluje do klastra služby, ktoré tam naša aplikácia implicitne predpokladá. V tomto prípade to je služba `polyfea-controller` a samotný operátor [Flux CD][flux], ktorý môžeme takto napríklad obnoviť na novšiu verziu.
 
 Po aplikovaní a priravenosti konfigurácie pomocou objektu `prepare` sa začne aplikovať konfigurácia uvedená v objekte `install` typu `Kustomization.kustomize.toolkit.fluxcd.io`, ktorá nasadí vlastné služby a objekty nášho projektu.
 
@@ -322,26 +322,30 @@ kubectl get all -n wac-hospital
 Výstup by mal byť podobný tomuto:
 
 ```plain
-NAME                                            READY   STATUS    RESTARTS   AGE
-pod/ambulance-ufe-deployment-64cfc4c9db-d46vq   1/1     Running   0          78m
-pod/ambulance-ufe-deployment-64cfc4c9db-f2cm7   1/1     Running   0          78m
-pod/ufe-controller-594bc6f989-45fjn             1/1     Running   0          78m
-pod/ufe-controller-594bc6f989-5b9jd             1/1     Running   0          78m
+NAME                                                        READY   STATUS    RESTARTS   AGE
+pod/polyfea-controller-controller-manager-84b649fd6-jn7bv   2/2     Running   0          3m8s
+pod/polyfea-md-shell-657c94985d-98zj8                       1/1     Running   0          2m45s
+pod/wacdemo-ambulance-ufe-deployment-868d8ff49b-nxd86       1/1     Running   0          2m45s
+pod/wacdemo-ambulance-ufe-deployment-868d8ff49b-zf5jq       1/1     Running   0          2m45s
 
-NAME                     TYPE        CLUSTER-IP       EXTERNAL-IP   PORT (S)        AGE
-service/ambulance-ufe    ClusterIP   10.105.190.116   <none>        80/ TCP         78m
-service/ufe-controller   NodePort    10.96.155.129    <none>        80:30331/ TCP   78m
+NAME                                                            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+service/polyfea-controller-controller-manager-metrics-service   ClusterIP   10.99.167.36    <none>        8443/TCP       3m8s
+service/polyfea-controller-manager                              NodePort    10.96.174.220   <none>        80:30331/TCP   3m8s
+service/polyfea-md-shell                                        ClusterIP   10.99.38.173    <none>        80/TCP         2m45s
+service/wacdemo-ambulance-ufe                                   ClusterIP   10.96.68.53     <none>        80/TCP         2m45s
 
-NAME                                       READY   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/ambulance-ufe-deployment   2/2     2            2           78m
-deployment.apps/ufe-controller             2/2     2            2           78m
+NAME                                                    READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/polyfea-controller-controller-manager   1/1     1            1           3m8s
+deployment.apps/polyfea-md-shell                        1/1     1            1           2m45s
+deployment.apps/wacdemo-ambulance-ufe-deployment        2/2     2            2           2m45s
 
-NAME                                                  DESIRED   CURRENT    READY   AGE
-replicaset.apps/ambulance-ufe-deployment-64cfc4c9db   2         2          2       78m
-replicaset.apps/ufe-controller-594bc6f989             2         2          2       78m
+NAME                                                              DESIRED   CURRENT   READY   AGE
+replicaset.apps/polyfea-controller-controller-manager-84b649fd6   1         1         1       3m8s
+replicaset.apps/polyfea-md-shell-657c94985d                       1         1         1       2m45s
+replicaset.apps/wacdemo-ambulance-ufe-deployment-868d8ff49b       2         2         2       2m45s
 ```
 
-Pre každý z našich dvoch komponentov (ambulance-ufe a ufe-controller) boli vytvorené nasledovné objekty:
+Pre každý z našich dvoch komponentov (ambulance-ufe a polyfea-controller) boli vytvorené nasledovné objekty:
 
 - 1x service
 - 1x deployment
