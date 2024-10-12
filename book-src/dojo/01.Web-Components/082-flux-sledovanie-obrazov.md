@@ -1,6 +1,6 @@
 # Flux - sledovanie a aplikovanie zmien verzie docker obrazu
 
-V predchádzajúcej kapitole sme zrealizovali priebežné nasadenie podľa konfigurácie v našom repozitári. Táto konfigurácia pritom vždy nasadzuje poslednú - _latest_ - verziu obrazu nášho kontajnera (a kontajnerov závislostí, ako napr. `ufe-controller`). V prípade, že pri ďalšom vydaní niektorého z kontajnerov dôjde k zmene API, môže to ovplyvniť funkcionalitu nášho riešenia. V praxi sa preto pri produkčnom nasadení určujú vždy len špecifické vydania softvérových kontajnerov alebo dokonca špecifické varianty kontajnerov - pomocou SHA podpisu, čo pomáha zachovať stabilitu a kybernetickú bezpečnosť produkčného nasadenia. Voľbu konkrétnych verzií pre dané nasadenie je možné realizovať napr. pomocou [ImageTransformer-a](https://kubectl.docs.kubernetes.io/references/kustomize/builtins/#_imagetagtransformer_) v Kustomize konfigurácii nášho klastra.
+V predchádzajúcej kapitole sme zrealizovali priebežné nasadenie podľa konfigurácie v našom repozitári. Táto konfigurácia pritom vždy nasadzuje poslednú - _latest_ - verziu obrazu nášho kontajnera (a kontajnerov závislostí, ako napr. `polyfea-controller`). V prípade, že pri ďalšom vydaní niektorého z kontajnerov dôjde k zmene API, môže to ovplyvniť funkcionalitu nášho riešenia. V praxi sa preto pri produkčnom nasadení určujú vždy len špecifické vydania softvérových kontajnerov alebo dokonca špecifické varianty kontajnerov - pomocou SHA podpisu, čo pomáha zachovať stabilitu a kybernetickú bezpečnosť produkčného nasadenia. Voľbu konkrétnych verzií pre dané nasadenie je možné realizovať napr. pomocou [ImageTransformer-a](https://kubectl.docs.kubernetes.io/references/kustomize/builtins/#_imagetagtransformer_) v Kustomize konfigurácii nášho klastra.
 
 Na rozdiel od produkčného systému chceme pri nasadení pre potreby vývojového tímu nasadzovať posledné verzie softvérových kontajnerov, ktoré úspešne prešli priebežnou integráciou. V tomto prípade nepostačuje použiť označenie `latest` (alebo iné), pretože kubernetes orchestrátor nevie, že v registri kontajnerov došlo k zmene obrazu s týmto označením. Uvádzanie špecifickej verzie obrazu by síce bolo možné, ale v prípade, že by sme chceli nasadiť novšiu verziu, museli by sme zároveň manuálne zmeniť konfiguráciu v repozitári `ambulance-gitops`, pričom najmä pri väčších tímoch by asi dochádzalo k pozabudnutiu tohto kroku. Ideálne by bolo, keby sa zmena verzie obrazu v repozitári automaticky prejavila v klastri.  V tejto kapitole si ukážeme, ako to dosiahnuť pomocou Flux-u.
 
@@ -26,16 +26,16 @@ spec:
 
 >warning:> Zameňte \<docker-id\> !
 
-Vytvorte tiež súbor `${WAC_ROOT}/ambulance-gitops/cluster/localhost/gitops/ufe-controller.image-repository.yaml` s obsahom:
+Vytvorte tiež súbor `${WAC_ROOT}/ambulance-gitops/cluster/localhost/gitops/polyfea-controller.image-repository.yaml` s obsahom:
 
 ```yaml
 apiVersion: image.toolkit.fluxcd.io/v1beta2
 kind: ImageRepository
 metadata:
-  name: ufe-controller
+  name: polyfea-controller
   namespace: wac-hospital
 spec:
-  image: milung/ufe-controller
+  image: ghcr.io/polyfea/polyfea-controller
   interval: 15m0s
 ```
 
@@ -53,30 +53,29 @@ spec:
   filterTags:
       pattern: "main.*" # vyberie všetky verzie, ktoré začínajú na main- (napr. main-20240315.1200) @_important_@
   policy:
-  alphabetical:
-    order: asc
-    
+    alphabetical:
+      order: asc
 ```
 
-a súbor  `${WAC_ROOT}/ambulance-gitops/cluster/localhost/gitops/ufe-controller.image-policy.yaml`
+a súbor  `${WAC_ROOT}/ambulance-gitops/cluster/localhost/gitops/polyfea-controller.image-policy.yaml`
 
 ```yaml
 apiVersion: image.toolkit.fluxcd.io/v1beta2
 kind: ImagePolicy
 metadata:
-  name: ufe-controller
+  name: polyfea-controller
   namespace: wac-hospital
 spec:
   imageRepositoryRef:
-    name: ufe-controller # referuje ImageRepository z predchádzajúceho kroku @_important_@
+    name: polyfea-controller # referuje ImageRepository z predchádzajúceho kroku
   policy:
     semver:
-      range: "^1.*.*" @_important_@
+      range: "^0.*.*"
 ```
 
 ### 2. Úprava súborov pre automatickú aktualizáciu verzií Docker obrazov
 
-Upravíme všetky súbory, kde chceme, aby Flux aktualizoval verziu docker obrazu. To sa realizuje pridaním špeciálneho markeru `# {"$imagepolicy": "POLICY_NAMESPACE:POLICY_NAME"}` na riadok, ktorý sa má upravovať. V našom prípade by sme mohli upraviť súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/deployment.yaml` a upraviť konfiguráciu v priečinku `${WAC_ROOT}/ambulance-gitops/infrastructure/ufe-controller`. Výhodnejšie je v tomto prípade ale mať všetky verzie kontajnerov na jednom mieste a zároveň mať možnosť riadiť verzie kontajnerov pre jednotlivé vydania nášho systému. K tomu využijeme takzvané [_Kustomize components_](https://kubectl.docs.kubernetes.io/guides/config_management/components/), ktoré umožňujú kombinovať jednotlivé varianty konfigurácie.
+Upravíme všetky súbory, kde chceme, aby Flux aktualizoval verziu docker obrazu. To sa realizuje pridaním špeciálneho markeru `# {"$imagepolicy": "POLICY_NAMESPACE:POLICY_NAME"}` na riadok, ktorý sa má upravovať. V našom prípade by sme mohli upraviť súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/deployment.yaml` a upraviť konfiguráciu v priečinku `${WAC_ROOT}/ambulance-gitops/infrastructure/polyfea-controller`. Výhodnejšie je v tomto prípade ale mať všetky verzie kontajnerov na jednom mieste a zároveň mať možnosť riadiť verzie kontajnerov pre jednotlivé vydania nášho systému. K tomu využijeme takzvané [_Kustomize components_](https://kubectl.docs.kubernetes.io/guides/config_management/components/), ktoré umožňujú kombinovať jednotlivé varianty konfigurácie.
 
 Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/components/version-developers/kustomization.yaml` s obsahom:
 
@@ -89,9 +88,9 @@ images:
   newName: <docker-id>/ambulance-ufe # {"$imagepolicy":  "wac-hospital:ambulance-ufe:name"} @_important_@
   newTag: main # {"$imagepolicy": "wac-hospital:ambulance-ufe:tag"} @_important_@
 
-- name: milung/ufe-controller
-  newName: milung/ufe-controller # {"$imagepolicy":  "wac-hospital:ufe-controller:name"} @_important_@
-  newTag: latest # {"$imagepolicy": "wac-hospital:ufe-controller:tag"} @_important_@
+- name: ghcr.io/polyfea/polyfea-controller
+  newName: ghcr.io/polyfea/polyfea-controller # {"$imagepolicy":  "wac-hospital:polyfea-controller:name"}
+  newTag: latest # {"$imagepolicy": "wac-hospital:polyfea-controller:tag"}
 ```
 
 Všimnite si markre v komentároch - je dôležité, aby referovali správne názvy _image police_, vytvorených v predchádzajúcom kroku.
@@ -104,7 +103,7 @@ components:
 - ../../../components/version-developers
 ```
 
-Týmto spôsobom cez kustomizáciu upravíme všetky miesta v referencovaných yaml súboroch, kde sa nachádza obraz `<docker_id>/ambulance-ufe` alebo `milung/ufe-controller`.
+Týmto spôsobom cez kustomizáciu upravíme všetky miesta v referencovaných yaml súboroch, kde sa nachádza obraz `<docker_id>/ambulance-ufe` alebo `ghcr.io/polyfea/polyfea-controller`.
 
 ### 3. Pridanie komponentu pre automatickú aktualizáciu verzií Docker obrazov
 
@@ -164,8 +163,8 @@ resources:
 ...
 - ambulance-ufe.image-repository.yaml @_add_@
 - ambulance-ufe.image-policy.yaml @_add_@
-- ufe-controller.image-repository.yaml @_add_@
-- ufe-controller.image-policy.yaml @_add_@
+- polyfea-controller.image-repository.yaml @_add_@
+- polyfea-controller.image-policy.yaml @_add_@
 - image-update-automation.yaml @_add_@
 ```
 
@@ -203,5 +202,5 @@ git pull
 >build_circle:> V prípade zlyhania Vášho klastra, napríklad pri reinštalácii počítača, môžete nasadenie obnoviť pomocou konfigurácie v repozitári. Vytvorte si lokálnu kópiu repozitára. V adresári  `${WAC_ROOT}/ambulance-gitops/clusters/localhost/secrets` vytvorte súbor `repository-pat.yaml` ako bolo uvedené v predchádzajúcej kapitole a potom postupujte podľa pokynov uvedených v predchádzajúcej kapitole v časti _Bootstrapping Flux_. Ostatné zmeny našej konfigurácie je už postačujúce vykonávať výhradne v git repozitári, nezabudnite ale naďalej priebežne sledovať stav jednotlivých objektov, čo patrí k štandardnej praxi pri vývoji softvéru pomocou DevOps. Môžete tiež využiť objekty [_Flux CD Notification Controller_-a](https://fluxcd.io/flux/components/notification/), ktoré umožňujú sledovať stav jednotlivých objektov a v prípade zmeny zaslať notifikáciu na príslušný komunikačný kanál tímu.
 
 Pre lepšie pochopenie sú na nasledujúcom obrázku znázornené komponenty spomínané v tejto kapitole a ich vzájomné prepojenie.
-
+!! TODO[MISO]: MOZNO FIXNUT MENA TIEZ
 ![Komponenty Flux a ich spolupráca](./img/082-02-FluxCD.svg)
