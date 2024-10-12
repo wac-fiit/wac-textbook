@@ -271,8 +271,6 @@ Aby sme využili deklaratívne princípy Kubernetes API a nezávislosť tímov v
 
 Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/polyfea-controller/kustomization.yaml` s obsahom:
 
-!! TODO [MISO]: PROBLEM S CRD POSTUPNOST, NIEKEDY TREBA VIAC KRAT ZAVOLAT
-
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -281,7 +279,6 @@ namespace: wac-hospital
 
 resources:
 - https://github.com/polyfea/polyfea-controller//config/default
-- https://github.com/polyfea/md-shell//deploy/manifests/base
 
 commonLabels:
   app.kubernetes.io/component: polyfea-controller
@@ -292,6 +289,21 @@ Týmto spôsobom sme vytvorili konfiguráciu založenú na vopred pripravenej ko
 Viac si o tomto riadiči viete prečítať tu: [https://github.com/polyfea/polyfea-controller/blob/main/README.md](https://github.com/polyfea/polyfea-controller/blob/main/README.md).
 
 >info:> Takáto priama závislosť na externých manifestoch, bez špecifikácie príslušnej verzie, je v praxi nežiadúca, keďže riskujeme, že dôjde k zmenám, ktoré narušia funkčnosť našej aplikácie. V praxi by sa tieto manifesty buď skopírovali do lokálneho repozitára, alebo sa určila konkrétna verzia (vetva/tag v GitHub), ktorá bude potom použitá v súbore `kustomization.yaml`.
+
+Samotný riadič poskytuje iba načítavanie web komponentov no nie ich zobrazenie. Pre toto treba do riadiča zaregistrovať ešte obálku, ktorá naše web komponenty zobrazí. Polyfea poskytuje ukážkovú implementáciu tejto obálky. Spolu aj s definíciami manifestov na registráciu do riadiča. Viac si viete prečítať tu [https://github.com/polyfea/md-shell](https://github.com/polyfea/md-shell).
+
+Táto obálka je dalšia aplikácia ktorú budeme využívať preto jej manifest vložíme do priečinku `apps/`. Vytvorýme súbor `${WAC_ROOT}/ambulance-gitops/apps/polyfea-md-shell/kustomization.yaml` s obsahom:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- https://github.com/polyfea/md-shell//deploy/manifests/base
+
+commonLabels:
+  app.kubernetes.io/component: polyfea-controller
+```
 
 ### 6. Nasadenie aplikácie do lokálneho Kubernetes klastra s využitím Kustomize
 
@@ -316,8 +328,6 @@ resources:
 
 patches: 
 - path: patches/polyfea-controller.service.yaml    # úprava služby polyfea-controller
-- path: patches/material-design.microfrontend.yaml
-- path: patches/polyfea-md-shell.microfrontend.yaml
 ```
 
 Táto "kustomization" navyše špecifikuje, že použijeme úpravu zo súboru `patches/polyfea-controller.service.yaml`.
@@ -342,33 +352,7 @@ Táto úprava mení typ služby `polyfea-controller`, ktorá je pôvodne špecif
 
 Ďalším typom _service_, ktorý by sme mohli použiť je typ `LoadBalancer`. Konfigurácia tohto typu je závislá od poskytovateľa klastra, v prípade [Docker Desktop][docker-desktop] by bola služba dostupná na porte 80 nášho počítača. V tomto prípade ale možno použiť iba jednu službu typu `LoadBalancer` v rámci celého klastra. (V prípade klastrov v prostredí Azure alebo AWS, sa každej službe typu `LoadBalancer` priraďuje samostatná _verejná_ IP adresa).
 
-!! TODO [MISO]: TREBA POZRET TEN SERVICE HANDLING V POLYFEA, TERAZ TO ROBI BORDEL A TREBA TO PATCHOVAT NA INY NAMESPACE.
-
-Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/patches/polyfea-md-shell.microfrontend.yaml` s obsahom:
-
-```yaml
-apiVersion: polyfea.github.io/v1alpha1
-kind: MicroFrontend
-metadata:
-  name: polyfea-md-shell
-spec:
-  service: http://polyfea-md-shell.wac-hospital.svc.cluster.local
-```
-
-a súbor `{WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/patches/material-design.microfrontend.yaml`:
-
-```yaml
-apiVersion: polyfea.github.io/v1alpha1
-kind: MicroFrontend
-metadata:
-  name: material-design
-spec:
-  service: http://polyfea-md-shell.wac-hospital.svc.cluster.local
-```
-
-Tieto úpravy obchádzajú nedostatok v Polyfea riadiči.
-
-Teraz nam zostáva nasadiť aplikáciu `ambulance-ufe` do klastra. Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/install/kustomization.yaml` s obsahom:
+Teraz nam zostáva nasadiť aplikáciu `ambulance-ufe` a `polyfea-md-shell` do klastra. Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/install/kustomization.yaml` s obsahom:
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -382,8 +366,37 @@ commonLabels:
   app.kubernetes.io/part-of: wac-hospital
 
 resources:
+- ../../../apps/polyfea-md-shell
 - ../../../apps/<pfx>-ambulance-ufe
+
+patches:
+- path: patches/material-design.microfrontend.yaml
+- path: patches/polyfea-md-shell.microfrontend.yaml
 ```
+
+Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/install/patches/polyfea-md-shell.microfrontend.yaml` s obsahom:
+
+```yaml
+apiVersion: polyfea.github.io/v1alpha1
+kind: MicroFrontend
+metadata:
+  name: polyfea-md-shell
+spec:
+  service: http://polyfea-md-shell.wac-hospital.svc.cluster.local
+```
+
+a súbor `{WAC_ROOT}/ambulance-gitops/clusters/localhost/install/patches/material-design.microfrontend.yaml`:
+
+```yaml
+apiVersion: polyfea.github.io/v1alpha1
+kind: MicroFrontend
+metadata:
+  name: material-design
+spec:
+  service: http://polyfea-md-shell.wac-hospital.svc.cluster.local
+```
+
+Tieto úpravy obchádzajú nedostatok v Polyfea riadiči ktorý spôsobuje nesprávne použitie namespace-ov, preto ich musíme preťažiť.
 
 Overte, že je vaša konfigurácia správna vykonaním príkazu v priečinku `${WAC_ROOT}/ambulance-gitops`:
 
@@ -428,6 +441,7 @@ V prehliadači otvorte stránku [http://localhost:30331](http://localhost:30331)
 ### 7. Odstránenie manuálne nasadených Kubernetes objektov
 
 Nasledujúci obrázok znázorňuje deployment a komunikačnú schému nasadenej aplikácie.
+
 !! TODO [MISO]: PRINCIP PODOBNY ALE BOLO BY FAJN UPDATNUT
 ![Komunikácia medzi micro-frontend radičom a nasadeným WebComponent](./img/060-03-k8s-ufe-komunikacia.png)
 
