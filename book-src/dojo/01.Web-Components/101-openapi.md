@@ -353,15 +353,19 @@ V tomto kroku sme upravili spôsob získania zoznamu pacientov - zoznam paciento
 render() {
   return (
     <Host>
-      {this.errorMessage @_add_@
-        ? <div class="error">{this.errorMessage}</div>  @_add_@
-        :  @_add_@
-          <md-list> 
-          <div slot="headline">{patient.name}</div>
-            <div slot="supporting-text">{"Predpokladaný vstup: " + patient.estimatedStart?.toLocaleString()}</div> @_important_@
+      {this.errorMessage  @_add_@
+        ? <div class="error">{this.errorMessage}</div> @_add_@
+        : @_add_@
+      <md-list>
+        {this.waitingPatients.map(patient => @_important_@
+          <md-list-item onClick={ () => this.entryClicked.emit(patient.id)} > @_important_@
+            <div slot="headline">{patient.name}</div>
+            <div slot="supporting-text">{"Predpokladaný vstup: " + patient.estimatedStart?.toLocaleString()}</div>
             <md-icon slot="start">person</md-icon>
-          </md-list>
-      }  @_add_@
+          </md-list-item>
+        )}
+      </md-list>
+      } @_add_@
     </Host>
   );
 }
@@ -515,11 +519,11 @@ describe('<pfx>-ambulance-wl-list', () => {
     fetchMock.mockRejectOnce(new Error('Network Error')); @_add_@
    @_add_@
     const page = await newSpecPage({ @_add_@
-      components: [MsevcikAmbulanceWlList], @_add_@
-      html: `<msevcik-ambulance-wl-list ambulance-id="test-ambulance" api-base="http://test/api"></msevcik-ambulance-wl-list>`, @_add_@
+      components: [<pfx>AmbulanceWlList], @_add_@
+      html: `<<pfx>-ambulance-wl-list ambulance-id="test-ambulance" api-base="http://test/api"></<pfx>-ambulance-wl-list>`, @_add_@
     }); @_add_@
    @_add_@
-    const wlList = page.rootInstance as MsevcikAmbulanceWlList; @_add_@
+    const wlList = page.rootInstance as <pfx>AmbulanceWlList; @_add_@
     const expectedPatients = wlList?.waitingPatients?.length; @_add_@
    @_add_@
     // Wait for the DOM to update @_add_@
@@ -588,19 +592,19 @@ git commit -m "Added ambulance waiting list API"
 git push
 ```
 
-Po vytvorení novej verzie obrazu sa táto nasadí na server. Pokiaľ máte klaster naštartovaný, môžete overiť funkcionalitu na stránke [http://localhost:30331](http://localhost:30331). V tomto prípade ale ešte nemáme nastavené správne atribúty pre našu aplikáciu. Otvorte súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/webcomponent.yaml` a pridajte atribúty `api-base` a `ambulance-id`:
+Po vytvorení novej verzie obrazu sa táto nasadí na server. Pokiaľ máte klaster naštartovaný, môžete overiť funkcionalitu na stránke [http://localhost:30331/fea](http://localhost:30331/fea). V tomto prípade ale ešte nemáme nastavené správne atribúty pre našu aplikáciu. Otvorte súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/webcomponent.yaml` a pridajte atribúty `api-base` a `ambulance-id`:
 
 ```yaml
 ...
-navigation:
-  - element: <pfx>-ambulance-wl-app
-    attributes:                    @_add_@
+spec:
+...
+  element: <pfx>-ambulance-wl-app
+  attributes:
     - name: api-base @_add_@
       value: http://localhost:5000/api @_add_@
     - name: ambulance-id @_add_@
       value: bobulova @_add_@
-    ...
-    hash-suffix: v1alpha2 @_important_@
+...
 ```
 
 >$apple:> Ak ste predtým zmenili číslo portu, nezabudnite aj tu nastaviť správny port.
@@ -613,6 +617,6 @@ git commit -m "Added ambulance waiting list API"
 git push
 ```
 
-Po uplynutí času nutného na aplikovanie zmien do klastra overte funkcionalitu na stránke [http://localhost:30331](http://localhost:30331). Na obrazovke vidíte chybové hlásenie. Dôvodom je, že neprechádza volanie na server. Presvedčte sa o tom skontrolovaním záložky `Sieť` v paneli `Nástroj pre vývojárov`, kde môžte vidieť neúspešné volanie API `http://localhost:5000/api/waiting-list/bobulova/entries`. Volanie zlyhá z dôvodu porušenia CSP pravidiel (vysvetlíme a vyriešime v ďalších kapitolách).
+Po uplynutí času nutného na aplikovanie zmien do klastra overte funkcionalitu na stránke [http://localhost:30331/fea](http://localhost:30331/fea). Na obrazovke vidíte chybové hlásenie. Dôvodom je, že neprechádza volanie na server. Presvedčte sa o tom skontrolovaním záložky `Sieť` v paneli `Nástroj pre vývojárov`, kde môžte vidieť neúspešné volanie API `http://localhost:5000/api/waiting-list/bobulova/entries`. Volanie zlyhá z dôvodu porušenia CSP pravidiel (vysvetlíme a vyriešime v ďalších kapitolách).
 
 Avšak aj v prípade, ak by sme vyriešili CSP problém, volanie na server nebude funkčné. Dôvodom je, že na adrese `localhost:5000` nie je spustený server. Môžeme ho simulovať spustením príkazu `npm run start:mock`.
