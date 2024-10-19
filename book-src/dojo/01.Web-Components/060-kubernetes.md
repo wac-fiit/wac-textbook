@@ -432,7 +432,7 @@ a overte, že sa novo vytvorené pody dostanú do stavu `Running` príkazom:
 kubectl get pods --namespace wac-hospital
 ```
 
-V prehliadači otvorte stránku [http://localhost:30331](http://localhost:30331), na ktorej uvidíte aplikačnú obálku s integrovanou mikro aplikáciou. Po stlačení na odkaz _Zoznam čakajúcich_ by ste mali vidieť nasledujúci výstup:
+V prehliadači otvorte stránku [http://localhost:30331/fea](http://localhost:30331/fea), na ktorej uvidíte aplikačnú obálku s integrovanou mikro aplikáciou. Po stlačení na odkaz _Zoznam čakajúcich_ by ste mali vidieť nasledujúci výstup:
 
 ![Integrovaný zoznam čakajúcich](./img/060-02-appshell-list.png)
 

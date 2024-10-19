@@ -352,7 +352,7 @@ Pre každý z našich dvoch komponentov (ambulance-ufe a polyfea-controller) bol
 - 1x replicaset (vytvorený automaticky pre každý deployment)
 - 2x pody (v deploymente sme mali uvedené 2 repliky)
 
-Zadajte do prehliadača adresu [http://localhost:30331/](http://localhost:30331/).
+Zadajte do prehliadača adresu [http://localhost:30331/fea/](http://localhost:30331/fea/).
 Mali by ste vidieť stránku s aplikačnou obálkou s integrovanou mikro aplikáciou. Po stlačení na odkaz _Zoznam čakajúcich_ by ste mali vidieť nasledujúci výstup:
 
 ![Integrovaný zoznam čakajúcich](./img/060-02-appshell-list.png)

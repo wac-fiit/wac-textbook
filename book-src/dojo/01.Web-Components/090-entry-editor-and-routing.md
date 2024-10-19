@@ -537,14 +537,17 @@ git push
 
 ### 9. Úprava konfigurácie web komponentu a nasadenie zmien
 
-Poslednou zmenou je úprava web komponentu ktorý sa má zobraziť v micro Front-End aplikácii. K tomu nám postačí úprava konfigurácie. Otvorte súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/webcomponent.yaml` a v sekcii `navigation` zadajte nové meno elementu:
+Poslednou zmenou je úprava web komponentu ktorý sa má zobraziť v micro Front-End aplikácii. K tomu nám postačí úprava konfigurácie. Otvorte súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/webcomponent-content.yaml` a v sekcii `spec` zadajte nové meno elementu a atrubút `base-path`:
 
 ```yaml
-navigation:
-- element: <pfx>-ambulance-wl-list @_remove_@
+spec:
+  element: <pfx>-ambulance-wl-list @_remove_@
 
 # aplication context element
-- element: <pfx>-ambulance-wl-app    @_add_@
+  element: <pfx>-ambulance-wl-app    @_add_@
+  attributes:
+    - name: base-path
+      value: /<pfx>-ambulance-wl/
 ```
 
 Zmeny archivujte príkazmi v priečinku `${WAC_ROOT}/ambulance-gitops`:
@@ -555,7 +558,7 @@ git commit -m "entry editor and navigation"
 git push
 ```
 
-Pokiaľ nie je Váš [Docker Desktop] klaster aktívny, naštartujte ho. Po chvíli, keď operátor [Flux CD] obnoví všetky zmeny - obnovenie verzie obrazu, nasadenie zmien v konfigurácii, prejdite na stránku [http://localhost:30331](http://localhost:30331) a následne vyberte aplikáciu _Zoznam čakajúcich ..._. Mala by sa Vám zobraziť stránka s komponentom `<pfx>-ambulance-wl-list`. Po kliknutí na záznam by sa Vám mal zobraziť editor záznamu. Po stlačení na tlačidlo "Zrušiť" by ste sa mali vrátiť na zoznam čakajúcich. Hoci sme v súbore `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/webcomponent.yaml` explicitne nenastavili atribút `base-path`, tento je k elementu automaticky pridávaný službou `ufe-controller` na základe hodnoty atribútu `path` .
+Pokiaľ nie je Váš [Docker Desktop] klaster aktívny, naštartujte ho. Po chvíli, keď operátor [Flux CD] obnoví všetky zmeny - obnovenie verzie obrazu, nasadenie zmien v konfigurácii, prejdite na stránku [http://localhost:30331/fea](http://localhost:30331/fea) a následne vyberte aplikáciu _Zoznam čakajúcich ..._. Mala by sa Vám zobraziť stránka s komponentom `<pfx>-ambulance-wl-list`. Po kliknutí na záznam by sa Vám mal zobraziť editor záznamu. Po stlačení na tlačidlo "Zrušiť" by ste sa mali vrátiť na zoznam čakajúcich.
 
 >build_circle:> V prípade problémov s nasadením zmien v konfigurácii môžete overiť stav jednotlivých objektov v klastri príkazmi:
 >

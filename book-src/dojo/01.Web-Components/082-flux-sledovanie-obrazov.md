@@ -190,7 +190,7 @@ Týmto spôsobom sme naše zmeny zároveň aplikovali do klastra. Po chvíli sa 
 
 ![Zmena verzie kontajnera](./img/082-01-FluxBotCommit.png)
 
-Overíme celý CI/CD cyklus explicitne. V priečinku `${WAC_ROOT}/ambulance-ufe` zmeňte kód komponentu `ambulance-ufe`, napr. zmeňte meno pacienta v zozname, komitnite a synchronizujte zmeny. Po chvíli, keď prebehne CI a vytvorí sa nový obraz na DockerHub-e, skontrolujte históriu na stránke [GitHub] v repozitári _ambulance-gitops_ (stlačte na nápis _N commits_ na vrchu zoznamu súborov), a potom zadajte v prehliadači adresu [http://localhost:30331/](http://localhost:30331/) a pozrite si zoznam pacientov.
+Overíme celý CI/CD cyklus explicitne. V priečinku `${WAC_ROOT}/ambulance-ufe` zmeňte kód komponentu `ambulance-ufe`, napr. zmeňte meno pacienta v zozname, komitnite a synchronizujte zmeny. Po chvíli, keď prebehne CI a vytvorí sa nový obraz na DockerHub-e, skontrolujte históriu na stránke [GitHub] v repozitári _ambulance-gitops_ (stlačte na nápis _N commits_ na vrchu zoznamu súborov), a potom zadajte v prehliadači adresu [http://localhost:30331/fea/](http://localhost:30331/fea/) a pozrite si zoznam pacientov.
 
 Po overení si obnovte stav repozitára - flux cd do neho zapísal nové zmeny:
 
