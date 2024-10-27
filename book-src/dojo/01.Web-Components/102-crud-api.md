@@ -365,7 +365,7 @@ form{  @_add_@
   flex-direction: column;    @_add_@
   gap: var(--_wl-editor_gap);  @_add_@
   padding: var(--_wl-editor_gap);  @_add_@
-  }  @_add_@
+}  @_add_@
 
 .error {  @_add_@
   margin: auto;  @_add_@
@@ -373,7 +373,7 @@ form{  @_add_@
   font-size: 2rem;  @_add_@
   font-weight: 900;  @_add_@
   text-align: center;  @_add_@
-  }  @_add_@
+}  @_add_@
 
 .duration-slider {
   ...
@@ -575,7 +575,7 @@ export class <Pfx>AmbulanceWlEditor {
         this.entry = {  @_add_@
           id: "@new",  @_add_@
           patientId: "",  @_add_@
-          waitingSince: "",  @_add_@
+          waitingSince: new Date(Date.now()),  @_add_@
           estimatedDurationMinutes: 15  @_add_@
         };  @_add_@
         return this.entry;  @_add_@
@@ -668,8 +668,7 @@ Funkcionalitu môžete overiť, mali by ste vidieť zoznam s tlačidlom _+_ a po
 Zoznam príčin návštevy je zatiaľ statický, pričom chceme dosiahnuť, aby sme mali špecifický zoznam pre každú ambulanciu. Otvorte súbor `${WAC_ROOT}/ambulance-ufe/src/components/<pfx>-ambulance-wl-editor/<pfx>-ambulance-wl-editor.tsx` a upravte ho:
 
 ```tsx
-import { AmbulanceWaitingListApi, AmbulanceConditionsApi, WaitingListEntry, Configuration, Condition } from '../../api/ambulance-wl';
- @_important_@
+import { AmbulanceWaitingListApi, AmbulanceConditionsApi, WaitingListEntry, Configuration, Condition } from '../../api/ambulance-wl'; @_important_@
 ...
 export class <Pfx>AmbulanceWlEditor {  
   ... 
