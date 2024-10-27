@@ -24,7 +24,8 @@ private async getWaitingEntryAsync(): Promise<WaitingListEntry> {
 }
 ```
 
-Do toho istého súboru pridajte novú funkciu `assumedEntryDateAsync` a ``:
+Do toho istého súboru pridajte novú funkciu `assumedEntryDateAsync`:
+
 ```tsx
 private async getWaitingEntryAsync(): Promise<WaitingListEntry> {
   ...
