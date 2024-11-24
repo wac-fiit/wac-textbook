@@ -10,7 +10,7 @@ Vytvorte súbor  `${WAC_ROOT}/ambulance-webapi/build/docker/Dockerfile` a vložt
 
 ```dockerfile
 # use specific versions of images
-FROM openapitools/openapi-generator-cli:v7.0.1 as api
+FROM openapitools/openapi-generator-cli:latest AS api
 
 WORKDIR /local
 
@@ -32,7 +32,7 @@ V prvej fáze použijeme obraz [openapitools/openapi-generator-cli](https://hub.
 
 ```dockerfile
 # use specific versions of images if you want
-FROM openapitools/openapi-generator-cli:v7.0.1 as api
+FROM openapitools/openapi-generator-cli:latest AS api
 ...
 ############################################
 FROM golang:latest AS build    @_add_@
@@ -231,11 +231,9 @@ V pravej časti v záložke _Marketplace_ zadajte do vyhľadávania text _openap
       - name: Generate api controllers interfaces    @_add_@
       uses: craicoverflow/openapi-generator-generate-action@v1.2.1    @_add_@
       with:    @_add_@
-         # version: 7.0.0-beta - at time of writing this text only prerelease was available    @_add_@
          generator: go-gin-server            @_add_@
          input: api/ambulance-wl.openapi.yaml    @_add_@
-         additional-properties: apiPath=internal/ambulance_wl,packageName=ambulance_wl    @_add_@
-         template: scripts/templates    @_add_@
+         additional-properties: apiPath=internal/ambulance_wl,packageName=ambulance_wl,interfaceOnly: true    @_add_@
 
       - name: Build
 ...

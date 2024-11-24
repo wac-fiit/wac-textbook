@@ -108,7 +108,7 @@ func NewRouterWithGinEngine(router *gin.Engine, handleFunctions ApiHandleFunctio
 
 Keďže generátor generuje iba obálku našeho api vytvorenie implementácie ostáva na nás. Na začiatok si vytvoríme iba jednoduchú implementáciu, ktorá bude vraciat HTTP Status kód 501 Not Implemented (neimplementované).
 
-Vytvorte súbor `${WAC_ROOT}/ambulance-webapi/internal/ambulance_wl/api_ambulance_conditions_impl.go`:
+Vytvorte súbor `${WAC_ROOT}/ambulance-webapi/internal/ambulance_wl/impl_ambulance_conditions.go`:
 
 ```go
 package ambulance_wl
@@ -136,7 +136,7 @@ Vytvorili sme si jednoduchý typ `implAmbulanceConditionsAPI`. Implementáciou f
 
 >homework:> Skúste zakomentovať metódu `GetConditions`. Pokiaľ používaťe VSCode rozšírenie pre GO mali by ste vidiet chybovú hlášku.
 
-Rovnaký princíp využijeme pre vytvorenie `${WAC_ROOT}/ambulance-webapi/internal/ambulance_wl/api_ambulance_waiting_list_impl.go`:
+Rovnaký princíp využijeme pre vytvorenie `${WAC_ROOT}/ambulance-webapi/internal/ambulance_wl/impl_ambulance_waiting_list.go`:
 
 ```go
 package ambulance_wl
