@@ -38,7 +38,7 @@ components:
         items:   @_add_@
           $ref: '#/components/schemas/Condition'   @_add_@
     example:   @_add_@
-    $ref: "#/components/examples/AmbulanceExample"   @_add_@
+        $ref: "#/components/examples/AmbulanceExample"   @_add_@
 examples: 
     ...
 ```
@@ -557,7 +557,6 @@ func main() {
         ctx.Next()     @_add_@
     })     @_add_@
     // request routings
-    ambulance_wl.AddRoutes(engine)
     ...
 }
 ```
