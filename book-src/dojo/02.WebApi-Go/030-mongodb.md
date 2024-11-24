@@ -105,7 +105,7 @@ switch ($command) {
         }    @_add_@
     }
     "mongo" {    @_add_@
-    mongo up    @_add_@
+        mongo up    @_add_@
     }    @_add_@
     default {
         throw "Unknown command: $command"
