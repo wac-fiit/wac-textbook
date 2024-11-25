@@ -18,54 +18,54 @@ metadata:
 spec:
   replicas: 1
   selector:
-      matchLabels:
-        pod: <pfx>-ambulance-webapi-label 
+    matchLabels:
+      pod: <pfx>-ambulance-webapi-label 
   template:
-      metadata:
-        labels:
-          pod: <pfx>-ambulance-webapi-label 
-      spec:
-        containers:
-        - name: <pfx>-ambulance-wl-webapi-container 
-          image: <docker-id>/ambulance-wl-webapi:latest 
-          imagePullPolicy: Always
-          ports:
-          - name: webapi-port
-            containerPort: 8080
-          env:
-            - name: AMBULANCE_API_ENVIRONMENT
-              value: production
-            - name: AMBULANCE_API_PORT
-              value: "8080"
-            - name: AMBULANCE_API_MONGODB_HOST
-              value: mongodb
-            - name: AMBULANCE_API_MONGODB_PORT
-              value: "27017"
-              # change to actual value
-            - name: AMBULANCE_API_MONGODB_USERNAME
-              value: ""
-              #change to actual value
-            - name: AMBULANCE_API_MONGODB_PASSWORD
-              value: ""
-            - name: AMBULANCE_API_MONGODB_DATABASE
-              valueFrom:
-                configMapKeyRef:
-                  name: <pfx>-ambulance-webapi-config
-                  key: database
-            - name: AMBULANCE_API_MONGODB_COLLECTION
-              valueFrom:
-                configMapKeyRef:
-                  name: <pfx>-ambulance-webapi-config 
-                  key: collection
-            - name: AMBULANCE_API_MONGODB_TIMEOUT_SECONDS
-              value: "5"
-          resources:
-            requests:
-              memory: "64Mi"
-              cpu: "0.01"
-            limits:
-              memory: "512Mi"
-              cpu: "0.3"
+    metadata:
+      labels:
+        pod: <pfx>-ambulance-webapi-label 
+    spec:
+      containers:
+      - name: <pfx>-ambulance-wl-webapi-container 
+        image: <docker-id>/ambulance-wl-webapi:latest 
+        imagePullPolicy: Always
+        ports:
+        - name: webapi-port
+          containerPort: 8080
+        env:
+          - name: AMBULANCE_API_ENVIRONMENT
+            value: production
+          - name: AMBULANCE_API_PORT
+            value: "8080"
+          - name: AMBULANCE_API_MONGODB_HOST
+            value: mongodb
+          - name: AMBULANCE_API_MONGODB_PORT
+            value: "27017"
+            # change to actual value
+          - name: AMBULANCE_API_MONGODB_USERNAME
+            value: ""
+            #change to actual value
+          - name: AMBULANCE_API_MONGODB_PASSWORD
+            value: ""
+          - name: AMBULANCE_API_MONGODB_DATABASE
+            valueFrom:
+              configMapKeyRef:
+                name: <pfx>-ambulance-webapi-config
+                key: database
+          - name: AMBULANCE_API_MONGODB_COLLECTION
+            valueFrom:
+              configMapKeyRef:
+                name: <pfx>-ambulance-webapi-config 
+                key: collection
+          - name: AMBULANCE_API_MONGODB_TIMEOUT_SECONDS
+            value: "5"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "0.01"
+          limits:
+            memory: "512Mi"
+            cpu: "0.3"
 
 ```
 
@@ -80,32 +80,32 @@ Do súboru `${WAC_ROOT}/ambulance-webapi/deployments/kustomize/install/deploymen
 ```yaml
 ...
     spec:
-        containers:
-        - name: <pfx>-ambulance-wl-webapi-container
-        ...
-        - name: openapi-ui   @_add_@
-          image: swaggerapi/swagger-ui   @_add_@
-          imagePullPolicy: Always   @_add_@
-          ports:   @_add_@
-          - name: api-ui   @_add_@
-            containerPort: 8081   @_add_@
-          env:           @_add_@
-            - name: PORT   @_add_@
-              value: "8081"   @_add_@
-            - name:   URL   @_add_@
-              value: /openapi   @_add_@
-            - name: BASE_URL   @_add_@
-              value: /openapi-ui   @_add_@
-            - name: FILTER   @_add_@
-              value: 'true'   @_add_@
-            - name: DISPLAY_OPERATION_ID   @_add_@
-              value: 'true'   @_add_@
-          resources:   @_add_@
-              requests:   @_add_@
-                  memory: "16M"   @_add_@
-                  cpu: "0.01"   @_add_@
-              limits:   @_add_@
-                  memory: "64M"   @_add_@
+      containers:
+      - name: <pfx>-ambulance-wl-webapi-container
+      ...
+      - name: openapi-ui   @_add_@
+        image: swaggerapi/swagger-ui   @_add_@
+        imagePullPolicy: Always   @_add_@
+        ports:   @_add_@
+        - name: api-ui   @_add_@
+          containerPort: 8081   @_add_@
+        env:           @_add_@
+          - name: PORT   @_add_@
+            value: "8081"   @_add_@
+          - name:   URL   @_add_@
+            value: /openapi   @_add_@
+          - name: BASE_URL   @_add_@
+            value: /openapi-ui   @_add_@
+          - name: FILTER   @_add_@
+            value: 'true'   @_add_@
+          - name: DISPLAY_OPERATION_ID   @_add_@
+            value: 'true'   @_add_@
+        resources:   @_add_@
+            requests:   @_add_@
+                memory: "16M"   @_add_@
+                cpu: "0.01"   @_add_@
+            limits:   @_add_@
+                memory: "64M"   @_add_@
                   cpu: "0.1"   @_add_@
 ```
 
@@ -120,52 +120,52 @@ Naša aplikácia predpokladá existenciu databázy určenej premennou prostredia
 spec:
   ...
   template:
+    ...
+    spec:
+      volumes:    @_add_@
+      - name: init-scripts     @_add_@
+        configMap:    @_add_@
+          name: <pfx>-ambulance-webapi-mongodb-init @_add_@
+      initContainers:        @_add_@
+      - name: init-mongodb        @_add_@
+        image: mongo:latest        @_add_@
+        imagePullPolicy: Always        @_add_@
+        command: ['mongosh', "--nodb", '-f', '/scripts/init-db.js']        @_add_@
+        volumeMounts:        @_add_@
+        - name: init-scripts        @_add_@
+          mountPath: /scripts        @_add_@
+        env:        @_add_@
+          - name: AMBULANCE_API_PORT    @_add_@
+            value: "8080"   @_add_@
+          - name: AMBULANCE_API_MONGODB_HOST    @_add_@
+            value: mongodb    @_add_@
+          - name: AMBULANCE_API_MONGODB_PORT    @_add_@
+            value: "27017"    @_add_@
+          - name: AMBULANCE_API_MONGODB_USERNAME    @_add_@
+            value: ""   @_add_@
+          - name: AMBULANCE_API_MONGODB_PASSWORD    @_add_@
+            value: ""   @_add_@
+          - name: AMBULANCE_API_MONGODB_DATABASE     @_add_@
+            valueFrom:     @_add_@
+              configMapKeyRef:     @_add_@
+                name: <pfx>-ambulance-webapi-config     @_add_@
+                key: database     @_add_@
+          - name: AMBULANCE_API_MONGODB_COLLECTION     @_add_@
+            valueFrom:     @_add_@
+              configMapKeyRef:     @_add_@
+                name: <pfx>-ambulance-webapi-config      @_add_@
+                key: collection     @_add_@
+          - name: RETRY_CONNECTION_SECONDS    @_add_@
+            value: "5"    @_add_@
+        resources:        @_add_@
+          requests:        @_add_@
+            memory: "128Mi"        @_add_@
+            cpu: "0.01"        @_add_@
+          limits:        @_add_@
+            memory: "256Mi"        @_add_@
+            cpu: "0.1"        @_add_@
+      containers:
       ...
-      spec:
-        volumes:    @_add_@
-        - name: init-scripts     @_add_@
-          configMap:    @_add_@
-            name: <pfx>-ambulance-webapi-mongodb-init @_add_@
-        initContainers:        @_add_@
-        - name: init-mongodb        @_add_@
-          image: mongo:latest        @_add_@
-          imagePullPolicy: Always        @_add_@
-          command: ['mongosh', "--nodb", '-f', '/scripts/init-db.js']        @_add_@
-          volumeMounts:        @_add_@
-          - name: init-scripts        @_add_@
-            mountPath: /scripts        @_add_@
-          env:        @_add_@
-            - name: AMBULANCE_API_PORT    @_add_@
-              value: "8080"   @_add_@
-            - name: AMBULANCE_API_MONGODB_HOST    @_add_@
-              value: mongodb    @_add_@
-            - name: AMBULANCE_API_MONGODB_PORT    @_add_@
-              value: "27017"    @_add_@
-            - name: AMBULANCE_API_MONGODB_USERNAME    @_add_@
-              value: ""   @_add_@
-            - name: AMBULANCE_API_MONGODB_PASSWORD    @_add_@
-              value: ""   @_add_@
-            - name: AMBULANCE_API_MONGODB_DATABASE     @_add_@
-              valueFrom:     @_add_@
-                configMapKeyRef:     @_add_@
-                  name: <pfx>-ambulance-webapi-config     @_add_@
-                  key: database     @_add_@
-            - name: AMBULANCE_API_MONGODB_COLLECTION     @_add_@
-              valueFrom:     @_add_@
-                configMapKeyRef:     @_add_@
-                  name: <pfx>-ambulance-webapi-config      @_add_@
-                  key: collection     @_add_@
-            - name: RETRY_CONNECTION_SECONDS    @_add_@
-              value: "5"    @_add_@
-          resources:        @_add_@
-            requests:        @_add_@
-              memory: "128Mi"        @_add_@
-              cpu: "0.01"        @_add_@
-            limits:        @_add_@
-              memory: "256Mi"        @_add_@
-              cpu: "0.1"        @_add_@
-        containers:
-        ...
 ```
 
 ### 2. Pridanie inicializačného skriptu pre MongoDB
@@ -304,60 +304,60 @@ metadata:
 spec:
   template:
   spec:
-      initContainers:
-        - name: init-mongodb
-          env:
-            - name: AMBULANCE_API_MONGODB_HOST
-              value: null     @_important_@
-              valueFrom:
-                configMapKeyRef:
-                  name: mongodb-connection
-                  key: host
-            - name: AMBULANCE_API_MONGODB_PORT
-              value: null    @_important_@
-              valueFrom:
-                configMapKeyRef:
-                  name: mongodb-connection
-                  key: port
-            - name: AMBULANCE_API_MONGODB_USERNAME
-              value: null    @_important_@
-              valueFrom:
-                secretKeyRef: 
-                  name: mongodb-auth
-                  key: username
-            - name: AMBULANCE_API_MONGODB_PASSWORD
-              value: null    @_important_@
-              valueFrom:
-                secretKeyRef: 
-                  name: mongodb-auth
-                  key: password
-      containers:
-        - name: <pfx>-ambulance-wl-webapi-container 
-          env:
-            - name: AMBULANCE_API_MONGODB_HOST
-              value: null    @_important_@
-              valueFrom:
-                configMapKeyRef:
-                  name: mongodb-connection
-                  key: host
-            - name: AMBULANCE_API_MONGODB_PORT
-              value: null    @_important_@
-              valueFrom:
-                configMapKeyRef:
-                  name: mongodb-connection
-                  key: port
-            - name: AMBULANCE_API_MONGODB_USERNAME
-              value: null    @_important_@
-              valueFrom:
-                secretKeyRef:
-                  name: mongodb-auth
-                  key: username
-            - name: AMBULANCE_API_MONGODB_PASSWORD
-              value: null    @_important_@
-              valueFrom:
-                secretKeyRef:
-                  name: mongodb-auth
-                  key: password
+    initContainers:
+      - name: init-mongodb
+        env:
+          - name: AMBULANCE_API_MONGODB_HOST
+            value: null     @_important_@
+            valueFrom:
+              configMapKeyRef:
+                name: mongodb-connection
+                key: host
+          - name: AMBULANCE_API_MONGODB_PORT
+            value: null    @_important_@
+            valueFrom:
+              configMapKeyRef:
+                name: mongodb-connection
+                key: port
+          - name: AMBULANCE_API_MONGODB_USERNAME
+            value: null    @_important_@
+            valueFrom:
+              secretKeyRef: 
+                name: mongodb-auth
+                key: username
+          - name: AMBULANCE_API_MONGODB_PASSWORD
+            value: null    @_important_@
+            valueFrom:
+              secretKeyRef: 
+                name: mongodb-auth
+                key: password
+    containers:
+      - name: <pfx>-ambulance-wl-webapi-container 
+        env:
+          - name: AMBULANCE_API_MONGODB_HOST
+            value: null    @_important_@
+            valueFrom:
+              configMapKeyRef:
+                name: mongodb-connection
+                key: host
+          - name: AMBULANCE_API_MONGODB_PORT
+            value: null    @_important_@
+            valueFrom:
+              configMapKeyRef:
+                name: mongodb-connection
+                key: port
+          - name: AMBULANCE_API_MONGODB_USERNAME
+            value: null    @_important_@
+            valueFrom:
+              secretKeyRef:
+                name: mongodb-auth
+                key: username
+          - name: AMBULANCE_API_MONGODB_PASSWORD
+            value: null    @_important_@
+            valueFrom:
+              secretKeyRef:
+                name: mongodb-auth
+                key: password
 ```
 
 V podstate sa jedná o zmenu hodnôt `env` v inicializačnom kontajneri a v kontajneri webapi v našom pôvodnom objekte `${WAC_ROOT}/ambulance-webapi/deployments/kustomize/install/deployment.yaml` s upravenými hodnotami príslušných premenných prostredia, ktoré sa načítavajú z konfiguračnej mapy a objektu [_Secret_](https://kubernetes.io/docs/concepts/configuration/secret/). Všimnite si, že pôvodné polia `value:` nastavujeme na hodnotu `null`, aby sme ich z výsledneho manifestu odstránili.
@@ -441,15 +441,15 @@ Teraz vytvorte súbor `${WAC_ROOT}/ambulance-webapi/deployments/kustomize/compon
 kind: Service
 apiVersion: v1
 metadata:
-    name: &PODNAME mongodb
+  name: &PODNAME mongodb
 spec:  
-    selector:
-      pod: *PODNAME
-    ports:
-    - name: mongo
-      protocol: TCP
-      port: 27017
-    targetPort: mongodb-port
+  selector:
+    pod: *PODNAME
+  ports:
+  - name: mongo
+    protocol: TCP
+    port: 27017
+  targetPort: mongodb-port
 ```
 
 a nakoniec vytvorte súbor `${WAC_ROOT}/ambulance-webapi/deployments/kustomize/components/mongodb/kustomization.yaml` s nasledujúcim obsahom:
