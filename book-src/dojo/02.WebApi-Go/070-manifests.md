@@ -101,12 +101,12 @@ Do súboru `${WAC_ROOT}/ambulance-webapi/deployments/kustomize/install/deploymen
           - name: DISPLAY_OPERATION_ID   @_add_@
             value: 'true'   @_add_@
         resources:   @_add_@
-            requests:   @_add_@
-                memory: "16M"   @_add_@
-                cpu: "0.01"   @_add_@
-            limits:   @_add_@
-                memory: "64M"   @_add_@
-                  cpu: "0.1"   @_add_@
+          requests:   @_add_@
+            memory: "16M"   @_add_@
+            cpu: "0.01"   @_add_@
+          limits:   @_add_@
+            memory: "64M"   @_add_@
+            cpu: "0.1"   @_add_@
 ```
 
 Prístup na Swagger sidecar zatiaľ nebude fungovať. Sfunkčníme si ho v časti `Service Mesh`.
@@ -303,61 +303,61 @@ metadata:
   name: <pfx>-ambulance-webapi 
 spec:
   template:
-  spec:
-    initContainers:
-      - name: init-mongodb
-        env:
-          - name: AMBULANCE_API_MONGODB_HOST
-            value: null     @_important_@
-            valueFrom:
-              configMapKeyRef:
-                name: mongodb-connection
-                key: host
-          - name: AMBULANCE_API_MONGODB_PORT
-            value: null    @_important_@
-            valueFrom:
-              configMapKeyRef:
-                name: mongodb-connection
-                key: port
-          - name: AMBULANCE_API_MONGODB_USERNAME
-            value: null    @_important_@
-            valueFrom:
-              secretKeyRef: 
-                name: mongodb-auth
-                key: username
-          - name: AMBULANCE_API_MONGODB_PASSWORD
-            value: null    @_important_@
-            valueFrom:
-              secretKeyRef: 
-                name: mongodb-auth
-                key: password
-    containers:
-      - name: <pfx>-ambulance-wl-webapi-container 
-        env:
-          - name: AMBULANCE_API_MONGODB_HOST
-            value: null    @_important_@
-            valueFrom:
-              configMapKeyRef:
-                name: mongodb-connection
-                key: host
-          - name: AMBULANCE_API_MONGODB_PORT
-            value: null    @_important_@
-            valueFrom:
-              configMapKeyRef:
-                name: mongodb-connection
-                key: port
-          - name: AMBULANCE_API_MONGODB_USERNAME
-            value: null    @_important_@
-            valueFrom:
-              secretKeyRef:
-                name: mongodb-auth
-                key: username
-          - name: AMBULANCE_API_MONGODB_PASSWORD
-            value: null    @_important_@
-            valueFrom:
-              secretKeyRef:
-                name: mongodb-auth
-                key: password
+    spec:
+      initContainers:
+        - name: init-mongodb
+          env:
+            - name: AMBULANCE_API_MONGODB_HOST
+              value: null     @_important_@
+              valueFrom:
+                configMapKeyRef:
+                  name: mongodb-connection
+                  key: host
+            - name: AMBULANCE_API_MONGODB_PORT
+              value: null    @_important_@
+              valueFrom:
+                configMapKeyRef:
+                  name: mongodb-connection
+                  key: port
+            - name: AMBULANCE_API_MONGODB_USERNAME
+              value: null    @_important_@
+              valueFrom:
+                secretKeyRef: 
+                  name: mongodb-auth
+                  key: username
+            - name: AMBULANCE_API_MONGODB_PASSWORD
+              value: null    @_important_@
+              valueFrom:
+                secretKeyRef: 
+                  name: mongodb-auth
+                  key: password
+      containers:
+        - name: <pfx>-ambulance-wl-webapi-container 
+          env:
+            - name: AMBULANCE_API_MONGODB_HOST
+              value: null    @_important_@
+              valueFrom:
+                configMapKeyRef:
+                  name: mongodb-connection
+                  key: host
+            - name: AMBULANCE_API_MONGODB_PORT
+              value: null    @_important_@
+              valueFrom:
+                configMapKeyRef:
+                  name: mongodb-connection
+                  key: port
+            - name: AMBULANCE_API_MONGODB_USERNAME
+              value: null    @_important_@
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-auth
+                  key: username
+            - name: AMBULANCE_API_MONGODB_PASSWORD
+              value: null    @_important_@
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-auth
+                  key: password
 ```
 
 V podstate sa jedná o zmenu hodnôt `env` v inicializačnom kontajneri a v kontajneri webapi v našom pôvodnom objekte `${WAC_ROOT}/ambulance-webapi/deployments/kustomize/install/deployment.yaml` s upravenými hodnotami príslušných premenných prostredia, ktoré sa načítavajú z konfiguračnej mapy a objektu [_Secret_](https://kubernetes.io/docs/concepts/configuration/secret/). Všimnite si, že pôvodné polia `value:` nastavujeme na hodnotu `null`, aby sme ich z výsledneho manifestu odstránili.
@@ -377,42 +377,42 @@ spec:
       matchLabels:
         pod: *PODNAME  @_important_@
   template:
-      metadata:
-        labels:
-          pod: *PODNAME  @_important_@
-      spec:
-        volumes: 
+    metadata:
+      labels:
+        pod: *PODNAME  @_important_@
+    spec:
+      volumes: 
+      - name: db-data
+        persistentVolumeClaim: @_important_@
+          claimName: mongo-pvc @_important_@
+      containers:
+      - name: *PODNAME
+        image: mongo:latest
+        imagePullPolicy: Always
+        ports:
+        - name: mongodb-port
+          containerPort: 27017
+        volumeMounts: @_important_@
         - name: db-data
-          persistentVolumeClaim: @_important_@
-            claimName: mongo-pvc @_important_@
-        containers:
-        - name: *PODNAME
-          image: mongo:latest
-          imagePullPolicy: Always
-          ports:
-          - name: mongodb-port
-            containerPort: 27017
-          volumeMounts: @_important_@
-          - name: db-data
-            mountPath: /data/db
-          env:
-          - name: MONGO_INITDB_ROOT_USERNAME
-            valueFrom:
-              secretKeyRef: 
-                name: mongodb-auth
-                key: username
-          - name: MONGO_INITDB_ROOT_PASSWORD
-            valueFrom:
-              secretKeyRef: 
-                name: mongodb-auth
-                key: password
-          resources:
-            requests:
-              memory: "1Gi"
-              cpu: "0.1"
-            limits:
-              memory: "4Gi"
-              cpu: "0.5"
+          mountPath: /data/db
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef: 
+              name: mongodb-auth
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef: 
+              name: mongodb-auth
+              key: password
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "0.1"
+          limits:
+            memory: "4Gi"
+            cpu: "0.5"
 ```
 
 Všimnite si ako deklarujeme názov podu, ktorý je použitý v rámci konfigurácie ako premenná YAML. Tiež si všimnite, že sme použili objekt [_PersistentVolumeClaim_](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims) pre zabezpečenie perzistentného úložiska pre databázu. Tiež si všimnite, že pre získanie autorizačných hodnôt pre prístup k databáze sme použili hodnoty načítavané z objektov typu [_Secret_](https://kubernetes.io/docs/concepts/configuration/secret/) a niektoré premenné prostredia sú získane z rôznych objektov typu [_ConfigMap_](https://kubernetes.io/docs/concepts/configuration/configmap/), čo umožňuje ich centrálne nastavenie a použitie na rôznych miestach v rámci našej konfigurácie.
