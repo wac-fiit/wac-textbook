@@ -60,7 +60,7 @@ components:
 
 Pretože v našom lokálnom klastri máme len jednu službu využívajúcu [MongoDB], aplikuje priamo manifesty uvedené v repozitári `ambulance-webapi`. Pri spoločnom klastri alebo v prípade viacerých služieb využívajúcich [MongoDB] budeme postupovať odlišne a manifesty v repozitári  `ambulance-webapi` nám poslúžia len ako príklad konfigurácie.
 
-Otvorte súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/webcomponent.yaml` a upravte atribút `api-base`:
+Otvorte súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/webcomponent-content.yaml` a upravte atribút `api-base`:
 
 ```yaml
 ...
