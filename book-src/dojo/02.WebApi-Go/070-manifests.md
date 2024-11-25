@@ -398,12 +398,12 @@ spec:
           env:
           - name: MONGO_INITDB_ROOT_USERNAME
             valueFrom:
-                secretKeyRef: 
+              secretKeyRef: 
                 name: mongodb-auth
                 key: username
           - name: MONGO_INITDB_ROOT_PASSWORD
             valueFrom:
-                secretKeyRef: 
+              secretKeyRef: 
                 name: mongodb-auth
                 key: password
           resources:
