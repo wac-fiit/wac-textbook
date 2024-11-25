@@ -24,14 +24,14 @@ Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/install/patches
 kind: Service
 apiVersion: v1
 metadata:
-name: <pfx>-ambulance-webapi
+  name: <pfx>-ambulance-webapi
 spec:  
-type: NodePort
-ports:
-- name: http
-  protocol: TCP
-  port: 80
-  nodePort: 30081
+  type: NodePort
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    nodePort: 30081
 ```
 
 Tento súbor upraví definíciu služby tak, aby bola dostupná z lokálnej siete na porte `30081`.
@@ -46,13 +46,16 @@ kind: Kustomization
 resources:
 - ../../../apps/<pfx>-ambulance-ufe
 - ../../../apps/<pfx>-ambulance-webapi @_add_@
+- ../../../apps/polyfea-md-shell
+
+patches:
+- path: patches/material-design.microfrontend.yaml
+- path: patches/polyfea-md-shell.microfrontend.yaml
+- path: patches/ambulance-webapi.service.yaml @_add_@
 
 components: 
 - ../../../components/version-developers
 - https://github.com/<github-id>/ambulance-webapi//deployments/kustomize/components/mongodb @_add_@
-
-patches: @_add_@
-- path: patches/ambulance-webapi.service.yaml @_add_@
 ```
 
 Pretože v našom lokálnom klastri máme len jednu službu využívajúcu [MongoDB], aplikuje priamo manifesty uvedené v repozitári `ambulance-webapi`. Pri spoločnom klastri alebo v prípade viacerých služieb využívajúcich [MongoDB] budeme postupovať odlišne a manifesty v repozitári  `ambulance-webapi` nám poslúžia len ako príklad konfigurácie.
@@ -61,16 +64,15 @@ Otvorte súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/webcompone
 
 ```yaml
 ...
-spec:   
+spec:
+  microFrontend: <pfx>-ambulance-ufe
   ...
-  navigation:
-    - element: pfx-ambulance-wl-app    
+  attributes:
     ...
-      attributes:
-        - name: api-base
-          value: http://localhost:5000/api @_remove_@
-          value: http://localhost:30081/api @_add_@
-        ...
+    - name: api-base
+      value: http://localhost:5000/api @_remove_@
+      value: http://localhost:30081/api @_add_@
+      ...
 ```
 
 Týmto sme nášmu mikro frontendu povedali, že má komunikovať s webapi na porte `30081`.
@@ -156,31 +158,40 @@ kubectl get pods -n wac-hospital
 
 ### 3. Nastavenie CSP hlavičky
 
-Momentálne je náš frontend zabezpečený tak, že dovoľuje načítavať requesty iba z rovnakého hosta. Aby sme mohli pristupovať na lokálne API na inom porte, musíme upraviť CSP hlavičku servera. Pridajte patch pre konfiguráciu CSP hlavičky do nášho lokálneho klastra. V súbore `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/kustomization.yaml` pridajte nasledovné riadky:
+Momentálne je náš frontend zabezpečený tak, že dovoľuje načítavať requesty iba z rovnakého hosta. Aby sme mohli pristupovať na lokálne API na inom porte, musíme upraviť CSP hlavičku servera. Pridajte patch pre konfiguráciu CSP hlavičky do nášho lokálneho klastra. 
+Vytvorte súbore `${WAC_ROOT}/ambulance-gitops/clusters/localhost/install/patches/polyfea-fea.microfrontendclass.yaml` s obsahom:
 
 ```yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-...
-patches: 
-...
-- patch: |- @_add_@
-    - op: add @_add_@
-      path: "/spec/template/spec/containers/0/env/-" @_add_@
-      value: @_add_@
-        name: "HTTP_CSP_HEADER" @_add_@
-        value: "default-src 'self' 'unsafe-inline' https://fonts.googleapis.com/ https://fonts.gstatic.com/; font-src 'self' https://fonts.googleapis.com/ https://fonts.gstatic.com/; script-src 'nonce-{NONCE_VALUE}'; connect-src 'self' localhost:30331 localhost:30081" @_add_@
-  target: @_add_@
-    group: apps @_add_@
-    version: v1 @_add_@
-    kind: Deployment @_add_@
-    name: ufe-controller @_add_@
-components:
-...
+apiVersion: polyfea.github.io/v1alpha1
+kind: MicroFrontendClass
+metadata:
+  name: fea
+spec:
+  cspHeader: >-
+    default-src 'self'; font-src 'self'; script-src 'strict-dynamic'
+    'nonce-{NONCE_VALUE}'; worker-src 'self'; manifest-src 'self'; style-src
+    'self' 'strict-dynamic' 'nonce-{NONCE_VALUE}'; style-src-attr 'self'
+    'unsafe-inline'; img-src *; connect-src 'self' localhost:30331 localhost:30081;
 ```
 
 Tento súbor upraví definíciu deploymentu tak, aby bol vytvorený s CSP hlavičkou, ktorá umožní prístup na lokálne API na porte `30081`. Uložte zmeny do git repozitára a odovzdajte ich do vzdialeného repozitára.
+
+Upravte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/install/kustomization.yaml`:
+
+```yaml
+...
+resources:
+- ../../../apps/<pfx>-ambulance-ufe
+- ../../../apps/<pfx>-ambulance-webapi
+- ../../../apps/polyfea-md-shell
+
+patches:
+- path: patches/material-design.microfrontend.yaml
+- path: patches/polyfea-md-shell.microfrontend.yaml
+- path: patches/ambulance-webapi.service.yaml
+- path: patches/polyfea-fea.microfrontendclass.yaml @_add_@
+...
+```
 
 V prehliadači otvorte stránku [http://localhost:30331](http://localhost:30331), na ktorej uvidíte aplikačnú obálku s integrovanou mikro aplikáciou. Mikro aplikácia sa pokúsi načítať dáta z webapi, ktoré však zatiaľ neexistujú. Vytvorte ich pomocou zobrazeného rozhrania. Skúste reštartovať Váš klaster a overte, že dáta sú stále dostupné.
 
