@@ -202,5 +202,5 @@ git pull
 >build_circle:> V prípade zlyhania Vášho klastra, napríklad pri reinštalácii počítača, môžete nasadenie obnoviť pomocou konfigurácie v repozitári. Vytvorte si lokálnu kópiu repozitára. V adresári  `${WAC_ROOT}/ambulance-gitops/clusters/localhost/secrets` vytvorte súbor `repository-pat.yaml` ako bolo uvedené v predchádzajúcej kapitole a potom postupujte podľa pokynov uvedených v predchádzajúcej kapitole v časti _Bootstrapping Flux_. Ostatné zmeny našej konfigurácie je už postačujúce vykonávať výhradne v git repozitári, nezabudnite ale naďalej priebežne sledovať stav jednotlivých objektov, čo patrí k štandardnej praxi pri vývoji softvéru pomocou DevOps. Môžete tiež využiť objekty [_Flux CD Notification Controller_-a](https://fluxcd.io/flux/components/notification/), ktoré umožňujú sledovať stav jednotlivých objektov a v prípade zmeny zaslať notifikáciu na príslušný komunikačný kanál tímu.
 
 Pre lepšie pochopenie sú na nasledujúcom obrázku znázornené komponenty spomínané v tejto kapitole a ich vzájomné prepojenie.
-!! TODO[MISO]: MOZNO FIXNUT MENA TIEZ
+
 ![Komponenty Flux a ich spolupráca](./img/082-02-FluxCD.svg)
