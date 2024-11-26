@@ -1,3 +1,5 @@
+!! TODO [MISO]: TREBA PREROBIT KED BUDE CLUSTER
+
 # Nasadenie na produkčný kubernetes klaster
 
 ---
