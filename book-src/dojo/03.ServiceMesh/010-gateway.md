@@ -82,7 +82,7 @@ spec:
       namespace: envoy-gateway-system    @_add_@
     - apiVersion: apps/v1    @_add_@
       kind: Deployment    @_add_@
-      name: ufe-controller    @_add_@
+      name: polyfea-controller-controller-manager    @_add_@
       namespace: wac-hospital         @_add_@
   interval: 120s
   ...
