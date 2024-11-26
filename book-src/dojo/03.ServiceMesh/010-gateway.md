@@ -157,6 +157,22 @@ spec:
 
 Vo všeobecnosti platí, že každá požiadavka musí byť spracovaná jedným alebo žiadny pravidlom uvedeným v objektoch `HTTRoute` pre daný `Gateway` objekt.  Tento manifest špecifikuje, že všetky požiadavky pri ktorých cesta začína segmentom `/fea` budú presmerované na službu `ployfea-controller-manager`. Požiadavky na root dokument `/` budú vrátené klientovi so stavom `303 -Redirect` a presmerovaním na cestu `/fea`.
 
+Upravte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/polyfea-controller/kustomization.yaml`:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- https://github.com/polyfea/polyfea-controller//config/default
+- http-route.yaml @_add_@
+
+namespace: wac-hospital
+
+commonLabels:
+  app.kubernetes.io/component: polyfea-controller
+```
+
 Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-webapi/http-route.yaml`
 
 ```yaml
