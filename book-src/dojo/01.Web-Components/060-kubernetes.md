@@ -442,7 +442,6 @@ V prehliadači otvorte stránku [http://localhost:30331/fea](http://localhost:30
 
 Nasledujúci obrázok znázorňuje deployment a komunikačnú schému nasadenej aplikácie.
 
-!! TODO [MISO]: PRINCIP PODOBNY ALE BOLO BY FAJN UPDATNUT
 ![Komunikácia medzi micro-frontend radičom a nasadeným WebComponent](./img/060-03-k8s-ufe-komunikacia.png)
 
 Overili sme, že manuálne nasadenie našej aplikácie do Kubernetes klastra

@@ -1,0 +1,70 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.17 Chrome/128.0.6613.36 Electron/32.0.1 Safari/537.36" version="24.7.17">
+  <diagram name="Page-1" id="cisFDQeKWaoCTAZ2WP1t">
+    <mxGraphModel dx="1493" dy="1030" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="EioQX5t_sSNuJPp6hYr4-2" value="K8S" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="30" y="860" width="950" height="470" as="geometry" />
+        </mxCell>
+        <mxCell id="EioQX5t_sSNuJPp6hYr4-13" value="&lt;i&gt;&amp;lt;&amp;lt;deployment&amp;gt;&amp;gt;&lt;/i&gt;&lt;div&gt;&lt;b&gt;ambulance-ufe&lt;/b&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;horizontal=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="540" y="1060" width="390" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="EioQX5t_sSNuJPp6hYr4-3" value="&lt;i&gt;&amp;lt;&amp;lt;service&amp;gt;&amp;gt;&lt;/i&gt;&lt;div&gt;&lt;b&gt;polyfea-controller-manager&lt;/b&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;type: NodePort&lt;/div&gt;&lt;div&gt;port: 80&lt;/div&gt;&lt;div&gt;targetPort: http&lt;/div&gt;&lt;div&gt;nodePort: 30331&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="120" y="910" width="200" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="EioQX5t_sSNuJPp6hYr4-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="EioQX5t_sSNuJPp6hYr4-4" target="EioQX5t_sSNuJPp6hYr4-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="350" y="830" />
+              <mxPoint x="350" y="955" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EioQX5t_sSNuJPp6hYr4-4" value="nodePort: 30331" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="120" y="800" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="EioQX5t_sSNuJPp6hYr4-6" value="&lt;i&gt;&amp;lt;&amp;lt;deployment&amp;gt;&amp;gt;&lt;/i&gt;&lt;div&gt;&lt;b&gt;polyfea-controller-manager&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;horizontal=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="60" y="1060" width="390" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="EioQX5t_sSNuJPp6hYr4-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="EioQX5t_sSNuJPp6hYr4-7" target="EioQX5t_sSNuJPp6hYr4-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="EioQX5t_sSNuJPp6hYr4-16" value="resolve the url based on custom resources" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="EioQX5t_sSNuJPp6hYr4-15">
+          <mxGeometry x="0.6356" y="-2" relative="1" as="geometry">
+            <mxPoint x="-38" y="-17" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EioQX5t_sSNuJPp6hYr4-7" value="&lt;i&gt;&amp;lt;&amp;lt;pod&amp;gt;&amp;gt;&lt;/i&gt;&lt;div&gt;&lt;b&gt;polyfea-controller&lt;/b&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="150" y="1110" width="200" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="EioQX5t_sSNuJPp6hYr4-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="EioQX5t_sSNuJPp6hYr4-3">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="170" y="1112" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="170" y="1112" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EioQX5t_sSNuJPp6hYr4-9" value="Serves md-shell and loads and serves web components.&lt;div&gt;Based on configured custom resources.&lt;/div&gt;" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1210" width="220" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="EioQX5t_sSNuJPp6hYr4-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="EioQX5t_sSNuJPp6hYr4-12" target="EioQX5t_sSNuJPp6hYr4-14">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="800" y="1055" />
+              <mxPoint x="850" y="1055" />
+              <mxPoint x="850" y="1155" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EioQX5t_sSNuJPp6hYr4-12" value="&lt;i&gt;&amp;lt;&amp;lt;service&amp;gt;&amp;gt;&lt;/i&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;&lt;b&gt;ambulance-ufe&lt;/b&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;type: ClusterIp&lt;/span&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;port: 80&lt;/div&gt;&lt;div&gt;targetPort: http&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="635" y="910" width="200" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="EioQX5t_sSNuJPp6hYr4-14" value="&lt;i&gt;&amp;lt;&amp;lt;pod&amp;gt;&amp;gt;&lt;/i&gt;&lt;div&gt;&lt;b&gt;ambulance-ufe&lt;/b&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="630" y="1110" width="200" height="90" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
