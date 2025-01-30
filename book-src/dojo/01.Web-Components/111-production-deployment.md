@@ -43,6 +43,20 @@ resources:
 
 components: 
 - ../../../components/version-release @_important_@
+
+patches:
+- target:
+    group: polyfea.github.io
+    version: v1alpha1
+    kind: MicroFrontend
+    name: <pfx>-ambulance-ufe
+  patch: |-
+    apiVersion: polyfea.github.io/v1alpha1
+    kind: MicroFrontend
+    metadata:
+      name: <pfx>-ambulance-ufe
+    spec:
+      frontendClass: "wac-hospital"
 ```
 
 Náš spoločný klaster sme tu nazvali `wac-aks`, čo referuje na nasadenie do klastra služby [Azure Kubernetes Services](https://azure.microsoft.com/en-us/products/kubernetes-service). Obsah je obdobný s obsahom z klastra `localhost`, avšak zmenili sme komponent v sekcii `components`.
