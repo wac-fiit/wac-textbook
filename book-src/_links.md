@@ -29,6 +29,7 @@
 [Fluentbit]:https://fluentbit.io/
 [flux]:https://fluxcd.io/
 [flux cd]:https://fluxcd.io/
+[fluxcd]:https://fluxcd.io/
 [gatewayapi]:https://gateway-api.sigs.k8s.io/
 [gateway api]:https://gateway-api.sigs.k8s.io/
 [generics]:https://go.dev/blog/intro-generics
