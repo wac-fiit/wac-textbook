@@ -32,7 +32,7 @@ V sekcii _Pricing plan_ zvoľte nový _Linux plan_ (_Create new_). Pomenujte ho 
 
 ![Vytvorenie prostriedku typu Web App](./img/042-01-CreateWebApp.png)
 
-Stlačte na tlačidlo _Next : Docker_ a upravte voľbu _Image Source_ na hodnotu `Docker Hub` a do políčka _Image and tag_ vložte hodnotu `<your-account>/ambulance-ufe:latest`
+Stlačte na tlačidlo _Next : Container_ a upravte voľbu _Image Source_ na hodnotu `Other container registries` a do políčka _Image and tag_ vložte hodnotu `<your-account>/ambulance-ufe:latest`
 
 ![Nastavenie docker obrazu pre Azure We Applikáciu](./img/042-02-CreateWebAppDocker.png)
 

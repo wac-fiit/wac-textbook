@@ -26,19 +26,6 @@ spec:
 
 >warning:> Zameňte \<docker-id\> !
 
-Vytvorte tiež súbor `${WAC_ROOT}/ambulance-gitops/cluster/localhost/gitops/polyfea-controller.image-repository.yaml` s obsahom:
-
-```yaml
-apiVersion: image.toolkit.fluxcd.io/v1beta2
-kind: ImageRepository
-metadata:
-  name: polyfea-controller
-  namespace: wac-hospital
-spec:
-  image: ghcr.io/polyfea/polyfea-controller
-  interval: 15m0s
-```
-
 Ďalší Flux komponent [_ImagePolicy_](https://fluxcd.io/flux/components/image/imagepolicies/) nastavuje kritérium, podľa ktorého sa vyberie príslušná verzia docker obrazu. Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/cluster/localhost/gitops/ambulance-ufe.image-policy.yaml` s obsahom:
 
 ```yaml
@@ -57,22 +44,6 @@ spec:
       order: asc
 ```
 
-a súbor  `${WAC_ROOT}/ambulance-gitops/cluster/localhost/gitops/polyfea-controller.image-policy.yaml`
-
-```yaml
-apiVersion: image.toolkit.fluxcd.io/v1beta2
-kind: ImagePolicy
-metadata:
-  name: polyfea-controller
-  namespace: wac-hospital
-spec:
-  imageRepositoryRef:
-    name: polyfea-controller # referuje ImageRepository z predchádzajúceho kroku
-  policy:
-    semver:
-      range: "^0.*.*"
-```
-
 ### 2. Úprava súborov pre automatickú aktualizáciu verzií Docker obrazov
 
 Upravíme všetky súbory, kde chceme, aby Flux aktualizoval verziu docker obrazu. To sa realizuje pridaním špeciálneho markeru `# {"$imagepolicy": "POLICY_NAMESPACE:POLICY_NAME"}` na riadok, ktorý sa má upravovať. V našom prípade by sme mohli upraviť súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/deployment.yaml` a upraviť konfiguráciu v priečinku `${WAC_ROOT}/ambulance-gitops/infrastructure/polyfea-controller`. Výhodnejšie je v tomto prípade ale mať všetky verzie kontajnerov na jednom mieste a zároveň mať možnosť riadiť verzie kontajnerov pre jednotlivé vydania nášho systému. K tomu využijeme takzvané [_Kustomize components_](https://kubectl.docs.kubernetes.io/guides/config_management/components/), ktoré umožňujú kombinovať jednotlivé varianty konfigurácie.
@@ -87,10 +58,6 @@ images:
 - name: <docker-id>/ambulance-ufe  @_important_@
   newName: <docker-id>/ambulance-ufe # {"$imagepolicy":  "wac-hospital:ambulance-ufe:name"} @_important_@
   newTag: main # {"$imagepolicy": "wac-hospital:ambulance-ufe:tag"} @_important_@
-
-- name: ghcr.io/polyfea/polyfea-controller
-  newName: ghcr.io/polyfea/polyfea-controller # {"$imagepolicy":  "wac-hospital:polyfea-controller:name"}
-  newTag: latest # {"$imagepolicy": "wac-hospital:polyfea-controller:tag"}
 ```
 
 Všimnite si markre v komentároch - je dôležité, aby referovali správne názvy _image police_, vytvorených v predchádzajúcom kroku.
@@ -163,8 +130,6 @@ resources:
 ...
 - ambulance-ufe.image-repository.yaml @_add_@
 - ambulance-ufe.image-policy.yaml @_add_@
-- polyfea-controller.image-repository.yaml @_add_@
-- polyfea-controller.image-policy.yaml @_add_@
 - image-update-automation.yaml @_add_@
 ```
 

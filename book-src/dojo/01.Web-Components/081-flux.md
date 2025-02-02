@@ -80,7 +80,7 @@ metadata:
 spec:
   wait: true
   interval: 120s
-  path: clusters/localhost/prepare
+  path: clusters/localhost/prepare @_important_@
   prune: true
   sourceRef:
     kind: GitRepository
@@ -103,7 +103,7 @@ spec:
   dependsOn:  @_important_@
   - name: prepare @_important_@
   interval: 120s
-  path: clusters/localhost/install
+  path: clusters/localhost/install @_important_@
   prune: true
   sourceRef:
     kind: GitRepository
@@ -123,7 +123,7 @@ metadata:
 spec:
   wait: true
   interval: 42s
-  path: clusters/localhost
+  path: clusters/localhost @_important_@
   prune: true
   sourceRef:
     kind: GitRepository
@@ -138,8 +138,9 @@ Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/gitops/kustomiz
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-commonLabels:
-  app.kubernetes.io/part-of: wac-hospital
+labels:
+- pairs:
+    app.kubernetes.io/part-of: wac-hospital
 
 namespace: wac-hospital
 
@@ -156,17 +157,39 @@ V priečinku `${WAC_ROOT}/ambulance-gitops/clusters/localhost` vytvorte súbor `
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-
-commonLabels:
-  app.kubernetes.io/name: wac-hospital
-  app.kubernetes.io/instance: development
-  app.kubernetes.io/version: "0.1"
+labels:
+- pairs:
+    app.kubernetes.io/name: wac-hospital
+    app.kubernetes.io/instance: development
+    app.kubernetes.io/version: "0.1"
 
 resources:
   - gitops
 ```
 
 Táto konfigurácia sa odkazuje na priečinok `gitops`, ktorý sme vytvorili v predchádzajúcom kroku. Znamená to, že konfigurácia klastra je riadená objektmi Flux CD, ktorý zabezpečuje priebežné nasadenie podľa konfigurácie v git repozitári na príslušných cestách.
+
+Upravte súbor `${WAC_ROOT}/infrastructure/polyfea/kustomization.yaml`:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - https://github.com/polyfea/manifests//gitops/fluxcd @_important_@
+
+configMapGenerator:
+- name: polyfea-shell-cfg @_important_@
+  namespace: polyfea
+  options:
+    disableNameSuffixHash: true
+  literals:
+  - APP_TITLE=Nemocnica WAC @_important_@
+  - SERVICE_TYPE=NodePort
+  - NODE_PORT=30331
+```
+
+Táto úprava prispôsobuje nasadenie Polyfea aplikácie pre  systém FluxCD, napríklad zabezpečí postupné nasadenie definícii objektov a následne nasadenie objektu typu `MicrofronendClass`.
 
 ### 2. Vytvorenie a konfigurácia Personal Access Token (PAT) pre FluxCD
 
@@ -199,8 +222,9 @@ V tom istom priečinku vytvorte súbor `kustomization.yaml`:
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-commonLabels:
-  app.kubernetes.io/part-of: wac-hospital
+labels:
+- pairs:
+    app.kubernetes.io/part-of: wac-hospital
 
 namespace: wac-hospital
 
@@ -239,7 +263,7 @@ git commit -m 'fluxcd configuration'
 git push
 ```
 
-### 4. Bootstraping Flux
+### 4. Bootstraping FluxCD
 
 Aby sme mohli začať využívať služby [Flux], musíme ich prvotne nasadiť do klastra manuálne. Po prvom nasadení dôjde k synchronizácii stavu medzi klastrom a našim repozitárom a pri ďalšej práci nám preto bude postačovať, keď zmeny konfigurácie uložíme do repozitára. Jednou z výhod tohto prístupu je aj to, že môžeme riadiť kto z vývojového tímu potrebuje mať prístup k jednotlivým nasadeniam/klastrom - v prípade vývoja formou DevOps predpokladáme, že to je väčšina vývojárov a zároveň môžeme riadiť, aké oprávnenia sú jednotlivým členom poskytnuté.
 
@@ -274,7 +298,7 @@ Týmto príkazom sme do klastra priamo nasadili objekty z priečinku `${WAC_ROOT
 
 Po aplikovaní a priravenosti konfigurácie pomocou objektu `prepare` sa začne aplikovať konfigurácia uvedená v objekte `install` typu `Kustomization.kustomize.toolkit.fluxcd.io`, ktorá nasadí vlastné služby a objekty nášho projektu.
 
-[Flux Cd][flux] pravidelne kontroluje, či nedošlo k zmenám v repozitári alebo či stav klastra nie je odlišný od konfigurácie určenej niektorým z objektov typu `Kustomization`. Pri akejkoľvek zistenej zmene sa pokúsi dosiahnuť stav totožný so stavom predpísaným v konfigurácii. V prípade, že sa zmení konfigurácia v repozitári, Flux CD automaticky zmení konfiguráciu v klastri.
+[Flux CD][flux] pravidelne kontroluje, či nedošlo k zmenám v repozitári alebo či stav klastra nie je odlišný od konfigurácie určenej niektorým z objektov typu `Kustomization`. Pri akejkoľvek zistenej zmene sa pokúsi dosiahnuť stav totožný so stavom predpísaným v konfigurácii. V prípade, že sa zmení konfigurácia v repozitári, Flux CD automaticky zmení konfiguráciu v klastri.
 
 >build_circle:> Niekedy potrebujeme dočasne zmeniť stav objektov v klastri - napríklad pri analýze hláseného problému môžeme chcieť dočasne zmeniť úroveň logov generovaných našou mikroslužbou. Pokiaľ pridáte v klastri objektu anotáciu `kustomize.toolkit.fluxcd.io/reconcile: disabled`, tak sa stav objektu nezmení až do momentu, kedy túto anotáciu odstránite. Anotáciu môžete aplikovať napríklad príkazom:
 >

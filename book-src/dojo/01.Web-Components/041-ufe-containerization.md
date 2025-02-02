@@ -20,23 +20,19 @@ RUN mkdir /build
 WORKDIR /build
 
 COPY package.json .
-RUN npm install 
+RUN npm install
 
 COPY . .
 RUN npm run build
 
-### prepare go embedding of SPA server 
-FROM milung/spa-server as spa-build 
+### we will use polyfea/spa_base as the base image for our 
+### "BackEnd for (micro)FrontEnd" pattern
+FROM ghcr.io/polyfea/spa-base
 
-COPY --from=build /build/www public
-RUN ./build.sh
+COPY --from=build /build/www /spa/public
 
-### scratch image - no additional dependencies only server process
-FROM scratch
-ENV CSP_HEADER=false
-
-COPY --from=spa-build /app/server /server
-CMD ["/server"]
+ENV OTEL_SERVICE_NAME=milung-ambulance-ufe
+ENV SPA_BASE_PORT=8080
 EXPOSE 8080
 ```
 
@@ -44,10 +40,9 @@ Tento dockerfile využíva takzvané viacstupňové vytváranie obrazov. Každý
 
 V našom prípade potrebujeme systém [Node JS][nodejs] len počas kompilácie, k vytvoreniu súborov poskytovaných webovým serverom. Samotný program bude vykonávaný webovým  prehliadačom na prostriedkoch koncového používateľa. Z toho dôvodu je prvý stupeň - identifikovaný  príkazom `FROM node:latest AS build` - takzvaný dočasný obraz, oddelený od druhého stupňa.
 
-Druhý stupeň - začínajúci príkazom `FROM milung/spa-server` - potom predstavuje ďalší stupeň vytvárania obrazu. V tomto kroku sú statické súbory skopírované do adresára public v pracovnom priečinku kontajnera milung/spa-server a príkaz `build.sh` vykoná kompiláciu predpripraveného programu vytvoreného v jazyku [Golang][go]. Účelom tohto kroku je zminimalizovať výslednú veľkosť cieľového obrazu a množstvo jeho závislostí. Viac informácií o tomto obraze nájdete v repozitári [SirCremefresh/spa-server](https://github.com/SirCremefresh/spa-server). _(Obraz `milung/spa-server` je len multiplatformovou verziou tohto obrazu, ktorý je dostupný aj pre procesory s architektúrou ARM64.)_
+Druhý stupeň - začínajúci príkazom `FROM ghcr.io/polyfea/spa-base` - potom predstavuje ďalší stupeň vytvárania obrazu. V tomto kroku sú statické súbory z predchádzajúce stupňa skopírované do adresára `/spa-public` v pracovnom priečinku kontajnera `ghcr.io/polyfea/spa-base`. Tento obraz implementuje architeknocký návrhový vzor [_Backend for (Micro)Frontend_](https://learn.microsoft.com/en-us/azure/architecture/patterns/backends-for-frontends), pri ktorom je funkcionalita každého microfrontendu poskytovaná samostatným HTTP Serverom. Implementácia je optimalizovaná pre potreby jednostránkových aplikácií. Viac informácií o tomto obraze nájdete v repozitári [polyfea/spa-base](https://github.com/polyfea/spa-base).
 
-Finálny obraz je založený na takzvanej _scratch_ vrstve, čo je v zásade prázdna vrstva kontajnera. Tým pádom už neobsahuje žiadne ďalšie závislosti, ale len komunikuje s vrstvou hostiteľského počítača. Do tejto vrstvy potom kopírujeme náš výsledný proces, ktorý implementuje HTTP službu upravenú pre potreby _Single Page Application_ funkcionality. V tomto stupni sme použili aj definíciu premennej prostredia `CSP_HEADER` ktorá je implicitne nastavená na hodnotu `false`. Takéto premenné prostredia sú viditeľné v procesoch, ktoré bežia v kontajneri (nie počas vytvárania kontajnera), a ich aktuálnu hodnotu možno upraviť pri vytváraní inštancie príslušného kontajnera z predom vytvoreného obrazu.
-
+Druhý stupeň je zároveň našim finálny a výsledným obrazom, v praxi by sme ale mohli definovať ďalšie stupne vytvárania finálneho obrazu.
 Teoreticky by bolo možné použiť len jediný stupeň vytvárania obrazu, napríklad doplnením príkazu `CMD npm run start` v prvom stupni. Takto vytvorený obraz by bol však zbytočne veľký - obsahoval by celý subsystém [Node.js][nodejs] ako aj všetky závislosti našej aplikácie v priečinku _node_modules_. Viacero stupňov vytvárania výsledného obrazu a kompilácia programu priamo pri jeho vytváraní zabezpečuje prenositeľnosť a reprodukovateľnosť celého procesu.
 
 Tiež si všimnite, že v prvom kroku kompilácie kopírujeme len súbor `package.json` a vykonávame  príkaz `npm install`, ktorý nainštaluje všetky balíčky potrebné k behu našej aplikácie. Systém  docker pri vytváraní jednotlivých vrstiev porovná hash kód kopírovaných súborov (vrstvy po  aplikovaní príkazu `COPY`) a pokiaľ nedošlo k zmene obsahu, vynechá vytváranie nasledujúcej vrstvy  s príkazom `RUN`. Keďže zmena obsahu súboru `package.json` je zriedkavá v porovnaní s frekvenciou  zmien zdrojových súborov našej aplikácie, je inštalácia balíčkov po prvotnom vytvorení vrstvy len  znovupoužitá, čo skracuje čas kompilácie obrazu pri opakovaných behoch. V zásade sa snažíme radiť  príkazy v súbore `Dockerfile` takým spôsobom, aby sa artefakty s väčšou frekvenciou zmien spracovávali neskôr počas behu kompilácie.

@@ -14,7 +14,6 @@ COPY favicon.png ./src/assets/icon/favicon.png
 
 #generate book
 RUN node ./build/makehtml/makehtml.mjs  --verbose --version ${version} 
-
 RUN npm run build
 
 # generate index.html
