@@ -18,7 +18,7 @@ info:
   version: "1.0.0"
   title: Waiting List Api
   contact:
-    email: <your_email>
+    email: your_email@stuba.sk  @_important_@
   license:
     name: CC BY 4.0
     url: "https://creativecommons.org/licenses/by/4.0/"
@@ -413,6 +413,17 @@ Naštartujte vývojový server vykonaním príkazu v priečinku `${WAC_ROOT}/amb
 npm run start
 ```
 
+>build_circle:> Vo výstupe príkazu uvidíte viacero upozornení typu
+>
+>```text
+>[ WARN  ]  TypeScript: src/api/ambulance-wl/models/WaitingListEntry.ts:19:5
+>            'ConditionFromJSONTyped' is declared but its value is never read.
+>```
+>
+>Tieto sú spôsobené generovaným kódom, môžete ich ignorovať alebo v súbore `${WAC_ROOT}/ambulance-ufe/tsconfig.json`
+>nastaviť príznaky `noUnusedLocals` a `noUnusedParameters` na hodnotu `false`.
+
+Po úspešnom spustení servera otvorte prehliadač
 a prejdite na stránku [http://localhost:3333](http://localhost:3333). Mali by ste vidieť stránku so zoznamom pacientov zodpovedajúci nášmu príkladu v [OpenAPI] špecifikácii. Môžete vyskúšať aj činnosť aplikácie bez prístupu k WEB API pomocou príkazu `npm run start:app`. V tomto prípade sa zobrazí chybové hlásenie, že sa nepodarilo pripojiť k API. Aby bolo hlásenie zreteľnejšie upravte súbor `${WAC_ROOT}/ambulance-ufe/src/components/<pfx>-ambulance-wl-list/<pfx>-ambulance-wl-list.css` :
 
 ```css
@@ -592,7 +603,7 @@ git commit -m "Added ambulance waiting list API"
 git push
 ```
 
-Po vytvorení novej verzie obrazu sa táto nasadí na server. Pokiaľ máte klaster naštartovaný, môžete overiť funkcionalitu na stránke [http://localhost:30331/fea](http://localhost:30331/fea). V tomto prípade ale ešte nemáme nastavené správne atribúty pre našu aplikáciu. Otvorte súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/webcomponent.yaml` a pridajte atribúty `api-base` a `ambulance-id`:
+Po vytvorení novej verzie obrazu sa táto nasadí na server. Pokiaľ máte klaster naštartovaný, môžete overiť funkcionalitu na stránke [http://localhost:30331/fea](http://localhost:30331/fea). V tomto prípade ale ešte nemáme nastavené správne atribúty pre našu aplikáciu. Otvorte súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/webcomponent-content.yaml` a pridajte atribúty `api-base` a `ambulance-id`:
 
 ```yaml
 ...
