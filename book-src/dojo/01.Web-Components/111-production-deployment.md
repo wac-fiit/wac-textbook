@@ -33,9 +33,12 @@ kind: Kustomization
 
 namespace: wac-hospital
 
-commonLabels:
+labels:
+- pairs:
     app.kubernetes.io/part-of: wac-hospital
-    app.kubernetes.io/name: <pfx>-ambulance-wl
+    app.kubernetes.io/name: milung-ambulance-wl
+  includeSelectors: true
+  includeTemplates: true
 
 resources:
 - ../../../apps/<pfx>-ambulance-ufe
@@ -43,20 +46,6 @@ resources:
 
 components: 
 - ../../../components/version-release @_important_@
-
-patches:
-- target:
-    group: polyfea.github.io
-    version: v1alpha1
-    kind: MicroFrontend
-    name: <pfx>-ambulance-ufe
-  patch: |-
-    apiVersion: polyfea.github.io/v1alpha1
-    kind: MicroFrontend
-    metadata:
-      name: <pfx>-ambulance-ufe
-    spec:
-      frontendClass: "wac-hospital"
 ```
 
 Náš spoločný klaster sme tu nazvali `wac-aks`, čo referuje na nasadenie do klastra služby [Azure Kubernetes Services](https://azure.microsoft.com/en-us/products/kubernetes-service). Obsah je obdobný s obsahom z klastra `localhost`, avšak zmenili sme komponent v sekcii `components`.
@@ -138,9 +127,10 @@ Pridajte súbor `${WAC_ROOT}/ambulance-gitops/clusters/wac-aks/gitops/kustomizat
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-commonLabels:
-  app.kubernetes.io/part-of: wac-hospital
-  app.kubernetes.io/name: <pfx>-ambulance-wl
+labels:
+- pairs:
+    app.kubernetes.io/part-of: wac-hospital
+    app.kubernetes.io/name: <pfx>-ambulance-wl
 
 namespace: wac-hospital
 
@@ -156,10 +146,11 @@ Nakoniec pridajte súbor `${WAC_ROOT}/ambulance-gitops/clusters/wac-aks/kustomiz
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-commonLabels:
-  app.kubernetes.io/name: <pfx>-apps
-  app.kubernetes.io/instance: release
-  app.kubernetes.io/version: "1.0.0"
+labels:
+  - pairs:
+      app.kubernetes.io/name: <pfx>-apps
+      app.kubernetes.io/instance: release
+      app.kubernetes.io/version: "1.0.0"
 
 resources:
   - gitops  
