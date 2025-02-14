@@ -60,6 +60,7 @@ Synchronizujte váš lokálny repozitár so vzdialeným repozitárom. Pri výzve
 >info:> Môžete použiť príkaz vygenerovaný na stránke vášho projektu v [GitHub].
 
 ```ps
+git branch -M main
 git push --set-upstream origin main
 ```
 

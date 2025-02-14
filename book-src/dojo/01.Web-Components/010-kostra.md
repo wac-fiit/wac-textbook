@@ -227,7 +227,7 @@ Okrem načítania fontu pre webové ikony a fontu pre Material Design je pre ná
 })
 ```
 
-tak viete, že sme mu priradili novú značku (`tag`) : `<pfx>-ambulance-wl.list`. V súbore `index.html`   teraz túto značku použijeme
+tak viete, že sme mu priradili novú značku (`tag`) : `<pfx>-ambulance-wl-list`. V súbore `index.html`   teraz túto značku použijeme
 
 ```html
 ...    

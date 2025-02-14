@@ -86,7 +86,3 @@ Aplikáciu používajú dvaja používatelia: Pacient a Ambulantná sestra
 V cvičeniach prepokladáme, že všetky aktivity budete realizovať pod jedným adresárom, ktorý je v texte označený ako `${WAC_ROOT}`. V tomto adresári budú vytvorené všetky repozitáre, ktoré budú vytvorené počas cvičenia a budú do neho umiestňované aj pomocné súbory. Odporúčame mať v tomto priečinku aj uložený workspace pre Visual Studio Code.
 
 Príkazy, ktoré používame na príkazovom riadku predpokladajú použitie [PowerShell] prostredia, ktoré je štandardne dostupné na platforme Windows. Hoci väčšina príkazov je funkčná bez zmeny aj v prostredí [Bash], odporúčame používať [PowerShell] prostredie aj na platforme Linux a MacOS. Postup inštalácie je popísaný na stránke [Install PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell).
-
-## Development Containers
-
-Na začiatku jednotlivých kapitol sú uvedené príkazy na aplikáciu šablón predvytvorených kontajnerov typu [Development Containers]. Tieto slúžia na inicializáciu projektu na začiatku kapitoly do predpokladaného stavu. Uvedený príkaz nie je za bežných okolností potrebný, slúži najmä na synchronizáciu stavu projektu medzi jednotlivými cvičeniami v prípade technických problémov. Podrobný postup je uvedený v kapitole [Riešenie Problémov](../99.Problems-Resolutions/01.development-containers.md).
