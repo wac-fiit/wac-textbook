@@ -6,9 +6,14 @@ aktualizovala, keď sa zmení jej docker obraz na Docker Hube.
 
 ### 1. Nastavenie kontinuálneho nasadenia pre Azure Web App a Docker Hub
 
-Vráťte sa do portálu [Azure][azure-portal], do vašej web aplikácie a v záložke _Deployment Center_ prepnite voľbu _Continuous deployment_ na `On` a skopírujte hodnotu z políčka _Webhook URL_. Uložte nastavenie stlačením tlačidla _Save_:
+Vráťte sa do portálu [Azure][azure-portal], do vašej web aplikácie a v záložke _Settings_ v sekcii _Configuration_ prepnite voľbu _SCM Basic Auth Publishing Credentials_ na `On`.
+Toto nastavenie umožní zobrazenie mena a vygenerovaného hesla v URL adrese pre notifikácie pri zmene docker obrazu a zároveň povolí možnosť authentifikácie pomocou tohto mena a hesla.
 
-![Deplyment Center Web Aplikácie Azure](./img/050-01-azurewebapp-cd.png)
+![Konfigurácia authentifikácie Web Aplikácie](./img/050-01-azurewebapp-auth.png)
+
+Ďalej v záložke _Deployment Center_ prepnite voľbu _Continuous deployment_ na `On` a skopírujte hodnotu z políčka _Webhook URL_. Uložte nastavenie stlačením tlačidla _Save_:
+
+![Deployment Center Web Aplikácie Azure](./img/050-01-azurewebapp-cd.png)
 
 Prejdite na stránku [Docker Hub][docker-hub], otvorte detaily vášho obrazu `ambulance-ufe` a prejdite do záložky _Webhooks_. Vytvorte nový webhook, pomenujte ho _Azure WebApp_ a ako URL nastavte hodnotu skopírovanú z Azure portálu.
 
