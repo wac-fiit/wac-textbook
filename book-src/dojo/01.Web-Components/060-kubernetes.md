@@ -255,7 +255,7 @@ resources:
 
 labels:
 - pairs:
-  app.kubernetes.io/component: <pfx>-ambulance-ufe
+    app.kubernetes.io/component: <pfx>-ambulance-ufe
 ```
 
 V tejto chvíli ešte nebudeme našu aplikáciu nasadzovať, potrebujeme najprv pripraviť manifesty pre infraštruktúru klastra. Pokiaľ ale chceme vidieť výsledok "kustomizacie" našej aplikácie, môžeme ho získať vykonaním príkazu
@@ -307,9 +307,9 @@ Táto úprava mení typ služby `polyfea`, ktorá je pôvodne špecifikovaná [v
 
 Ďalším typom _service_, ktorý by sme mohli použiť je typ `LoadBalancer`. Konfigurácia tohto typu je závislá od poskytovateľa klastra, v prípade [Docker Desktop][docker-desktop] by bola služba dostupná na porte 80 nášho počítača. V tomto prípade ale možno použiť iba jednu službu typu `LoadBalancer` v rámci celého klastra. (V prípade klastrov v prostredí Azure alebo AWS, sa každej službe typu `LoadBalancer` priraďuje samostatná _verejná_ IP adresa).
 
->build_circle:> Pokiaľ používate minikube alebo iný lokálny klaster než _Docker Desktop_, tak možno budete nútený použiť prikaz `kubectl --namespace polyfea port-forward svc/polyfea-controller 30331:80` na presmerovanie portov predtým než otvoríte stránku `http:lovalhost:30331/fea`.
+>build_circle:> Pokiaľ používate minikube alebo iný lokálny klaster než _Docker Desktop_, tak možno budete nútený použiť prikaz `kubectl --namespace polyfea port-forward svc/polyfea-controller 30331:80` na presmerovanie portov predtým než otvoríte stránku `http:localhost:30331/fea`.
 
-Týmto spôsobom sme vytvorili konfiguráciu založenú na vopred pripravenej konfigurácii pre systému Polyfea, ktorým budeme spravovať naše microfrontend komponenty. Viac si o tomto riadiči viete prečítať tu: [https://github.com/polyfea/polyfea/blob/main/README.md](https://github.com/polyfea/polyfea/blob/main/README.md).
+Týmto spôsobom sme vytvorili konfiguráciu založenú na vopred pripravenej konfigurácii pre systém Polyfea, ktorým budeme spravovať naše microfrontend komponenty. Viac si o tomto riadiči viete prečítať tu: [https://github.com/polyfea/polyfea/blob/main/README.md](https://github.com/polyfea/polyfea/blob/main/README.md).
 
 >info:> Takáto priama závislosť na externých manifestoch, bez špecifikácie príslušnej verzie, je v praxi nežiadúca, keďže riskujeme, že dôjde k zmenám, ktoré narušia funkčnosť našej aplikácie. V praxi by sa tieto manifesty buď skopírovali do lokálneho repozitára, alebo sa určila konkrétna verzia (vetva/tag v GitHub), ktorá bude potom použitá v súbore `kustomization.yaml`.
 
@@ -325,7 +325,16 @@ Implicitne tiež predpokladáme, že medzi týmito krokmi existujú nejaké záv
 
 >info:> Počet krokov sa snažíme limitovať, niekedy však môže byť potrebné rozdeliť nasadenie do viacerých krokov, aby boli splnené určité predpoklady pre nasadenie našej aplikácie - typicky dostupnosť služieb, ktoré definujú spôsob ako nasadiť iné objekty alebo objekty, ku ktorým chceme limitovať prístup pre lepšiu koordináciu jednotlivých tímov.
 
-Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/kustomization.yaml`
+Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/namespace.yaml`
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: wac-hospital
+```
+
+Ďalej vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/kustomization.yaml`
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
