@@ -36,7 +36,7 @@ namespace: wac-hospital
 labels:
 - pairs:
     app.kubernetes.io/part-of: wac-hospital
-    app.kubernetes.io/name: milung-ambulance-wl
+    app.kubernetes.io/name: <pfx>-ambulance-wl
   includeSelectors: true
   includeTemplates: true
 
