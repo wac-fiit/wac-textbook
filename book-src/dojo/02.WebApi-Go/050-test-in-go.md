@@ -51,7 +51,7 @@ Testovaciu funkciu sme najprv rozdelili do sekcií `// ARRANGE`, `// ACT`, a `//
 
 ### 2. Dopĺňanie a implementácia testovacej funkcie 
 
-Začíname v sekcii `// ASSERT`, kde sa snažíme určiť spôsob, akým overíme, či výsledok alebo vedľajšie efekty zodpovedajú naším očakávaniam. V tomto prípade chceme overiť, že po požiadavke na aktualizáciu zoznamu čakajúcich je volaná funkcia `UpdateDocument` triedy `DbService` (kde miesto reálnej inštancie `DbService` použijeme jej `mock`). Doplňte do sekcie `// ARRANGE` nasledujúci kód
+Začíname v sekcii `// ASSERT`, kde sa snažíme určiť spôsob, akým overíme, či výsledok alebo vedľajšie efekty zodpovedajú naším očakávaniam. V tomto prípade chceme overiť, že po požiadavke na aktualizáciu zoznamu čakajúcich je volaná funkcia `UpdateDocument` triedy `DbService` (kde miesto reálnej inštancie `DbService` použijeme jej `mock`). Doplňte do sekcie `// ASSERT` nasledujúci kód
 
 ```go
 ...

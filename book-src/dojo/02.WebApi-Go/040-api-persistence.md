@@ -521,7 +521,7 @@ Týmto máme náš prístup k databáze naimplementovaný.
 
 Aby sme mohli naše rozhranie `DbService` využiť v kóde obsluhy požiadaviek, ktorý sme vygenerovali v _package_ `ambulance_wl`, pridáme jeho inštanciu do _context_-u, ktorý je predaný vygenerovaným funkciám ako argument. K tomu využijeme [_middleware_](https://gin-gonic.com/docs/examples/custom-middleware/) funkciu, ktorú zaregistrujeme do _router_-a knižnice `gin`. Zároveň pridáme CORS configuráciu.
 
-Otvorte súbor `${WAC_ROOT}/workspaces/wac-test/ambulance-webapi/cmd/ambulance-api-service/main.go` a do funkcie `main` doplňte uvedený kód:
+Otvorte súbor `${WAC_ROOT}/ambulance-webapi/cmd/ambulance-api-service/main.go` a do funkcie `main` doplňte uvedený kód:
 
 ```go
 package main
@@ -1057,7 +1057,7 @@ func (o *implAmbulanceWaitingListAPI) DeleteWaitingListEntry(c *gin.Context) {
 
 V tomto prípade nás zaujíma najmä či daný záznam existuje, pokiaľ áno, tak ho odstránime zo zoznamu a zavoláme metódu `reconcileWaitingList` na objekte `Ambulance`.
 
-Metódy `GetWaitingList` a `GetWaitingListEntry` sú pomerne priamočiare - vrátia aktuálny zoznam čakajúcich alebo požadovaný záznam pokiaľ existuje:
+Metódy `GetWaitingListEntries` a `GetWaitingListEntry` sú pomerne priamočiare - vrátia aktuálny zoznam čakajúcich alebo požadovaný záznam pokiaľ existuje:
 
 ```go
 // GetWaitingListEntries - Provides the ambulance waiting list
