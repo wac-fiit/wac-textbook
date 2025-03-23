@@ -219,7 +219,7 @@ Nakoniec overte, či sú všetky nasadené objekty pripravené a či sú všetky
 kubectl get all -n wac-hospital
 ```
 
-Výstup by mal okrem iného obsahovať Váš deployment `<pfx>-ambulance-ufe-deployment` a k tomu zodpovedajúci pod. Pokiaľ sú oba nasadené, môžete prejsť na stránku [spoločného klastra](https://wac-2025.westeurope.cloudapp.azure.com/ui/), kde v zozname aplikácií uvidíte aj svoju aplikáciu.
+Výstup by mal okrem iného obsahovať Váš deployment `<pfx>-ambulance-ufe-deployment` a k tomu zodpovedajúci pod. Pokiaľ sú oba nasadené, môžete prejsť na stránku [spoločného klastra](https://wac-2025.westeurope.cloudapp.azure.com/fea), kde v zozname aplikácií uvidíte aj svoju aplikáciu.
 
 Zmeňte kubectl kontext späť na lokálny klaster:
 
