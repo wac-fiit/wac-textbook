@@ -746,7 +746,7 @@ bobulova Dr.Bobulov?? 123        {@{value=N??dcha; code=rhinitis}, @{value=Kontr
 >$linux:> V prípade linuxu/mac použite príkaz `curl`:
 >
 > ```sh
-> curl -X POST -H "Content-Type: application/json" -d '{"id":"bobulova","name":"Dr.Bobulová","roomNumber":"123","predefinedConditions":>    [{"value":"Nádcha","code":"rhinitis"},{"value":"Kontrola","code":"checkup"}]}' http://localhost:8080/api/ambulance
+> curl -X POST -H "Content-Type: application/json" -d '{"id":"bobulova","name":"Dr.Bobulová","roomNumber":"123","predefinedConditions": [{"value":"Nádcha","code":"rhinitis"},{"value":"Kontrola","code":"checkup"}]}' http://localhost:8080/api/ambulance
 > ```
 
 Týmto sme overili funkčnosť doteraz implmentovného kódu a zároveň sme vytvorili novú ambulanciu. V prehliadači otvorte stánku `http://localhost:8081/db/<pfx>-ambulance-wl/ambulance` a v zozname dokumentov stlačte na prvý záznam.
