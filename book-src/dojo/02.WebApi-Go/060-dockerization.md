@@ -173,34 +173,33 @@ name: Go @_remove_@
 name: Test and Publish WebAPi Container Image @_add_@
 
 on:
-   push:
-      branches: [ "main" ]
-      tags: [ "v1*" ] @_add_@
-   pull_request:
-      branches: [ "main" ]
-   workflow_dispatch:  {} # allow manually trigger workflow @_add_@
-   ...      
+  push:
+    branches: [ "main" ]
+    tags: [ "v1*" ] @_add_@
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:  {} # allow manually trigger workflow @_add_@
+  ...      
 ```
 
 Pre automatické prebratie verzie jazyka `go` zo súboru `go.mod` použijeme nasledovné 2 kroky:
 
 ```yaml
 ...
-build:
-   runs-on: ubuntu-latest
-   steps:
-   - name: Checkout repository
-      uses: actions/checkout@v3
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
 
-   - name: Get Go version from go.mod    @_add_@
+    - name: Get Go version from go.mod    @_add_@
       id: get_go_version    @_add_@
       run: echo "go_version=$(grep -m1 'go ' go.mod | awk '{print $2}')" >> $GITHUB_OUTPUT    @_add_@
       
-   - name: Set up Go
+    - name: Set up Go
       uses: actions/setup-go@v4
       with:
-         go-version: 1.21 @_remove_@
-         go-version: ${{ steps.get_go_version.outputs.go_version }}    @_add_@
+        go-version: 1.21 @_remove_@
+        go-version: ${{ steps.get_go_version.outputs.go_version }}    @_add_@
 ...      
 ```
 
@@ -209,12 +208,12 @@ Teraz upravte krok `Build`:
 ```yaml
 ...
 jobs:
-   ...
-   - name: Build
+    ...
+    - name: Build
       run: go build -v ./... @_remove_@
       # build api service 
       run: go build -v ./cmd/ambulance-api-service @_add_@
-   ...      
+    ...      
 ```
 
 ### 4. Automatizácia Dockerizácie a generovanie OpenAPI kontrolérov v CI/CD pipeline
@@ -223,19 +222,19 @@ V pravej časti v záložke _Marketplace_ zadajte do vyhľadávania text _openap
 
 ```yaml
 ...
-      - name: Set up Go
+    - name: Set up Go
       uses: actions/setup-go@v4
       with:
-         go-version: ${{ steps.get_go_version.outputs.go_version }}
+        go-version: ${{ steps.get_go_version.outputs.go_version }}
 
-      - name: Generate api controllers interfaces    @_add_@
+    - name: Generate api controllers interfaces    @_add_@
       uses: craicoverflow/openapi-generator-generate-action@v1.2.1    @_add_@
       with:    @_add_@
-         generator: go-gin-server            @_add_@
-         input: api/ambulance-wl.openapi.yaml    @_add_@
-         additional-properties: apiPath=internal/ambulance_wl,packageName=ambulance_wl,interfaceOnly: true    @_add_@
+        generator: go-gin-server            @_add_@
+        input: api/ambulance-wl.openapi.yaml    @_add_@
+        additional-properties: apiPath=internal/ambulance_wl,packageName=ambulance_wl,interfaceOnly: true    @_add_@
 
-      - name: Build
+    - name: Build
 ...
 
 ```
@@ -246,10 +245,10 @@ Prejdite späť do vyhľadávania v _Marketplace_ (stlačte na odkaz _Marketplac
 
 ```yaml
 ...
-      - name: Test
+    - name: Test
       run: go test -v ./...
 
-      - name: Docker Setup QEMU  @_add_@
+    - name: Docker Setup QEMU  @_add_@
       uses: docker/setup-qemu-action@v2.2.0  @_add_@
 ```
 
@@ -257,42 +256,42 @@ Vráťte sa do výsledkov vyhľadávania (stlačte na odkaz _Search results_)  a
 
 ```yaml
 ...
-      - name: Docker Setup QEMU
+    - name: Docker Setup QEMU
       uses: docker/setup-qemu-action@v2.2.0 
 
-      - name: Docker Setup Buildx     @_add_@
+    - name: Docker Setup Buildx     @_add_@
       uses: docker/setup-buildx-action@v2.9.1      @_add_@
       @_add_@
-      - name: Docker Metadata action     @_add_@
+    - name: Docker Metadata action     @_add_@
       id: meta    @_add_@
       uses: docker/metadata-action@v4.6.0    @_add_@
       with:    @_add_@
-         images: <docker-id>/ambulance-wl-webapi     @_add_@
-         tags: |      @_add_@
-            type=schedule     @_add_@
-            type=ref,event=branch      @_add_@
-            type=ref,event=branch,suffix={{date '.YYYYMMDD.HHmm'}}      @_add_@
-            type=ref,event=tag      @_add_@
-            type=semver,pattern={{version}}     @_add_@
-            type=semver,pattern={{major}}.{{minor}}      @_add_@
-            type=semver,pattern={{major}}          @_add_@
-            type=raw,value=latest,enable={{is_default_branch}}    @_add_@
+        images: <docker-id>/ambulance-wl-webapi     @_add_@
+        tags: |      @_add_@
+          type=schedule     @_add_@
+          type=ref,event=branch      @_add_@
+          type=ref,event=branch,suffix={{date '.YYYYMMDD.HHmm'}}      @_add_@
+          type=ref,event=tag      @_add_@
+          type=semver,pattern={{version}}     @_add_@
+          type=semver,pattern={{major}}.{{minor}}      @_add_@
+          type=semver,pattern={{major}}          @_add_@
+          type=raw,value=latest,enable={{is_default_branch}}    @_add_@
       @_add_@
-      - name: Docker Login   @_add_@
+    - name: Docker Login   @_add_@
       uses: docker/login-action@v2.2.0   @_add_@
       with:   @_add_@
-         username: ${{ secrets.DOCKERHUB_USERNAME }}   @_add_@
-         password: ${{ secrets.DOCKERHUB_TOKEN }}   @_add_@
-         @_add_@
-      - name: Build and push Docker images     @_add_@
+        username: ${{ secrets.DOCKERHUB_USERNAME }}   @_add_@
+        password: ${{ secrets.DOCKERHUB_TOKEN }}   @_add_@
+      @_add_@
+    - name: Build and push Docker images     @_add_@
       uses: docker/build-push-action@v4.1.1     @_add_@
       with:    @_add_@
-         context: .      @_add_@
-         file: ./build/docker/Dockerfile      @_add_@
-         labels: ${{ steps.meta.outputs.labels }}            @_add_@
-         platforms: linux/amd64,linux/arm64/v8      @_add_@
-         push: true      @_add_@
-         tags: ${{ steps.meta.outputs.tags }}       @_add_@
+        context: .      @_add_@
+        file: ./build/docker/Dockerfile      @_add_@
+        labels: ${{ steps.meta.outputs.labels }}            @_add_@
+        platforms: linux/amd64,linux/arm64/v8      @_add_@
+        push: true      @_add_@
+        tags: ${{ steps.meta.outputs.tags }}       @_add_@
 ```
 
 >info:> Väčšina uvedených krokov s kopírovaním kódu zo záložky _Marketplace_ by sa dala preskočiť a mohli by sme rovno pracovať so súborom `${WAC_ROOT}/ambulance-webapi/.github/workflows/ci.yml`. Zámerom ale bolo ukázať, akým spôsobom pracovať s grafickým editorom predpisov na stránke [GitHub], kde okrem získania aktuálnych šablón predpisu možete zároveň získať aj prehľad o množstve znovupoužiteľných akcií vytvorených pre automatizáciu najrozličnejších úloh v procese vývoja softvérových systémov.
