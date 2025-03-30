@@ -218,7 +218,7 @@ jobs:
 
 ### 4. Automatizácia Dockerizácie a generovanie OpenAPI kontrolérov v CI/CD pipeline
 
-V pravej časti v záložke _Marketplace_ zadajte do vyhľadávania text _openapi_ a zo zoznamu vyberte položku _openapi-generator-generate-action_. V nasledujúcom zobrazení zkopírujte kód z časti _Installation_ a vložte ho do Vášho kódu pred blok `- name: Build`. Upravte vložený kód do nasledujúceho tvaru:
+V pravej časti v záložke _Marketplace_ zadajte do vyhľadávania text _OpenAPITools_ a zo zoznamu vyberte položku _openapi-generator-generate-action_. V nasledujúcom zobrazení zkopírujte kód z časti _Installation_ a vložte ho do Vášho kódu pred blok `- name: Build`. Upravte vložený kód do nasledujúceho tvaru:
 
 ```yaml
 ...
@@ -232,7 +232,7 @@ V pravej časti v záložke _Marketplace_ zadajte do vyhľadávania text _openap
       with:    @_add_@
         generator: go-gin-server            @_add_@
         input: api/ambulance-wl.openapi.yaml    @_add_@
-        additional-properties: apiPath=internal/ambulance_wl,packageName=ambulance_wl,interfaceOnly: true    @_add_@
+        additional-properties: apiPath=internal/ambulance_wl,packageName=ambulance_wl,interfaceOnly=true    @_add_@
 
     - name: Build
 ...
@@ -249,7 +249,7 @@ Prejdite späť do vyhľadávania v _Marketplace_ (stlačte na odkaz _Marketplac
       run: go test -v ./...
 
     - name: Docker Setup QEMU  @_add_@
-      uses: docker/setup-qemu-action@v2.2.0  @_add_@
+      uses: docker/setup-qemu-action@v3.6.0  @_add_@
 ```
 
 Vráťte sa do výsledkov vyhľadávania (stlačte na odkaz _Search results_)  a obdobným postupom skopírujte kód pre akcie _Docker Setup Buildx_, _Docker metadata action_, _Docker Login_ a nakoniec _Build and push Docker Images_. Upravte výsledný kód do tvaru:
@@ -257,14 +257,14 @@ Vráťte sa do výsledkov vyhľadávania (stlačte na odkaz _Search results_)  a
 ```yaml
 ...
     - name: Docker Setup QEMU
-      uses: docker/setup-qemu-action@v2.2.0 
+      uses: docker/setup-qemu-action@v3.6.0 
 
     - name: Docker Setup Buildx     @_add_@
-      uses: docker/setup-buildx-action@v2.9.1      @_add_@
+      uses: docker/setup-buildx-action@v3.10.0      @_add_@
       @_add_@
     - name: Docker Metadata action     @_add_@
       id: meta    @_add_@
-      uses: docker/metadata-action@v4.6.0    @_add_@
+      uses: docker/metadata-action@v5.7.0    @_add_@
       with:    @_add_@
         images: <docker-id>/ambulance-wl-webapi     @_add_@
         tags: |      @_add_@
@@ -278,13 +278,13 @@ Vráťte sa do výsledkov vyhľadávania (stlačte na odkaz _Search results_)  a
           type=raw,value=latest,enable={{is_default_branch}}    @_add_@
       @_add_@
     - name: Docker Login   @_add_@
-      uses: docker/login-action@v2.2.0   @_add_@
+      uses: docker/login-action@v3.4.0   @_add_@
       with:   @_add_@
         username: ${{ secrets.DOCKERHUB_USERNAME }}   @_add_@
         password: ${{ secrets.DOCKERHUB_TOKEN }}   @_add_@
       @_add_@
     - name: Build and push Docker images     @_add_@
-      uses: docker/build-push-action@v4.1.1     @_add_@
+      uses: docker/build-push-action@v6.15.0     @_add_@
       with:    @_add_@
         context: .      @_add_@
         file: ./build/docker/Dockerfile      @_add_@
@@ -300,7 +300,7 @@ Stlačte na tlačidlo _Commit changes ..._ v hornej časti stránky, zvoľte _Co
 
 ### 5. Nastavenie CI/CD tajomstiev pre Docker Hub integráciu
 
-Pre úspešný beh priebežnej integrácie je nutné ešte nastaviť premenné `secrets.DOCKERHUB_USERNAME` a `secrets.DOCKERHUB_TOKEN`. Prejdite na stránku [Docker Hub], rozbaľte menu označené názvom Vášho účtu a zvoľte _Account Settings_. V záložke _Security_ nájdete tlačidlo _New Access Token_.
+Pre úspešný beh priebežnej integrácie je nutné ešte nastaviť premenné `secrets.DOCKERHUB_USERNAME` a `secrets.DOCKERHUB_TOKEN`. Prejdite na stránku [Docker Hub], rozbaľte menu označené názvom Vášho účtu a zvoľte _Account Settings_. V záložke _Personal access tokensy_ nájdete tlačidlo _Generate new token_.
 
 ![Vytvorenie nového tokena pre Docker Hub](./img/060-03-AccountSecurity.png)
 
