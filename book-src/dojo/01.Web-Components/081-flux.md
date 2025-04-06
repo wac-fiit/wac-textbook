@@ -44,7 +44,6 @@ Týmto spôsobom sme vytvorili závislosť na konkrétnom vydaní systému [Flux
 ```yaml
 ...
 resources:
-- namespace.yaml
 - ../../../infrastructure/polyfea-controller
 - ../../../infrastructure/fluxcd @_add_@
 ```
@@ -169,27 +168,33 @@ resources:
 
 Táto konfigurácia sa odkazuje na priečinok `gitops`, ktorý sme vytvorili v predchádzajúcom kroku. Znamená to, že konfigurácia klastra je riadená objektmi Flux CD, ktorý zabezpečuje priebežné nasadenie podľa konfigurácie v git repozitári na príslušných cestách.
 
-Upravte súbor `${WAC_ROOT}/infrastructure/polyfea/kustomization.yaml`:
+Upravte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/polyfea/kustomization.yaml`:
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - https://github.com/polyfea/manifests//gitops/fluxcd @_important_@
+  - https://github.com/polyfea/manifests//controller #?ref=v1.0.0 @_remove_@
+  - https://github.com/polyfea/manifests//md-shell # should be in the later step, we will replace it later @_remove_@
+  - https://github.com/polyfea/manifests//gitops/fluxcd @_add_@
 
-configMapGenerator:
-- name: polyfea-shell-cfg @_important_@
-  namespace: polyfea
-  options:
-    disableNameSuffixHash: true
-  literals:
-  - APP_TITLE=Nemocnica WAC @_important_@
-  - SERVICE_TYPE=NodePort
-  - NODE_PORT=30331
+patches: @_remove_@
+  - path: ./patches/service.yaml @_remove_@
+
+configMapGenerator: @_add_@
+- name: polyfea-shell-cfg @_add_@
+  namespace: polyfea @_add_@
+  options: @_add_@
+    disableNameSuffixHash: true @_add_@
+  literals: @_add_@
+  - APP_TITLE=Nemocnica WAC @_add_@
+  - SERVICE_TYPE=NodePort @_add_@
+  - NODE_PORT=30331 @_add_@
 ```
 
 Táto úprava prispôsobuje nasadenie Polyfea aplikácie pre  systém FluxCD, napríklad zabezpečí postupné nasadenie definícii objektov a následne nasadenie objektu typu `MicrofronendClass`.
+Zároveň môžete zmazať súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/polyfea/patches/service.yaml` ktorý sa už nepoužíva.
 
 ### 2. Vytvorenie a konfigurácia Personal Access Token (PAT) pre FluxCD
 

@@ -6,7 +6,7 @@
 
 ### 1. Nastavenie GitOps konfigurácie pre nasadenie Web API
 
-Otvorte súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-webapi/kustomization.yaml` a vložte do neho nasledujúci obsah - upravte názov repozitára podľa toho, ako ste ho nazvali:
+Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-webapi/kustomization.yaml` a vložte do neho nasledujúci obsah - upravte názov repozitára podľa toho, ako ste ho nazvali:
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -36,7 +36,7 @@ spec:
 
 Tento súbor upraví definíciu služby tak, aby bola dostupná z lokálnej siete na porte `30081`.
 
-Otvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/install/kustomization.yaml` a vložte do neho nasledujúci obsah:
+Upravte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/install/kustomization.yaml` nasledovne:
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -46,11 +46,8 @@ kind: Kustomization
 resources:
 - ../../../apps/<pfx>-ambulance-ufe
 - ../../../apps/<pfx>-ambulance-webapi @_add_@
-- ../../../apps/polyfea-md-shell
 
-patches:
-- path: patches/material-design.microfrontend.yaml
-- path: patches/polyfea-md-shell.microfrontend.yaml
+patches: @_add_@
 - path: patches/ambulance-webapi.service.yaml @_add_@
 
 components: 
@@ -158,40 +155,27 @@ kubectl get pods -n wac-hospital
 
 ### 3. Nastavenie CSP hlavičky
 
-Momentálne je náš frontend zabezpečený tak, že dovoľuje načítavať requesty iba z rovnakého hosta. Aby sme mohli pristupovať na lokálne API na inom porte, musíme upraviť CSP hlavičku servera. Pridajte patch pre konfiguráciu CSP hlavičky do nášho lokálneho klastra. 
-Vytvorte súbore `${WAC_ROOT}/ambulance-gitops/clusters/localhost/install/patches/polyfea-fea.microfrontendclass.yaml` s obsahom:
+Momentálne je náš frontend zabezpečený tak, že dovoľuje načítavať requesty iba z rovnakého hosta. Aby sme mohli pristupovať na lokálne API na inom porte, musíme upraviť CSP hlavičku servera. 
+Upravte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/polyfea/kustomization.yaml` nasledovne:
 
 ```yaml
-apiVersion: polyfea.github.io/v1alpha1
-kind: MicroFrontendClass
-metadata:
-  name: fea
-spec:
-  cspHeader: >-
-    default-src 'self'; font-src 'self'; script-src 'strict-dynamic'
-    'nonce-{NONCE_VALUE}'; worker-src 'self'; manifest-src 'self'; style-src
-    'self' 'strict-dynamic' 'nonce-{NONCE_VALUE}'; style-src-attr 'self'
-    'unsafe-inline'; img-src *; connect-src 'self' localhost:30331 localhost:30081;
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+...
+
+configMapGenerator:
+- name: polyfea-shell-cfg
+  namespace: polyfea
+  options:
+    disableNameSuffixHash: true
+  literals:
+  - APP_TITLE=Nemocnica WAC
+  - SERVICE_TYPE=NodePort
+  - NODE_PORT=30331
+  - CSP_HEADER=default-src 'self'; font-src 'self'; script-src 'strict-dynamic' 'nonce-{NONCE_VALUE}'; worker-src 'self'; manifest-src 'self'; style-src 'self' 'strict-dynamic' 'nonce-{NONCE_VALUE}'; style-src-attr 'self' 'unsafe-inline'; img-src *; connect-src 'self' localhost:30331 localhost:30081; @_add_@
 ```
 
-Tento súbor upraví definíciu deploymentu tak, aby bol vytvorený s CSP hlavičkou, ktorá umožní prístup na lokálne API na porte `30081`. Uložte zmeny do git repozitára a odovzdajte ich do vzdialeného repozitára.
-
-Upravte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/install/kustomization.yaml`:
-
-```yaml
-...
-resources:
-- ../../../apps/<pfx>-ambulance-ufe
-- ../../../apps/<pfx>-ambulance-webapi
-- ../../../apps/polyfea-md-shell
-
-patches:
-- path: patches/material-design.microfrontend.yaml
-- path: patches/polyfea-md-shell.microfrontend.yaml
-- path: patches/ambulance-webapi.service.yaml
-- path: patches/polyfea-fea.microfrontendclass.yaml @_add_@
-...
-```
+Touto úpravou zabezpečíme aby boli polyfea komponenty vytvorené s CSP hlavičkou, ktorá umožní prístup na lokálne API na porte `30081`. Uložte zmeny do git repozitára a odovzdajte ich do vzdialeného repozitára.
 
 V prehliadači otvorte stránku [http://localhost:30331](http://localhost:30331), na ktorej uvidíte aplikačnú obálku s integrovanou mikro aplikáciou. Mikro aplikácia sa pokúsi načítať dáta z webapi, ktoré však zatiaľ neexistujú. Vytvorte ich pomocou zobrazeného rozhrania. Skúste reštartovať Váš klaster a overte, že dáta sú stále dostupné.
 

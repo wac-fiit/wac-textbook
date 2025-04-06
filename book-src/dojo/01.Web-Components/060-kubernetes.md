@@ -325,23 +325,13 @@ Implicitne tiež predpokladáme, že medzi týmito krokmi existujú nejaké záv
 
 >info:> Počet krokov sa snažíme limitovať, niekedy však môže byť potrebné rozdeliť nasadenie do viacerých krokov, aby boli splnené určité predpoklady pre nasadenie našej aplikácie - typicky dostupnosť služieb, ktoré definujú spôsob ako nasadiť iné objekty alebo objekty, ku ktorým chceme limitovať prístup pre lepšiu koordináciu jednotlivých tímov.
 
-Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/namespace.yaml`
-
-```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: wac-hospital
-```
-
-Ďalej vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/kustomization.yaml`
+Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/kustomization.yaml`
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- namespace.yaml
 - ../../../infrastructure/polyfea
 ```
 
@@ -375,6 +365,12 @@ kubectl kustomize clusters/localhost/install
 ```
 
 Pokiaľ sú vaše konfigurácie správne, zobrazí sa výpis aplikovaných YAML dokumentov, v opačnom prípade musíte opraviť chybu podľa zobrazeného výpisu.
+
+Pred tým ako zmeny nasadíme do klastra, vytvoríme si požadovaný namespace `wac-hospital`. Tento namespace by mohol byť aj súčasťou definícii objektov pre kustomize, ale pre jednoduchosť odstraňovania a opätovného nasadenia do klastra sme sa ho rozhodli vytvoriť manuálne. Vykonajte príkaz.
+
+```ps
+  kubectl create namespace wac-hospital
+```
 
 Následne aplikujte prípravný krok príkazom v priečinku `${WAC_ROOT}/ambulance-gitops`:
 
@@ -424,4 +420,5 @@ Predtým odstránime všetky manuálne nasadené objekty z klastra:
 ```ps
 kubectl delete -k ./clusters/localhost/install
 kubectl delete -k ./clusters/localhost/prepare
+kubectl delete namespace wac-hospital
 ```
