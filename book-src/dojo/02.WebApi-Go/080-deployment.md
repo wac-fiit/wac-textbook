@@ -46,7 +46,7 @@ kind: Kustomization
 resources:
 - ../../../apps/<pfx>-ambulance-ufe
 - ../../../apps/<pfx>-ambulance-webapi @_add_@
-
+@_add_@
 patches: @_add_@
 - path: patches/ambulance-webapi.service.yaml @_add_@
 

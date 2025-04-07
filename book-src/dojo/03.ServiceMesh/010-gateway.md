@@ -29,11 +29,11 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: Gateway
 metadata:
-name: wac-hospital-gateway
-namespace: wac-hospital
+  name: wac-hospital-gateway
+  namespace: wac-hospital
 spec:
-gatewayClassName: wac-hospital-gateway-class
-listeners:
+  gatewayClassName: wac-hospital-gateway-class
+  listeners:
   - name: http
     protocol: HTTP
     port: 80
@@ -54,6 +54,8 @@ resources:
 ```
 
 Tento manifest obsahuje objekty potrebné pre nasadenie [Envoy Gateway] implementácie [Gateway API] a prípravu klastra pre potreby nasadenia jednotlivých mikroslužieb.
+
+>info:> Použitím `latest` vydania pre `envoyproxy gateway` máme k dispozícii vždy najčerstvejšie vydanie tohto softvéru, avšak za cenu možných vývojárskych chýb. Preto v prípade chýb pri štarte envoy kontajnerov uprednostnite posledné stabilné vydanie pred `latest` vydaním.
 
 Upravte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/kustomization.yaml`
 
@@ -82,8 +84,8 @@ spec:
       namespace: envoy-gateway-system    @_add_@
     - apiVersion: apps/v1    @_add_@
       kind: Deployment    @_add_@
-      name: polyfea-controller-controller-manager    @_add_@
-      namespace: wac-hospital         @_add_@
+      name: polyfea-controller    @_add_@
+      namespace: polyfea         @_add_@
   interval: 120s
   ...
 ```
@@ -119,7 +121,7 @@ V našom klastri máme k dispozícii tieto služby, ku ktorým by sme sa mohli p
 
 Postupne vytvoríme cesty - `HTTPRoute` - pre všetky služby, ktoré budú dostupné z vonkajšej siete.
 
-Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/polyfea-controller/http-route.yaml`
+Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/polyfea/http-route.yaml`
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -140,7 +142,7 @@ spec:
       backendRefs:
         - group: ""
           kind: Service
-          name: polyfea-controller-manager
+          name: polyfea-controller
           port: 80
 
     - matches:
@@ -157,20 +159,18 @@ spec:
 
 Vo všeobecnosti platí, že každá požiadavka musí byť spracovaná jedným alebo žiadny pravidlom uvedeným v objektoch `HTTRoute` pre daný `Gateway` objekt.  Tento manifest špecifikuje, že všetky požiadavky pri ktorých cesta začína segmentom `/fea` budú presmerované na službu `ployfea-controller-manager`. Požiadavky na root dokument `/` budú vrátené klientovi so stavom `303 -Redirect` a presmerovaním na cestu `/fea`.
 
-Upravte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/polyfea-controller/kustomization.yaml`:
+Upravte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/polyfea/kustomization.yaml`:
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- https://github.com/polyfea/polyfea-controller//config/default
-- http-route.yaml @_add_@
+  - https://github.com/polyfea/manifests//gitops/fluxcd
+  - http-route.yaml @_add_@
 
-namespace: wac-hospital
-
-commonLabels:
-  app.kubernetes.io/component: polyfea-controller
+configMapGenerator:
+...
 ```
 
 Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-webapi/http-route.yaml`
