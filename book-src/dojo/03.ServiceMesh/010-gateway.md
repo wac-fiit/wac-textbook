@@ -34,7 +34,10 @@ metadata:
 spec:
   gatewayClassName: wac-hospital-gateway-class
   listeners:
-  - name: http
+  - allowedRoutes:
+        namespaces:
+          from: All
+    name: http
     protocol: HTTP
     port: 80
 ```
