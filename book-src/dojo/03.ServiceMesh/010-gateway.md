@@ -131,6 +131,7 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: polyfea-controller
+  namespace: polyfea
 spec:
   parentRefs:
     - name: wac-hospital-gateway
