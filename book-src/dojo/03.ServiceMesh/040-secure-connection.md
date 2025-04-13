@@ -116,6 +116,9 @@ Za účelom vydávania certifikátov nasadíme do klastra službu [cert-manager]
     - name: http
       ...
     - hostname: wac-hospital.loc     @_add_@
+      allowedRoutes:     @_add_@
+        namespaces:     @_add_@
+          from: All     @_add_@
       name: fqdn     @_add_@
       protocol: HTTPS     @_add_@
       port: 443     @_add_@
@@ -125,6 +128,9 @@ Za účelom vydávania certifikátov nasadíme do klastra službu [cert-manager]
         - kind: Secret     @_add_@
           name: wac-hospital-tls     @_add_@
     - hostname: localhost     @_add_@
+      allowedRoutes:     @_add_@
+        namespaces:     @_add_@
+          from: All     @_add_@
       name: https-localhost     @_add_@
       protocol: HTTPS     @_add_@
       port: 443     @_add_@
@@ -146,7 +152,7 @@ Za účelom vydávania certifikátov nasadíme do klastra službu [cert-manager]
         requestRedirect:
           path:
             type: ReplaceFullPath
-            replaceFullPath: /ui
+            replaceFullPath: /fea
           scheme: https   @_add_@
           port: 443   @_add_@
 ```
@@ -171,10 +177,10 @@ Za účelom vydávania certifikátov nasadíme do klastra službu [cert-manager]
    kubectl get pods -n cert-manager
    ```
 
-8. V prehliadači otvorte stránku [https://localhost/ui/](https://localhost/ui/). Prehliadač Vás upozorní na neplatný certifikát, pretože je vydávaný _self-signed certificate_:
+8. V prehliadači otvorte stránku [https://localhost/fea/](https://localhost/fea/). Prehliadač Vás upozorní na neplatný certifikát, pretože je vydávaný _self-signed certificate_:
 
    ![Nebezpečný certifikát](./img/040-01-SelfSignde-Cert.png)
 
-   Stlačte tlačidlo _Rozšírené_ a následne stlačte na odkaz _Prejsť na stránku https://localhost/ui/_. Mali by ste vidieť stránku s aplikáciou, pričom prehliadač Vás v poli adresy stále upozorňuje na nebezpečné pripojenie.
+   Stlačte tlačidlo _Rozšírené_ a následne stlačte na odkaz _Prejsť na stránku https://localhost/fea/_. Mali by ste vidieť stránku s aplikáciou, pričom prehliadač Vás v poli adresy stále upozorňuje na nebezpečné pripojenie.
 
    >info:> Aktuálny postup prechodu na stránku s nebezpečným certifikátom sa môže medzi prehliadačmi odlišovať.
