@@ -1,13 +1,5 @@
 # Vytváranie vlastných operačných metrík s využitím OpenTelemetry SDK
 
----
-
->info:>
-Šablóna pre predvytvorený kontajner ([Detaily tu](../99.Problems-Resolutions/01.development-containers.md)):
-`registry-1.docker.io/milung/wac-mesh-100`
-
----
-
 V predchádzajúcej sekcii sme nasadili do nášho systému služby [Prometheus] a [Grafana], čo nám umožnilo zbierať a zobrazovať rôzne operačné metriky nášho systému, prevažne získané sledovaním parametrov kubernetes systému. Nie vždy sú však tieto metriky dostatočné, pretože nezahŕňajú metriky z našej aplikácie, ktoré sú pre nás dôležité. V tejto časti si ukážeme ako môžeme vytvoriť vlastné operačné metriky. K tomuto účelu musíme upraviť náš zdrojový kód. V našom prípade budeme využívať knižnicu [OpenTelemetry], ktorá nám umožní vytvárať vlastné metriky a zároveň ich exportovať do formátu, ktorý dokáže spracovať služba [Prometheus].
 
 Knižnica - SDK - [OpenTelemetry] je výsledkom integrácie rôznych projektov, ktoré sa zaoberajú monitorovaním aplikácií. Výsledkom je jednotná knižnica, ktorá umožňuje vytvárať metriky, distribuované trasovanie, generovanie záznamov - logov, vo všeobecnosti nazývanými [_Signals_](https://opentelemetry.io/docs/concepts/signals/metrics/). Tieto signály je potom možné exportovať do rôznych formátov. Formát a [špecifikácia OpenTelemetry](https://opentelemetry.io/docs/specs/) sú podporované väčšinou známych knižníc a integrovateľné so službami rôznych poskytovateľov. SDK je implementované v rôznych programovacích jazykoch, v našom prípade budeme využívať implementáciu pre jazyk [Go](https://opentelemetry.io/docs/instrumentation/go/).

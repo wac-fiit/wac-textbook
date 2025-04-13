@@ -1,12 +1,5 @@
 # Nasadenie na produkčný kubernetes klaster
 
----
-
->info:>
-Šablóna pre predvytvorený kontajner ([Detaily tu](../99.Problems-Resolutions/01.development-containers.md)):
-`registry-1.docker.io/milung/wac-mesh-030`
-
----
 
 Rovnako ako v prípade web klienta, aj pre webapi bola infraštruktúra nasadená centrálne. To znamená, že v klastri bežia služby  _MongoDb_, _ufe-container_ a _Envoy Gateway_.
 
