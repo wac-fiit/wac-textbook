@@ -137,7 +137,7 @@ Nástroj [Prometheus] patrí medzi najčastejšie využívané nástroje na moni
    serve_from_sub_path = true @_important_@
    
    [security]
-   # enable iframe embedding in ufe-controller
+   # enable iframe embedding in polyfea
    # or to embed graphs in external pages
    allow_embedding = true
 

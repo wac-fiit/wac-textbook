@@ -118,7 +118,7 @@ a prípadne otvoriť v prehliadači stránku `http://localhost`, ktorá ale bude
 
 V našom klastri máme k dispozícii tieto služby, ku ktorým by sme sa mohli pripojiť z vonkajšej siete:
 
-* **ufe-controller** - poskytuje naše používateľské rozhranie
+* **polyfea** - poskytuje naše používateľské rozhranie
 * **ambulance-webapi** - poskytuje rozhranie pre prístup k dátam
 * **swagger-ui** - poskytuje popis nášho web api
 

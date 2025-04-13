@@ -135,7 +135,7 @@ Za účelom vydávania certifikátov nasadíme do klastra službu [cert-manager]
 
    Pomocou bloku anotácií informujeme _cert-manager_ o tom, že má vytvoriť certifikát pre doménu `wac-hospital.loc` a pre doménu `localhost`. V prípade produkčného klastra by sme museli zmeniť vydavateľa certifikátov na `letsencrypt-issuer` a zmeniť emailovú adresu, ako aj zmeniť doménu na verejne dostupnú doménu. Doménu `wac-hospital.loc` využijeme v ďalšej časti, kedy bude potrebná pre správnu komunikáciu s [OpenID] poskytovateľom.
 
-6. Ďalej upravte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/ufe-controller/http-route.yaml`:
+1. Ďalej upravte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/polyfea/http-route.yaml`:
 
 ```yaml
       ...
