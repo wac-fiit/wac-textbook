@@ -1,13 +1,5 @@
 # Autorizácia používateľov s Open Policy Agent
 
----
-
->info:>
-Šablóna pre predvytvorený kontajner ([Detaily tu](../99.Problems-Resolutions/01.development-containers.md)):
-`registry-1.docker.io/milung/wac-mesh-070`
-
----
-
 Autentifikácia používateľov ešte nerieši riadenie prístupu k jednotlivým zdrojom v našej aplikácii. V praxi môžeme napríklad požadovať, aby k jednotlivým ambulanciám mali prístup len používatelia s rolou `hospital-supervisor` alebo `general-practitioner` - takzvané [_Role-Based Access Control_](https://en.wikipedia.org/wiki/Role-based_access_control), alebo aby sa do čakárne mohli v určitý deň prihlasovať len pacienti s príznakom `pregnant-women` - takzvaný [_Attribute-Based Access Control_](https://en.wikipedia.org/wiki/Attribute-based_access_control).
 
 Pre riadenie politiky prístupu, nielen v rámci autorizácie používateľov, ale pre definovanie takzvaných _policy rules_ vo všeobecnosti, použijeme [Open Policy Agent](https://www.openpolicyagent.org/). V našom prípade sa pokúsime nastaviť politiku, ktorá zabráni prístupu k mikroslužbe `http-echo` pre všetkých používateľov, okrem tých, ktorí majú našou politikou prístupu priradenú rolu "admin".

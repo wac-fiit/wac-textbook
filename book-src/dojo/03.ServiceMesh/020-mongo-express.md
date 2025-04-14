@@ -195,4 +195,4 @@ git commit -m "Mongo Express deployment"
 git push
 ```
 
-Po aplikovaní zmien službou [FluxCD][flux] prejdite na stránku [http://localhost/ui](http://localhost/ui) a overte, že sa Vám zobrazuje aj aplikácia [Mongo Express][mongoexpress].
+Po aplikovaní zmien službou [FluxCD][flux] prejdite na stránku [http://localhost/fea](http://localhost/fea) a overte, že sa Vám zobrazuje aj aplikácia [Mongo Express][mongoexpress].

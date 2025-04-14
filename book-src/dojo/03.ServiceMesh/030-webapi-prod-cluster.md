@@ -1,19 +1,12 @@
 # Nasadenie na produkčný kubernetes klaster
 
----
-
->info:>
-Šablóna pre predvytvorený kontajner ([Detaily tu](../99.Problems-Resolutions/01.development-containers.md)):
-`registry-1.docker.io/milung/wac-mesh-030`
-
----
 
 Rovnako ako v prípade web klienta, aj pre webapi bola infraštruktúra nasadená centrálne. To znamená, že v klastri bežia služby  _MongoDb_, _ufe-container_ a _Envoy Gateway_.
 
-Na Mongo Express bolo vytvorené smerovacie pravidlo, aplikácia je prístupná na adrese [https://wac-2025.westeurope.cloudapp.azure.com/fea/mongo-express/](https://wac-24.westeurope.cloudapp.azure.com/fea/mongo-express/).
+Na Mongo Express bolo vytvorené smerovacie pravidlo, aplikácia je prístupná na adrese [https://wac-2025.westeurope.cloudapp.azure.com/fea/mongo-express/](https://wac-2025.westeurope.cloudapp.azure.com/fea/mongo-express/).
 Keďže ide o verejne prístupný zdroj, prístup je chránený menom a heslom, ktoré sa dozviete od cvičiaceho.
 
-1. Overte, či stále funguje vaša klient aplikácia (webkomponent) na adrese [https://wac-2025.westeurope.cloudapp.azure.com/fea](https://wac-24.westeurope.cloudapp.azure.com/fea/).
+1. Overte, či stále funguje vaša klient aplikácia (webkomponent) na adrese [https://wac-2025.westeurope.cloudapp.azure.com/fea](https://wac-2025.westeurope.cloudapp.azure.com/fea/).
 
 2. Pokiaľ ste medzičasom vykonali zmeny vo Vašej front-end aplikácii - `ambulance-ufe`, musíte vytvoriť jej nové vydanie - release. Podobne ako pri [prvom nasadzovaní nášho Web komponentu](../01.Web-Components/111-production-deployment.md), na stránke [GitHub] prejdite do repozitára `ambulance-ufe` a v sekcii _Code_ stlačte na odkaz `1 tags` a následne na tlačidlo _Create a new releases_. V rozbaľovacom zozname _Choose a tag_ zadajte  text `v1.1.0` - alebo ďalší vyšší v zmysle [sémantického verzionovania][semver]. Do poľa _Release title_ zadajte text `v1.1.0` a v poli _Describe this release_ zadajte text v zmysle zmien, ktoré ste vykonali. Stlačte tlačidlo _Publish release_.
 
@@ -67,7 +60,7 @@ Keďže ide o verejne prístupný zdroj, prístup je chránený menom a heslom, 
    kubectl get pods -n wac-hospital
    ```
 
-7. Môžete skúsiť pristúpiť na váš web komponent cez stránku [https://wac-2025.westeurope.cloudapp.azure.com/fea/](https://wac-24.westeurope.cloudapp.azure.com/fea/).
+7. Môžete skúsiť pristúpiť na váš web komponent cez stránku [https://wac-2025.westeurope.cloudapp.azure.com/fea/](https://wac-2025.westeurope.cloudapp.azure.com/fea/).
 
 ---
 

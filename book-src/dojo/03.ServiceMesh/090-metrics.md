@@ -1,13 +1,5 @@
 # Sledovanie stavu systému pomocou metrík s využitím služieb Prometheus a Grafana
 
----
-
->info:>
-Šablóna pre predvytvorený kontajner ([Detaily tu](../99.Problems-Resolutions/01.development-containers.md)):
-`registry-1.docker.io/milung/wac-mesh-090`
-
----
-
 Pokiaľ sú naše logy vhodne vytvorené, môžeme z nich okrem analýzy problémov získať aj dostatok informácií o aktuálnom stave systému. Logy však primárne neriešia túto úlohu a vo väčšine prípadov nie sú najvhodnejším spôsobom na sledovanie rôznych výkonových parametrov systému a iných metrík systému vo všeobecnosti. V tejto časti si ukážeme, ako náš systém obohatiť o zber metrík formou časových sérií aktuálneho stavu systému. Na začiatok si ukážeme, ako zozbierať tieto metriky pre samotný klaster a v ďalšej časti si ukážeme postup, ako generovať špecifické metriky pre našu aplikáciu. Pre účel zberu metrík využijeme nástroj [Prometheus] a pre ich vizualizáciu nástroj [Grafana](https://grafana.com/).
 
 Nástroj [Prometheus] patrí medzi najčastejšie využívané nástroje na monitorovanie stavu komplexných systémov. Zaznamenáva merania získavané z rôznych zdrojov, pričom každému meraniu priradí časovú značku, čím vznikne časová séria takýchto meraní. Meraním môže byť objem alokovanej pamäti, oneskorenie odpovede na HTTP požiadavku a mnoho ďaších ukazovateľov. Jednotlivé merania potom možno zo systému získať, vzájomne kombinovať alebo agregovať pomocou dotazovacieho jazyka [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/). [Prometheus] obsahuje aj jednoduché rozhranie na získanie a vizualizáciu údajov, vo všeobecnosti sa ale na účely vizualizácie stavu systému využívajú špecializované nástroje, v našom prípade to bude nástroj [Grafana].
@@ -145,7 +137,7 @@ Nástroj [Prometheus] patrí medzi najčastejšie využívané nástroje na moni
    serve_from_sub_path = true @_important_@
    
    [security]
-   # enable iframe embedding in ufe-controller
+   # enable iframe embedding in polyfea
    # or to embed graphs in external pages
    allow_embedding = true
 

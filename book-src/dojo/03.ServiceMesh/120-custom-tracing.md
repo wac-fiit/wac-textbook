@@ -1,13 +1,5 @@
 # Pridanie distribuovaného trasovania do Web API služby
 
----
-
->info:>
-Šablóna pre predvytvorený kontajner ([Detaily tu](../99.Problems-Resolutions/01.development-containers.md)):
-`registry-1.docker.io/milung/wac-mesh-120`
-
----
-
 V predchádzajúcej sekcii sme videli, ako môžeme analyzovať jednotlivé požiadavky pomocou distribuovaného trasovania, samotné záznamy boli ale pomerne hrubé a stále nemáme k dispozícii ďalšie detaily ohľadne prebiehajúceho výpočtu. V tejto sekcii si ukážeme, ako doplniť do aplikácie rozsahy - _span_ - vlastného výpočtu.
 
 1. Otvorte súbor `${WAC_ROOT}/ambulance-webapi/cmd/ambulance-api-service/main.go` a upravte ho

@@ -1,13 +1,5 @@
 # Bezpečné pripojenie k aplikácii protokolom HTTPS
 
----
-
->info:>
-Šablóna pre predvytvorený kontajner ([Detaily tu](../99.Problems-Resolutions/01.development-containers.md)):
-`registry-1.docker.io/milung/wac-mesh-040`
-
----
-
 Naša aplikácia je teraz dostupná na porte 80 (HTTP) a javí sa ako jeden aplikačný server. [HTTP protokol](https://developer.mozilla.org/en-US/docs/Web/HTTP) však sám o sebe prenáša všetky údaje v textovej podobe a v nezabezpečenom formáte, čo môže spôsobiť únik informácií na verejných sieťach. Navyše, k našej aplikácii môže pristupovať hociktorá osoba, čo nemusí byť vždy žiadúce, napríklad môžeme chcieť obmedziť prístup k inštancii mongo express alebo umožniť len prístup pre registrovaných pacientov. V tejto časti si ukážeme ako zabezpečiť prístup k našej aplikácii pomocou [TLS](https://developer.mozilla.org/en-US/docs/Web/Security/Transport_Layer_Security), v ďalšej časti sa potom budeme zaoberať autentifikáciou a autorizáciou požiadaviek.
 
 Pre vytvorenie bezpečného pripojenia k našej aplikácii potrebujeme vytvoriť TLS certifikát pomocou infraštruktúry PKI a nasadiť ho do nášho kubernetes klastra. Aby bol certifikát akceptovaný klientom, musí byť vydaný, respektíve overený, známou certifikačnou autoritou, ktorej klient dôveruje. Prehliadač má vopred nastavené certifikačné autority, ktorým dôveruje, a ktoré sú schopné overiť platnosť certifikátu, prípadne môžeme doplniť vlastné certifikačné autority.
@@ -97,47 +89,53 @@ Za účelom vydávania certifikátov nasadíme do klastra službu [cert-manager]
 5. Upravíme konfiguráciu pre objekt `wac-hospital-gateway`. Upravte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/gateway.yaml`:
 
 ```yaml
-  ...
-  metadata:
-    name: wac-hospital-gateway
-    namespace: wac-hospital
-    annotations:   @_add_@
-      cert-manager.io/issuer: development-issuer # patch this to letsencrypt-issuer for production cluster   @_add_@
-      cert-manager.io/email-sans: "pfx@gmail.com"   @_add_@
-      cert-manager.io/subject-organizations: "WAC-Hospital"   @_add_@
-      cert-manager.io/subject-organizationalunits: "IT Support"   @_add_@
-      cert-manager.io/subject-countries: "SK"   @_add_@
-      cert-manager.io/subject-localities: "Bratislava"   @_add_@
-      cert-manager.io/revision-history-limit: "3"   @_add_@
-      cert-manager.io/private-key-rotation-policy: Always   @_add_@
-  spec:
-    gatewayClassName: wac-hospital-gateway-class
-    listeners:
-    - name: http
-      ...
-    - hostname: wac-hospital.loc     @_add_@
-      name: fqdn     @_add_@
-      protocol: HTTPS     @_add_@
-      port: 443     @_add_@
-      tls:     @_add_@
-        mode: Terminate     @_add_@
-        certificateRefs:     @_add_@
-        - kind: Secret     @_add_@
-          name: wac-hospital-tls     @_add_@
-    - hostname: localhost     @_add_@
-      name: https-localhost     @_add_@
-      protocol: HTTPS     @_add_@
-      port: 443     @_add_@
-      tls:     @_add_@
-        mode: Terminate     @_add_@
-        certificateRefs:     @_add_@
-        - kind: Secret     @_add_@
-          name: wac-hospital-tls     @_add_@
+...
+metadata:
+  name: wac-hospital-gateway
+  namespace: wac-hospital
+  annotations:   @_add_@
+    cert-manager.io/issuer: development-issuer # patch this to letsencrypt-issuer for production cluster   @_add_@
+    cert-manager.io/email-sans: "pfx@gmail.com"   @_add_@
+    cert-manager.io/subject-organizations: "WAC-Hospital"   @_add_@
+    cert-manager.io/subject-organizationalunits: "IT Support"   @_add_@
+    cert-manager.io/subject-countries: "SK"   @_add_@
+    cert-manager.io/subject-localities: "Bratislava"   @_add_@
+    cert-manager.io/revision-history-limit: "3"   @_add_@
+    cert-manager.io/private-key-rotation-policy: Always   @_add_@
+spec:
+  gatewayClassName: wac-hospital-gateway-class
+  listeners:
+  - name: http
+    ...
+  - hostname: wac-hospital.loc     @_add_@
+    allowedRoutes:     @_add_@
+      namespaces:     @_add_@
+        from: All     @_add_@
+    name: fqdn     @_add_@
+    protocol: HTTPS     @_add_@
+    port: 443     @_add_@
+    tls:     @_add_@
+      mode: Terminate     @_add_@
+      certificateRefs:     @_add_@
+      - kind: Secret     @_add_@
+        name: wac-hospital-tls     @_add_@
+  - hostname: localhost     @_add_@
+    allowedRoutes:     @_add_@
+      namespaces:     @_add_@
+        from: All     @_add_@
+    name: https-localhost     @_add_@
+    protocol: HTTPS     @_add_@
+    port: 443     @_add_@
+    tls:     @_add_@
+      mode: Terminate     @_add_@
+      certificateRefs:     @_add_@
+      - kind: Secret     @_add_@
+        name: wac-hospital-tls     @_add_@
 ```
 
    Pomocou bloku anotácií informujeme _cert-manager_ o tom, že má vytvoriť certifikát pre doménu `wac-hospital.loc` a pre doménu `localhost`. V prípade produkčného klastra by sme museli zmeniť vydavateľa certifikátov na `letsencrypt-issuer` a zmeniť emailovú adresu, ako aj zmeniť doménu na verejne dostupnú doménu. Doménu `wac-hospital.loc` využijeme v ďalšej časti, kedy bude potrebná pre správnu komunikáciu s [OpenID] poskytovateľom.
 
-6. Ďalej upravte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/ufe-controller/http-route.yaml`:
+1. Ďalej upravte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/polyfea/http-route.yaml`:
 
 ```yaml
       ...
@@ -146,7 +144,7 @@ Za účelom vydávania certifikátov nasadíme do klastra službu [cert-manager]
         requestRedirect:
           path:
             type: ReplaceFullPath
-            replaceFullPath: /ui
+            replaceFullPath: /fea
           scheme: https   @_add_@
           port: 443   @_add_@
 ```
@@ -171,10 +169,10 @@ Za účelom vydávania certifikátov nasadíme do klastra službu [cert-manager]
    kubectl get pods -n cert-manager
    ```
 
-8. V prehliadači otvorte stránku [https://localhost/ui/](https://localhost/ui/). Prehliadač Vás upozorní na neplatný certifikát, pretože je vydávaný _self-signed certificate_:
+8. V prehliadači otvorte stránku [https://localhost/fea/](https://localhost/fea/). Prehliadač Vás upozorní na neplatný certifikát, pretože je vydávaný _self-signed certificate_:
 
    ![Nebezpečný certifikát](./img/040-01-SelfSignde-Cert.png)
 
-   Stlačte tlačidlo _Rozšírené_ a následne stlačte na odkaz _Prejsť na stránku https://localhost/ui/_. Mali by ste vidieť stránku s aplikáciou, pričom prehliadač Vás v poli adresy stále upozorňuje na nebezpečné pripojenie.
+   Stlačte tlačidlo _Rozšírené_ a následne stlačte na odkaz _Prejsť na stránku https://localhost/fea/_. Mali by ste vidieť stránku s aplikáciou, pričom prehliadač Vás v poli adresy stále upozorňuje na nebezpečné pripojenie.
 
    >info:> Aktuálny postup prechodu na stránku s nebezpečným certifikátom sa môže medzi prehliadačmi odlišovať.
