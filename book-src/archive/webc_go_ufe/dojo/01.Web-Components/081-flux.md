@@ -49,7 +49,7 @@ uložíme do git repozitára, aby boli pripravené pre priebežné nasadenie do 
    kind: Kustomization
 
    resources:
-   - https://github.com/fluxcd/flux2//manifests/install?ref=v2.0.1
+   - https://github.com/fluxcd/flux2//manifests/install?ref=v2.5.1
    ```
 
    Týmto spôsobom sme vytvorili závislosť na konkrétnom vydaní systému [Flux CD][flux]. Do súboru

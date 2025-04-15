@@ -2,414 +2,305 @@
 
 Náš systém sa postupne rozrastá o nové mikroslužby, ktoré obsluhujú rôzne aspekty našej aplikácie. Zároveň predpokladáme rozrastanie sa aj samotnej funkcionality aplikácie, čo bude viesť k pridávaniu ďalších mikroslužieb do systému. Napriek všetkej snahe o dodanie čo najkvalitnejších komponentov, musíme predpokladať, že počas prevádzky systému bude dochádzať k situáciám, kedy sa správanie systému bude odchylovať od predpokladaného špecifikovaného správania. V takýchto situáciách je potrebné mať k dispozícii nástroje, ktoré nám umožnia zistiť, čo sa v systéme deje a kde sa nachádza problém. Zároveň potrebujeme mať k dispozícii informácie o tom, ako je súčasný systém využívaný a zaťažovaný, aby sme prípadným problémom dokázali včas predchádzať. V kontexte [DevOps](https://en.wikipedia.org/wiki/DevOps) vývoja sa tieto schopnosti a aktivity očakávajú od samotného vývojového tímu. V tejto a nasledujúcej časti si ukážeme, ako takéto nástroje nasadiť do systému a ako sledovanie (monitorovanie) systému podporiť aj pri implementácii mikroslužieb.
 
-Väčšina softvérových riešení generuje nejakým spôsobom záznamy o činnosti - _log_, v ideálnom prípade ich zapisuje rovno do štandardného výstupu. V prvom kroku preto nasadíme do klastra nástroje na zber a analýzu logov. V našom prípade to budú [FluentBit] a [Opensearch].
+Na sledovanie činnosti systému budeme využívať systém [Grafana Stack](https://grafana.com/about/grafana-stack/) a systém/ knižnice [OpenTelemetry](https://opentelemetry.io/). [Open Telemetry] je dnes de facto štandardom v oblast monitorovanie a zberu údajov zo softvérových systémov. Systém [Grafana Stack] poskytuje nástroje na analýzy a vizualizáciu údajov, ako aj na ďaľšie spracovanie týchto údajov. Existuje viacero alternatívnych riešení k systému [Grafana Stack], za povšimnutie stojí napríklad systém [SigNoz](https://signoz.io/), alebo [Uptrace](https://github.com/uptrace/uptrace).
 
-1. Služba [FluentBit] slúži na zber a spracovanie prúdu údajov. Je optimalizovaná na spracovanie logov, typicky v prostredí kubernetes a mikroslužieb. Spracované záznamy potom odosiela na ďalšie uloženie a analýzu, pričom pre konkrétny cieľ, kde sa tieto údaje majú uložiť, môžme využiť niektorý z existujúcich pluginov. [FluentBit] musíme nainštalovať do klastra kubernetes ako objekt typu [_DaemonSet_](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/), čo zabezpečí, že na každom [_Node_](https://kubernetes.io/docs/concepts/architecture/nodes/) bude vytvorená jedna replika služby [FluentBit], ktorá z tohto prostriedku zabezpečí zber údajov a ich odoslanie na ďalšie spracovanie.
+Pre nasadenie systému [Grafana Stack] sme pripravili manifesty, ktoré sú prispôsobené projektu týchto cvičení. Manifesty sú dostupné tu [https://github.com/wac-fiit/manifests/tree/main/observability]. Pre reálne nasadenie odporúčame naštudovať si aj oficiálnu dokumentáciu, pretože tu uvedená konfigurácia je optimalizované pre nasadenie na klastri s limitovanou kapacitou.
 
-   Pri konfigurácii [FluentBit] budeme vychádzať z ukážky v repozitári [Kubernetes Logging with Fluent Bit](https://github.com/fluent/fluent-bit-kubernetes-logging), ktorú upravíme pre naše potreby. Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/fluentbit/kustomization.yaml` s nasledujúcim obsahom:
+
+1. Vytvorte adresár `${WAC_ROOT}/ambulance-gitops/infrastructure/observability` a v ňom súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/observability/kustomization.yaml`:
 
    ```yaml
+   apiVersion: kustomize.config.k8s.io/v1beta1
+   kind: Kustomization
+
+   resources:
+   - https://github.com/wac-fiit/manifests//observability/gitops?ref=main
+   # in case your cluster is too small (e.g. not enough CPU/memory on laptop) you may 
+   # use following line instead of the above one, 
+   # to install only open Open*Telemetry Collector with exports into its log stream
+   # - https://github.com/wac-fiit/manifests//observability/otel-collector-logging/gitops?ref=main
+
+   # if you do not have yet certmanager installed: 
+   #- https://github.com/wac-fiit/manifests//cert-manager/gitops?ref=main
+   ```
+
+   >info:> Predpokladáme, že `cert-manager` máte nainštalované z prechádzajúcej kapitoly. Ak nie, odkomentujte príslušný riadok v predchádzajúcom súbore.
+
+   
+
+   Následne otvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/kustomization.yaml` a upravte ho:
+
+   ```yaml
+   apiVersion: kustomize.config.k8s.io/v1beta1
+   kind: Kustomization
+   
    resources:
    - namespace.yaml
-   - https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/fluent-bit-service-account.yaml
-   - https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/fluent-bit-role-1.22.yaml
-   - https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/fluent-bit-role-binding-1.22.yaml
-   - https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/output/elasticsearch/fluent-bit-configmap.yaml
-   - https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/output/elasticsearch/fluent-bit-ds.yaml
-   # for minikube use the following line  instead of the above one
-   # - https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/output/elasticsearch/   fluent-bit-ds-minikube.yaml
-      
-   images:
-     - name: fluent/fluent-bit
-       newName: fluent/fluent-bit
-       newTag: latest
-   commonLabels:
-       app.kubernetes.io/component: fluentbit
-   patches: 
-   - path: patches/fluent-bit-config.config-map.yaml
-   - path: patches/fluent-bit.daemon-set.yaml
+   - ../../../infrastructure/polyfea
+   - ../../../infrastructure/fluxcd
+   - ../../../infrastructure/envoy-gateway
+   - ../../../infrastructure/observability @_add_@
+     @_add_@
+   configMapGenerator:  @_add_@
+     - name: otel-params    @_add_@
+       namespace: wac-hospital   @_add_@
+       options:  @_add_@
+         disableNameSuffixHash: true  @_add_@
+       literals:  @_add_@
+       # for development purposes we use always_on sampler,   @_add_@
+       # in production you may want to use parentbased_trace_id_ratio sampler or any other available  @_add_@
+         - OTEL_TRACES_SAMPLER=always_on  @_add_@
+         - LOG_LEVEL=debug  @_add_@
+         # specify different host if `localhost` is not your top level domain name for the cluster @_add_@
+         - GRAFANA_ROOT_URL:=http://localhost/grafana  @_add_@ 
+     
+   components:
+   - ../../../components/version-developers
    ```
 
-   Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/fluentbit/namespace.yaml` s nasledujúcim obsahom:
+   Uložte zmeny a archivujte ich vo vzdialenom repozitári:
 
-   ```yaml
-   apiVersion: v1
-   kind: Namespace
-   metadata:
-     name: logging
-   ```
-
-   Mohli by sme fluentbit inštalovať aj do _namespace_-u `wac-hospital`, ale pre lepšiu izoláciu a prehľadnosť inštalujeme fluentbit do samostatného namespace-u `logging`.
-
-   Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/fluentbit/patches/fluent-bit-config.config-map.yaml` s nasledujúcim obsahom:
-
-    ```yaml
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      name: fluent-bit-config
-      namespace: logging
-      labels:
-        k8s-app: fluent-bit
-    data:
-      # Configuration files: server, input, filters and output
-      # ======================================================
-      fluent-bit.conf: |
-        [SERVICE]
-            Flush         1
-            Log_Level     info
-            Daemon        off
-            Parsers_File  parsers.conf
-            HTTP_Server   On
-            HTTP_Listen   0.0.0.0
-            HTTP_Port     2020
-
-        @INCLUDE input-kubernetes.conf
-        @INCLUDE filter-kubernetes.conf
-        @INCLUDE output-opensearch.conf
-
-      output-opensearch.conf: |  
-        [OUTPUT]
-            Name                opensearch
-            Match               *
-            Host                ${FLUENT_OPENSEARCH_HOST}
-            Port                ${FLUENT_OPENSEARCH_PORT}
-            Suppress_Type_Name  On
-            Replace_Dots        On
-            Retry_Limit         2
-
-      output-elasticsearch.conf: null
-    ```
-
-    Pôvodná konfiguráciu využívala výstupný plugin pre [Elasticsearch](https://www.elastic.co/), ktorý sme nahradili pluginom pre [Opensearch](https://opensearch.org/). V konfigurácii je potrebné nastaviť adresu a port, na ktorom bude [Opensearch] API dostupné.
-
-    Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/fluentbit/patches/fluent-bit.daemon-set.yaml` s nasledujúcim obsahom:
-
-    ```yaml
-    apiVersion: apps/v1
-    kind: DaemonSet
-    metadata:
-      name: fluent-bit
-      namespace: logging
-    spec:
-      template:
-        spec:
-          containers:
-          - name: fluent-bit
-            env:
-            - name: FLUENT_OPENSEARCH_HOST
-              value: monitoring-opensearch.wac-hospital @_important_@
-            - name: FLUENT_OPENSEARCH_PORT
-              value: "9200"
-    ```
-
-    Pri nastavení `FLUENT_OPENSEARCH_HOST` je nutné uviesť adresu servera aj s rozlíšením `namespace`, keďže túto službu budeme nasadzovať v namespace `wac-hospital`. V prípade, že by sme fluentbit nasadzovali do namespace-u `logging`, tak by sme mohli uviesť iba `monitoring-opensearch`.
-
-2. Pripravte konfiguráciu pre službu [OpenSearch]. Táto sa skladá z dvoch služieb - _backend_ služby poskytujúcej služby pre uloženie, indexovanie a vyhľadávanie údajov prostredníctvom REST API, a služby [OpenSearch Dashboards](https://opensearch.org/docs/latest/dashboards/index/), ktorá poskytuje používateľské rozhranie pre vyhľadávanie a vizualizáciu údajov. Obsah a zmysel jednotlivých súborov by Vám už mal byť zrejmý.
-
-   Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/monitoring-opensearch/server.deployment.yaml`
-
-    ```yaml
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: &PODNAME monitoring-opensearch
-    spec:
-      replicas: 1
-      strategy:
-        # recreate to avoid simultanopus locking of the data volume during updates
-        type: Recreate
-      selector:
-        matchLabels:
-          app.kubernetes.io/component: *PODNAME
-      template:
-        metadata:
-          labels:
-            app.kubernetes.io/component: *PODNAME
-        spec:
-          volumes:
-          - name: *PODNAME
-            persistentVolumeClaim:
-              claimName: *PODNAME
-          initContainers:
-          - name: fsgroup-volume
-            image: busybox:latest
-            imagePullPolicy: IfNotPresent
-            command: ['sh', '-c']
-            args:
-            # change data ownership to avoid "permision denied" errors
-            - 'chown -R 1000:1000 /usr/share/opensearch/data'
-            securityContext:
-            runAsUser: 0
-            resources:
-            requests:
-              cpu: 1m
-              memory: 32Mi
-            limits:
-              cpu: 10m
-              memory: 128Mi
-            volumeMounts:
-            - mountPath: /usr/share/opensearch/data
-              name: *PODNAME
-          containers:
-          - name: *PODNAME
-            image: opensearchproject/opensearch:latest
-            volumeMounts:
-              - mountPath: /usr/share/opensearch/data @_important_@
-                name: *PODNAME
-            env:
-              - name: discovery.type
-                value: single-node  @_important_@
-              - name: OPENSEARCH_JAVA_OPTS
-                value: -Xms512m -Xmx512m
-              - name: DISABLE_INSTALL_DEMO_CONFIG @_important_@
-                value: "true"
-              - name: DISABLE_SECURITY_PLUGIN @_important_@
-                value: "true"
-            ports: 
-              - name: api
-                containerPort: 9200 
-              - name: performance
-                containerPort: 9600
-    ```
-
-   Konfigurácia je účelne zjednodušená, predpokladá použitie bezpečnostných mechanizmov na úrovni klastra a je nasadená v móde jedného uzla. V prípade potreby je možné túto konfiguráciu rozšíriť o ďalšie parametre, ktoré sú dostupné v [dokumentácii](https://opensearch.org/docs/latest/install/index/), v produkcii je možné napríklad využiť [StatefulSet](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/) pre zabezpečenie vysokej dostupnosti.
-
-   Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/monitoring-opensearch/server.service.yaml`
-
-   ```yaml
-   apiVersion: v1
-   kind: Service
-   metadata:
-     name: &PODNAME monitoring-opensearch
-   spec: 
-     selector:
-       app.kubernetes.io/component: *PODNAME
-     ports:
-     - name: api
-       port: 9200
-       targetPort: 9200
-     - name: performance
-       port: 9600
-       targetPort: 9600
-   ```
-
-    Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/monitoring-opensearch/pvc.yaml`
-
-   ```yaml
-   apiVersion: v1
-   kind: PersistentVolumeClaim
-   metadata:
-     name: monitoring-opensearch
-   spec:
-     accessModes:
-       - ReadWriteOnce
-     resources:
-       requests:
-         storage: 5Gi
-   ```
-
-   Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/monitoring-opensearch/dashboard.deployment.yaml`:
-
-   ```yaml
-   apiVersion: apps/v1
-   kind: Deployment
-   metadata:
-     name: &PODNAME monitoring-dashboards
-   spec:
-     replicas: 1
-     selector:
-       matchLabels:
-         app.kubernetes.io/component: *PODNAME
-     template:
-       metadata:
-         labels:
-           app.kubernetes.io/component: *PODNAME
-       spec:
-         containers:
-         - name: *PODNAME
-           image: opensearchproject/opensearch-dashboards:latest
-           env:
-             - name: OPENSEARCH_HOSTS
-               value: '["http://monitoring-opensearch:9200"]' @_important_@
-             - name: DISABLE_SECURITY_DASHBOARDS_PLUGIN
-               value: "true"
-             - name: SERVER_BASEPATH
-               value: /monitoring @_important_@
-             - name: SERVER_REWRITEBASEPATH
-               value: "true"
-           ports: 
-             - name: web
-               containerPort: 5601
-           resources:
-            limits:
-                cpu: '0.5'
-                memory: '1Gi'
-            requests:
-                cpu: '0.1'
-                memory: '512M'
-   ```
-
-   Služba [OpenSearch Dashboards](https://opensearch.org/docs/latest/dashboards/index/) bude dostupná za našou [Gateway API][gatewayapi], preto nastavujeme `SERVER_BASEPATH` na `/monitoring`.
-
-   Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/monitoring-opensearch/dashboard.service.yaml`:
-
-   ```yaml
-   apiVersion: v1
-   kind: Service
-   metadata:
-     name: &PODNAME monitoring-dashboards
-   spec: 
-     selector:
-       app.kubernetes.io/component: *PODNAME
-     ports:
-     - name: web
-       port: 80
-       targetPort: 5601
-   ```
-
-   Nakoniec vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/monitoring-opensearch/kustomization.yaml`:
-
-   ```yaml
-   apiVersion: kustomize.config.k8s.io/v1beta1
-   kind: Kustomization
-   
-   namespace: wac-hospital
-   
-   commonLabels:
-     app.kubernetes.io/part-of: wac-hospital
-   
-   resources:
-   - server.deployment.yaml
-   - server.service.yaml
-   - pvc.yaml
-   - dashboard.deployment.yaml
-   - dashboard.service.yaml
-   ```
-
-3. Vytvorte adresár  `${WAC_ROOT}/ambulance-gitops/apps/observability-webc` a v ňom súbor `${WAC_ROOT}/ambulance-gitops/apps/observability-webc/monitoring-opensearch.webcomponent.yaml`:
-
-   ```yaml
-   apiVersion: fe.milung.eu/v1
-   kind: WebComponent
-   metadata: 
-     name: monitoring-dashboards
-   spec:   
-     module-uri: built-in
-     navigation:
-       - element: ufe-frame 
-         path: monitoring
-         title: Analýza logov
-         details: Analytické nástroje pre prácu so záznamami systému
-         attributes:  
-           - name: src
-             value: /monitoring
-   ```
-
-   a súbor `${WAC_ROOT}/ambulance-gitops/apps/observability-webc/monitoring-opensearch.http-route.yaml`:
-
-   ```yaml
-   apiVersion: gateway.networking.k8s.io/v1
-   kind: HTTPRoute
-   metadata:
-     name: monitoring-dashboards
-   spec:
-     parentRefs:
-       - name: wac-hospital-gateway
-     rules:
-       - matches:
-           - path:
-               type: PathPrefix
-               value: /monitoring
-         backendRefs:
-           - group: ""
-             kind: Service
-             name: monitoring-dashboards
-             port: 80
-   ```
-
-   Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/apps/observability-webc/kustomization.yaml`:
-
-   ```yaml
-   apiVersion: kustomize.config.k8s.io/v1beta1
-   kind: Kustomization
-
-   namespace: wac-hospital
-
-   resources:
-   - monitoring-opensearch.webcomponent.yaml
-   - monitoring-opensearch.http-route.yaml
-   ```
-
-   Objekty _WebComponent_ a _HTTPRoute_ vytvárame ako súčasť aplikácie, aby sme sa vyhli krížovej závislosti medzi týmito objektami a inštaláciou používateľských typov objektov - [_Custom Resource Definition_](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/). Alternatívou by bolo rozdeliť nasadenie infraštruktúry do ďalších na sebe závislých krokov, napríklad `prepare-crd` a `prepare-instances`, kvôli zjednodušeniu sme ale zvolili umiestnenie integrácie s mikrofrontendom do sekcie _apps_, čo viac menej aj zodpovedá sémantike registrácie týchto mikro-frontend komponentov do našej aplikácie.
-
-4. Upravte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/kustomization.yaml`
-
-   ```yaml
-   ...
-   resources:
-   ...
-   - ../../../infrastructure/fluentbit   @_add_@
-   - ../../../infrastructure/monitoring-opensearch   @_add_@
-   ```
-
-   a súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/install/kustomization.yaml`:
-
-   ```yaml
-   ...
-   resources:
-    ...
-    - ../../../apps/http-echo
-    - ../../../apps/observability-webc  @_add_@
-   ```
-
-   Overte správnosť konfigurácie pomocou príkazov v priečinku `${WAC_ROOT}/ambulance-gitops/`:
-
-   ```bash
-   kubectl kustomize ./clusters/localhost/prepare
-   kubectl kustomize ./clusters/localhost/install
-   ```
-
-5. Archivujte zmeny a uložte ich do vzdialeného repozitára:
-
-   ```bash
+   ```ps
    git add .
-   git commit -m "Add fluentbit and opensearch"
+   git commit -m "Add grafana stack"
    git push
    ```
 
-   Počkajte, kým sa zmeny nasadia do klastra a overte ich pomocou príkazu:
+   Overte, že sa aplikujú najnovšie zmeny vo Vašom klastri
 
-   ```bash
-   kubectl get kustomization -n wac-hospital
-   kubectl get pods -n logging
-   kubectl get pods -n wac-hospital
+   ```ps
+   kubectl -n observability get kustomization -w
    ```
 
-  >info:> Ak sa pody nevedia naštartovať, je možné, že klaster nemá dostatok miesta na disku. Napríklad v pripade docker-desktop je potrebné zvýšiť limit pre disky v nastaveniach aplikácie.
+2. Po aplikovani zmien sa do klastra nainštalujú komponenty systému [Grafana Stack]. Otvorte v prehliadači stránku [http://localhost] a vyberte aplikáciu _Aktuálny operačný stav systému_. Pri správnej inštalácii by sa mala objaviť okno aplikácie Grafana s prednastaveným informačným panelom "System Overview". 
 
-6. Prejdite na stránku [http://localhost/monitoring](http://localhost/monitoring) a overte, že je dostupná.  Pri úvodnom prístupe zvoľte voľbu _Explore on my own_ a zrušte prípadné popup okno. Otvorte bočný panel menu, vyberte položku _Index Management_ a následne vyberte položku _Indices_. V zozname indexov by ste mali vidieť index _fluent-bit_.
+   >build_circle:> V niektorých prípadoch, v závislosti od načasovania sa môže zobraziť informácia _Dashboard not found_. V takom prípade je potrebné počkať, kým sa nainštaluje systém [Grafana Stack] a znovu načítať stránku.
 
-   ![Index Management](./img/080-01-IndexManagement.png)
+   V pravom hornom okne rámčeka Grafana kliknite na ikonu menu menu a v bočnom paneli stlačte na záložku _Explore_. V okne _Explore_ sa zobrazí zoznam dostupných zdrojov údajov. V hornej časti vyberte v rozbalovacom zozname položku "Logs".
 
-   Otvorte bočný panel a vyberte položku _Discover_. Zobrazí sa vám okno s pokynmi na vytvorenie _Index Patterns_.
+   ![Grafana Logs](./img/080-01-Grafana-logs.png)
 
-   ![Úvodné okno Discover](./img/080-02-DiscoverFirstTime.png)
+3. V zobrazenok paneli zadajte do poľa _Label filters_ názov `container` a priraďte mu hodnotu `polyfea-controller` a v hornej časti stlačte modro sfarbené tlačidlo _Run query_. V spodnej časti okna sa zobrazí zoznam logov, ktoré boli zaznamenané v poslednej hodine kontajnermi s názvom `polyfea-controller`
 
-   Stlačte na tlačidlo _Create index pattern_  a do poľa _Index pattern name_ zadajte text `fluent-bit`.
+   ![Grafana Logs](./img/080-02-Grafana-logs.png)
 
-   ![Vytvorenie Index Pattern](./img/080-03-CreateIndexPattern.png)
+   >homework:> Vyskúšajte si rôzne konfigurácie sledovania záznamov, napríklad pre `namespace=wac-hospital`, rôzne časové obdobie, prípadne filtrovanie záznamov so špecifickým textom alebo atribútom. Pre podrobnejšiu prácu si naštudujte aj dokumentáciu pre tvorenie dotazov [Log queries](https://grafana.com/docs/loki/latest/query/log_queries/).
 
-   >info:> Túto akciu sme mohli vyvolať aj výberom položky _Dashboards Management_ v bočnom menu a následným výberom položky _Index patterns_.
+Predchádzajúcim postupom sme do nášho systému nainštalovali systém [Grafana Stack] a [Open Telemetry Collector], čím sme pripravili sme si prostredie na sledovanie činnosti našich mikroslužieb. Schématicke znázornenie ako tento systém funguje je na nasledujúcom obrázku:
 
-   Stlačte tlačidlo _Next step_ a v rozbaľovacom poli _Time field_ zvoľte položku `@timestamp`. Stlačte tlačidlo _Create index pattern_.
+![Grafana Stack](./img/080-03-grafana-stack.png)
 
-   ![Vytvorenie Index Pattern](./img/080-04-CreateIndexPattern-Timefield.png)
+V tejto kapitole využívame subsystém _Promtail_, ktorého úlohou je zozbierať všetky logy z kontajnerov v systéme kubernetes a poslať ich do subsystému _Loki_, ktorý ich uloží do databázy. Následne je možné tieto logy analyzovať pomocou aplikácie _Grafana_.
 
-7. V bočnom menu aplikácie _OpenSearch Dashboards_ vyberte položku _Discover_. Teraz sa zobrazí okno s výpisom logov vo Vašom klastri za posledných 15 minút. V ľavom bočnom paneli môžete upraviť, ktoré údaje logov sa Vám budú zobrazovať. V hornom paneli môžete zadať frázu pre vyhľadávanie v záznamoch systému, prípadne výpis filtrovať podľa rôznych kritérií, alebo si nastaviť iný časový rozsah záznamov systému. V prípade nepredvídaného správania sa systému, môžete túto funkcionalitu využiť na dohľadanie možnej príčiny takéhoto správania sa. Ďalšie možnosti analýzy logov nájdete v bočnom menu v položke "Logs". Pre viac informácií o možnostiach využitia OpenSearch Dashboard pre analýzu a monitorovanie systému si pozrite [dokumentáciu](https://opensearch.org/docs/latest/dashboards/index/).
+Pokiaľ by sme chceli sledovať činnosť našej aplikácie v kontajneri `<pfx>-ambulance- wl-webapi-container`, boli by zatiaľ nedostatočné, keďže sme až doteraz tomuto aspektu vývoja nevenovali dostatočnú pozornosť. Predstavte si, že by ste po nasadení aplikácie do produkcie dostávali od zákaznikov informácie typu, že v ranných hodinách sa musia pacienti registrovať do zoznamu čakajúcich niekoľkokrát, kým sa im podarí úspešne vytvoriť záznam. Aké informácie by ste potrebovali v zázname činnosti vidieť aby ste získali aspoň základný prehľad o tom, čo môže túto chybu spôsobovať? Aké informácie by ste potrebovali z logov, aby ste vedeli, že sa naozaj jedná o problém s Vašou aplikáciou a nie s iným komponentom systému? Na to aby ste tieto otázky vedeli zodpovedať je potrebné kód obohatiť o generovanie relevantných záznamov - _logov_.
 
-   ![Výpis a analýza logov pre namespace `wac-hospital`](./img/080-05-LogAnalysis.png)
+Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá umožňuje vytvárať štrukturované JSON logy. Štrukturované JSON logy umožňujú dosiahnuť vyššiu úroveň flexibility a efektivity pri spracovaní logov. V porovnaní s klasickými textovými logmi, štrukturované JSON logy umožňujú jednoduchšie filtrovanie a analýzu údajov. Vďaka tomu je možné rýchlo identifikovať problémy a získať prehľad o výkonnosti aplikácie.
 
-Aby bola analýza logov naozaj efektívna, musíte venovať náležitú pozornosť výberu záznamov, ktoré produkujete. Základným kritériom výberu je užitočnosť informácií v nich obsiahnutých. Zahltenie logov zbytočnými informáciami môže viesť k tomu, že v prípade potreby budete mať ťažkosti s ich analýzou. Vždy označte záznamy vhodným spôsobom, aby ste ich mohli jednoducho filtrovať a obsiahnite v nich informácie, ktoré Vám umožnia sledovať spracovanie údajov v rôznych častiach systému. Mať k dispozícii informáciu, že sa Vaše API vyvolalo 500-krát nie je až také užitočné, pokiaľ neviete zistiť, ktoré z týchto vyvolaní súvisí s podozrivým správaním sa systému.
+1. Otvorte súbor `${WAC_ROOT}/ambulance-webapi/internal/ambulance_wl/impl_ambulance_waiting_list.go` a upravte ho. Všimnite si, že vždy zapisuje log pokiaľ dôjde k chybe, ktorú nevieme spracovať, a v prípade úspešného behu zobrzíme len strohú informáciu o vytvorení záznamu.
 
-Aplikácia [OpenSearch] umožňuje pridať aj pokročilejšie vizualizácie, naše logy napríklad môžu obsahovať niektoré dôležité ukazovatele stavu jednotlivých služieb. Tu sa týmito možnosťami nebudeme zaoberať, v ďalšej kapitole si ukážeme, ako poskytovať rôzne metriky a ukazovatele činnosti systému.
+   >warning:> Nikdy do logov nezapisujte citlivé informácie, ako sú napríklad osobné údaje pacientov, alebo iné citlivé údaje. Pokiaľ počas vývoja potrebujete a pri analýze problému v testovacom prostredí potrebuje získať detailné informácie o spracovaných údajoch, použite `Trace` úroveň logov. V produkčných systémoch obsahujúcich reálne údaje nikde nenastavujte úroveň logov na nižšiu úroveň ako je úroveň `Debug`.
+
+   ```go
+   package ambulance_wl
+   
+   import (
+     "net/http"
+     "time"
+   
+     "slices"
+   
+     "github.com/gin-gonic/gin"
+     "github.com/google/uuid"
+     "github.com/rs/zerolog"     @__add__@
+     "github.com/rs/zerolog/log"     @__add__@
+   )
+   
+   type implAmbulanceWaitingListAPI struct {
+     logger zerolog.Logger     @__add__@
+   }
+   
+   func NewAmbulanceWaitingListApi() AmbulanceWaitingListAPI {
+     return &implAmbulanceWaitingListAPI{logger: log.With().Str("component", "ambulance-wl").Logger()}      @__add__@
+   }
+   
+   func (o implAmbulanceWaitingListAPI) CreateWaitingListEntry(c *gin.Context) {
+     updateAmbulanceFunc(c, func(c *gin.Context, ambulance *Ambulance) (*Ambulance, interface{}, int) {
+       logger := o.logger.With().     @__add__@
+         Str("method", "CreateWaitingListEntry").     @__add__@
+         Str("ambulanceId", ambulance.Id).     @__add__@
+         Str("ambulanceName", ambulance.Name).     @__add__@
+         Logger()     @__add__@
+       var entry WaitingListEntry
+   
+       if err := c.ShouldBindJSON(&entry); err != nil {
+         logger.Error().Err(err).Msg("Failed to bind JSON")     @__add__@
+         return nil, gin.H{
+           "status":  http.StatusBadRequest,
+           "message": "Invalid request body",
+           "error":   err.Error(),
+         }, http.StatusBadRequest
+       }
+   
+       if entry.PatientId == "" {
+         logger.Error().Msg("Patient ID is required")     @__add__@
+         logger.Trace().Msgf("Entry: %+v", entry)     @__add__@
+         return nil, gin.H{
+           "status":  http.StatusBadRequest,
+           "message": "Patient ID is required",
+         }, http.StatusBadRequest
+       }
+   
+       if entry.Id == "" || entry.Id == "@new" {
+         entry.Id = uuid.NewString()
+         logger.Debug().     @__add__@
+           Str("entry-id", entry.Id).     @__add__@
+           Msg("Generating new ID for entry")     @__add__@
+       }
+   
+       conflictIndx := slices.IndexFunc(ambulance.WaitingList, func(waiting WaitingListEntry) bool {
+         return entry.Id == waiting.Id || entry.PatientId == waiting.PatientId
+       })
+   
+       if conflictIndx >= 0 {
+         logger.Error().Msg("Entry already exists")     @__add__@
+         return nil, gin.H{
+           "status":  http.StatusConflict,
+           "message": "Entry already exists",
+         }, http.StatusConflict
+       }
+   
+       ambulance.WaitingList = append(ambulance.WaitingList, entry)
+       ambulance.reconcileWaitingList()
+       // entry was copied by value return reconciled value from the list
+       entryIndx := slices.IndexFunc(ambulance.WaitingList, func(waiting WaitingListEntry) bool {
+         return entry.Id == waiting.Id
+       })
+       if entryIndx < 0 {
+         logger.Error().Msg("Failed to find entry in waiting list after saving")     @__add__@
+         return nil, gin.H{
+           "status":  http.StatusInternalServerError,
+           "message": "Failed to save entry",
+         }, http.StatusInternalServerError
+       }
+       logger.Info().     @__add__@
+         Str("entry-id", ambulance.WaitingList[entryIndx].Id).     @__add__@
+         Msg("Succesfully created patient entry")     @__add__@
+       return ambulance, ambulance.WaitingList[entryIndx], http.StatusOK
+     })
+   }
+   ```
+
+   >homework:> Obdobným spôsobom upravte aj ostatné funkcie v súbore `${WAC_ROOT}/ambulance-webapi/internal/ambulance_wl/impl_ambulance_waiting_list.go`, a v ďalších súboroch webapi. v súbore `${WAC_ROOT}/ambulance-webapi/internal/db_service/mongo_svc.go` zmeňte spôsob generovania logov tak použil knižnicu [zerolog] a vytvorte štrukturované záznamy  .
+
+   V tejto časti sme pridali do kódu knižnicu [zerolog] a inicializovali sme logger. Následne sme do funkcie `CreateWaitingListEntry` pridali logovanie udalostí, ktoré sa v tejto funkcii dejú. V prípade, že nastane chyba, alebo sa vykoná úspešná operácia, zaznamenáme túto udalosť do logu.
+
+   >info:> Pre zjednodušenie sme použili prednastavené úrovne logovania. V reálnych aplikáciách by ste mali zvážiť aj použitie vlastných úrovní logovania, aby ste mohli lepšie prispôsobiť logovanie potrebám vašej aplikácie.
+
+2. Otvorte súbor `${WAC_ROOT}/ambulance-webapi/cmd/ambulance-api-service/main.go` a doplňte inicializáciu knižnice [zerolog] do funkcie `main`:
+
+   ```go
+   package main
+
+   import (
+     "log" @__remove__@
+     ...
+     "github.com/rs/zerolog"     @__add__@
+     "github.com/rs/zerolog/log"     @__add__@
+   )
+
+   func main() {
+     output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: zerolog.TimeFormatUnix}   @__add__@
+     log.Logger = zerolog.New(output).With().   @__add__@
+       Str("service", "ambulance-wl-list").   @__add__@
+       Timestamp().   @__add__@
+       Caller().   @__add__@
+       Logger()   @__add__@
+      @__add__@
+     logLevelStr := os.Getenv("LOG_LEVEL")   @__add__@
+     defaultLevel := zerolog.InfoLevel   @__add__@
+     level, err := zerolog.ParseLevel(strings.ToLower(logLevelStr))   @__add__@
+     if err != nil {   @__add__@
+       log.Warn().Str("LOG_LEVEL", logLevelStr).Msgf("Invalid log level, using default: %s", defaultLevel)   @__add__@
+       level = defaultLevel   @__add__@
+     }   @__add__@
+     // Set the global log level   @__add__@
+     zerolog.SetGlobalLevel(level)   @__add__@
+      @__add__@
+     log.Info().Msg("Server started")   @__add__@
+     log.Printf("Server started")   @__remove__@
+
+     ...
+   }
+   ```
+
+   V tejto funkcie sme nastavil globálnu úroveň logovania na hodnotu, ktorú sme nastavili v premennej prostredia a pridali základné atribúty pre generované logy.
+
+   V príkazovom riadku vykonajte nasledujúce príkazy a overte či je program v kompilovateľnom stave:
+
+   ```ps
+   go mod tidy
+   go build .\cmd\ambulance-api-service\main.go
+   ```
+
+3. Upravte súbor `${WAC_ROOT}/ambulance-webapi/buid/docker/Dockerfile` v ktorom doplníme implicitnú konfiguráciu tak aby bol kontajner použiteľný aj samostatne. Význam niektorých nastavení bude zrejmý v neskorších kapitolách, tu je pre nás zaujímave najmä nastavenie hodnoty `LOG_LEVEL`:
+
+   ```Dockerfile
+   ...
+   FROM scratch
+
+   # to avoid connection errors in standalone case otel exporters are disabled by default
+   ENV OTEL_TRACES_EXPORTER=none
+   ENV OTEL_METRICS_EXPORTER=none
+   ENV OTEL_LOGS_EXPORTER=none
+   ENV LOG_LEVEL=info
+   
+   ENV OTEL_SERVICE_NAME=ambulance-wl-api
+   ...
+   ```
+
+   Pri nasadení grafana stack sme v klastri vytvorili ak objekt typu _ConfigMap_ s názvom `otel-params`, ktorý obsahuje všeobecnú konfiguráciu pre kvalitativný aspekt [_observability_](https://en.wikipedia.org/wiki/Observability_(software)) nášho systému. Upravte súbor `${WAC_ROOT}/ambulance-webapi/deployments/kustomize/install/deployment.yaml` a použite túto konfiguráciu:
+
+   ```yaml
+
+   metadata:
+   name: cv1-ambulance-webapi
+   spec:
+     ...
+     template:
+       ...
+       spec:
+         ...
+         containers:
+         - name: <pfx>-ambulance-wl-webapi-container
+           image: <docker-id>/ambulance-wl-webapi:latest
+           imagePullPolicy: Always
+           ports:
+           - name: webapi-port
+             containerPort: 8080
+           envFrom:   @__add_@
+             - configMapRef:   @__add_@
+                 name: otel-params   @__add_@
+                 voptional: true   @__add_@
+           env:
+           ...
+    ```
+
+   Uložte zmeny a archivujte ich vo vzdialenom repozitári:
+
+   ```ps
+    git add .
+    git commit -m "Observability improved by structured logs"
+    git push
+    ```
+
+4. Prejdite na stránku [http://localhost/] a v aplikácii _Zoznam čakajúcich v ambulancii_ vytvorte niekoľko záznamov. Následne prejdite do aplikácie _Aktuálny operačný stav systému_ (Grafana), a opäť otvorte záložku _Explore_ so zdrojom dát `Logs`. V zobrazenok paneli zadajte do poľa _Label filters_ názov `container` a priraďte mu hodnotu ``<pfx>-ambulance- wl-webapi-container`` a v hornej časti stlačte modro sfarbené tlačidlo _Run query_.
+
+   Predpokladajme, že chceme vidieť iba záznamy, ktoré sa týkajú výhradne ambulancie `bobulova`. Musíme preto vytvoriť dotaz, ktorý by dokázal skonvertovať náš záznam na požadovaný formát. V panely dotazu logov stlačte na tlačidlo _Code_ a skopírujte nasledujúci text do poľa dotazu:
+
+   ```plain
+   {container="cv1-ambulance-wl-webapi-container"} |= `` | json | line_format `{{.log}}` | json | ambulanceId = `bobulova`
+   ```
+
+  Následne stlačte tlačidlo _Run query_. V panely logov vidíte len záznamy, ktoré sa týkajú ambulancie `bobulova`, štrukturované s detailami záznamov, ako sme ich uviedli v našej aplikácií.
+
+  >info:> Aby sme boli schopný efektívne využívať štrukturované záznamy, je nutné zjednotiť kódovanie informácii a ich interpretáciu v štrukturovaných záznamoch. Napríklad by sme v našom projekte mohli definovať konvenciu, že všetky záznamy, ktoré sa týkajú ambulancie budú mať v štruktúre záznamu atribút `ambulanceId`, ktorý bude obsahovať identifikátor ambulancie. To nam následne umožní filtrovať záznamy podľa ambulancie a získať tak prehľad o činnosti systému skrz rôzne miroslužby. Dobrým príkladom ako zjednotiť všeobecne používane atribúty je napríklad projekt [OpenTelemetry Semantic Conventions](https://opentelemetry.io/docs/specs/otel/semantic_conventions/overview/), ktorý definuje konvencie pre rôzne atribúty a ich hodnoty, ktoré sa používajú v štrukturovaných záznamoch. V prípade, že sa rozhodnete používať tieto konvencie, je dobré si ich preštudovať a zadefinovať ich rozšírenie pre potreby vašej aplikácie.
