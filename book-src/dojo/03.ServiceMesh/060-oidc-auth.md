@@ -18,7 +18,7 @@ Pre účely autentifikácie použijeme službu [oauth2-proxy](https://oauth2-pro
 
    >warning:> IP adresa pridelená Vášmu počítaču sa môže zmeniť, pri každom ďalšom sedení preto musíte overiť, aká IP adresa je vášmu počítaču pridelená a zmeniť záznam v tomto súbore. V niektorých sieťach majú jednotlivé zariadenia, vrátane pracovných počítačov, pridelené stále FQDN. V týchto prípadoch môžete použiť toto označenie a nemusíte upravovať súbor `etc/hosts`. Použitie označenia `localhost` v ďalšom cvičení ale nebude fungovať.
 
-2. Aby sme získali prístup k identite používateľov platformy GitHub, musíme na tejto platforme zaregistrovať našu aplikáciu. Používatelia budú neskôr vyzvaní na poskytnutie súhlasu so zdieľaním ich identity s našou aplikáciou. Prihláste sa so svojim účtom do platformy GitHub a prejdite na stránku [https://github.com/settings/developers](https://github.com/settings/developers). Zvoľte voľbu _Register a new application_. Vyplňte formulár na zobrazenej stránke:
+2. Aby sme získali prístup k identite používateľov platformy GitHub, musíme na tejto platforme zaregistrovať našu aplikáciu. Používatelia budú neskôr vyzvaní na poskytnutie súhlasu so zdieľaním ich identity s našou aplikáciou. Prihláste sa so svojim účtom do platformy GitHub a prejdite na stránku [https://github.com/settings/developers](https://github.com/settings/developers). Zvoľte voľbu _New OAuth app_. Vyplňte formulár na zobrazenej stránke:
 
    * _Application name_: `WAC hospital`
    * _Homepage URL_: `https://wac-hospital.loc`
@@ -260,7 +260,6 @@ Pre účely autentifikácie použijeme službu [oauth2-proxy](https://oauth2-pro
          group: gateway.networking.k8s.io
          kind: Gateway
          name: wac-hospital-gateway
-         namespace: wac-hospital
        type: JSONPatch
        jsonPatches:
          - type: "type.googleapis.com/envoy.config.listener.v3.Listener"
@@ -466,6 +465,7 @@ Pre účely autentifikácie použijeme službu [oauth2-proxy](https://oauth2-pro
     ...
     resources: 
     ...
+    - ../../../apps/mongo-express
     - ../../../apps/http-echo @_add_@
     ...
     ```
