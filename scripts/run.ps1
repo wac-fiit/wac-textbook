@@ -11,7 +11,7 @@ $ProjectRoot = "${PSScriptRoot}/.."
 
 switch ($command) {
 
-    "help": {
+    "help" {
         Write-Output "Usage: run.ps1 <command>"
         Write-Output "Commands:"
         Write-Output "  start: start the book-builder container"

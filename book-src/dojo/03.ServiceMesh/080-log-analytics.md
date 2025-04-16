@@ -1,11 +1,10 @@
-# Zber a analýza logov s Fluentbit a OpenSearch
+# Zber a analýza logov
 
 Náš systém sa postupne rozrastá o nové mikroslužby, ktoré obsluhujú rôzne aspekty našej aplikácie. Zároveň predpokladáme rozrastanie sa aj samotnej funkcionality aplikácie, čo bude viesť k pridávaniu ďalších mikroslužieb do systému. Napriek všetkej snahe o dodanie čo najkvalitnejších komponentov, musíme predpokladať, že počas prevádzky systému bude dochádzať k situáciám, kedy sa správanie systému bude odchylovať od predpokladaného špecifikovaného správania. V takýchto situáciách je potrebné mať k dispozícii nástroje, ktoré nám umožnia zistiť, čo sa v systéme deje a kde sa nachádza problém. Zároveň potrebujeme mať k dispozícii informácie o tom, ako je súčasný systém využívaný a zaťažovaný, aby sme prípadným problémom dokázali včas predchádzať. V kontexte [DevOps](https://en.wikipedia.org/wiki/DevOps) vývoja sa tieto schopnosti a aktivity očakávajú od samotného vývojového tímu. V tejto a nasledujúcej časti si ukážeme, ako takéto nástroje nasadiť do systému a ako sledovanie (monitorovanie) systému podporiť aj pri implementácii mikroslužieb.
 
 Na sledovanie činnosti systému budeme využívať systém [Grafana Stack](https://grafana.com/about/grafana-stack/) a systém/ knižnice [OpenTelemetry](https://opentelemetry.io/). [Open Telemetry] je dnes de facto štandardom v oblast monitorovanie a zberu údajov zo softvérových systémov. Systém [Grafana Stack] poskytuje nástroje na analýzy a vizualizáciu údajov, ako aj na ďaľšie spracovanie týchto údajov. Existuje viacero alternatívnych riešení k systému [Grafana Stack], za povšimnutie stojí napríklad systém [SigNoz](https://signoz.io/), alebo [Uptrace](https://github.com/uptrace/uptrace).
 
-Pre nasadenie systému [Grafana Stack] sme pripravili manifesty, ktoré sú prispôsobené projektu týchto cvičení. Manifesty sú dostupné tu [https://github.com/wac-fiit/manifests/tree/main/observability]. Pre reálne nasadenie odporúčame naštudovať si aj oficiálnu dokumentáciu, pretože tu uvedená konfigurácia je optimalizované pre nasadenie na klastri s limitovanou kapacitou.
-
+Pre nasadenie systému [Grafana Stack] sme pripravili manifesty, ktoré sú prispôsobené projektu týchto cvičení. Manifesty sú dostupné [tu](https://github.com/wac-fiit/manifests/tree/main/observability). Pre reálne nasadenie odporúčame naštudovať si aj oficiálnu dokumentáciu, pretože tu uvedená konfigurácia je optimalizované pre nasadenie na klastri s limitovanou kapacitou.
 
 1. Vytvorte adresár `${WAC_ROOT}/ambulance-gitops/infrastructure/observability` a v ňom súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/observability/kustomization.yaml`:
 
@@ -25,8 +24,6 @@ Pre nasadenie systému [Grafana Stack] sme pripravili manifesty, ktoré sú pris
    ```
 
    >info:> Predpokladáme, že `cert-manager` máte nainštalované z prechádzajúcej kapitoly. Ak nie, odkomentujte príslušný riadok v predchádzajúcom súbore.
-
-   
 
    Následne otvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/kustomization.yaml` a upravte ho:
 
@@ -75,7 +72,7 @@ Pre nasadenie systému [Grafana Stack] sme pripravili manifesty, ktoré sú pris
    kubectl -n observability get kustomization -w
    ```
 
-2. Po aplikovani zmien sa do klastra nainštalujú komponenty systému [Grafana Stack]. Otvorte v prehliadači stránku [http://localhost] a vyberte aplikáciu _Aktuálny operačný stav systému_. Pri správnej inštalácii by sa mala objaviť okno aplikácie Grafana s prednastaveným informačným panelom "System Overview". 
+2. Po aplikovani zmien sa do klastra nainštalujú komponenty systému [Grafana Stack]. Otvorte v prehliadači stránku [http://localhost](http://localhost) a vyberte aplikáciu _Aktuálny operačný stav systému_. Pri správnej inštalácii by sa mala objaviť okno aplikácie Grafana s prednastaveným informačným panelom "System Overview".
 
    >build_circle:> V niektorých prípadoch, v závislosti od načasovania sa môže zobraziť informácia _Dashboard not found_. V takom prípade je potrebné počkať, kým sa nainštaluje systém [Grafana Stack] a znovu načítať stránku.
 
@@ -93,7 +90,7 @@ Predchádzajúcim postupom sme do nášho systému nainštalovali systém [Grafa
 
 ![Grafana Stack](./img/080-03-grafana-stack.png)
 
-V tejto kapitole využívame subsystém _Promtail_, ktorého úlohou je zozbierať všetky logy z kontajnerov v systéme kubernetes a poslať ich do subsystému _Loki_, ktorý ich uloží do databázy. Následne je možné tieto logy analyzovať pomocou aplikácie _Grafana_.
+V tejto kapitole využívame subsystém [Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/), ktorého úlohou je zozbierať všetky logy z kontajnerov v systéme kubernetes a poslať ich do subsystému _Loki_, ktorý ich uloží do databázy. Následne je možné tieto logy analyzovať pomocou aplikácie _Grafana_.
 
 Pokiaľ by sme chceli sledovať činnosť našej aplikácie v kontajneri `<pfx>-ambulance- wl-webapi-container`, boli by zatiaľ nedostatočné, keďže sme až doteraz tomuto aspektu vývoja nevenovali dostatočnú pozornosť. Predstavte si, že by ste po nasadení aplikácie do produkcie dostávali od zákaznikov informácie typu, že v ranných hodinách sa musia pacienti registrovať do zoznamu čakajúcich niekoľkokrát, kým sa im podarí úspešne vytvoriť záznam. Aké informácie by ste potrebovali v zázname činnosti vidieť aby ste získali aspoň základný prehľad o tom, čo môže túto chybu spôsobovať? Aké informácie by ste potrebovali z logov, aby ste vedeli, že sa naozaj jedná o problém s Vašou aplikáciou a nie s iným komponentom systému? Na to aby ste tieto otázky vedeli zodpovedať je potrebné kód obohatiť o generovanie relevantných záznamov - _logov_.
 
@@ -296,7 +293,7 @@ Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá um
     git push
     ```
 
-4. Prejdite na stránku [http://localhost/] a v aplikácii _Zoznam čakajúcich v ambulancii_ vytvorte niekoľko záznamov. Následne prejdite do aplikácie _Aktuálny operačný stav systému_ (Grafana), a opäť otvorte záložku _Explore_ so zdrojom dát `Logs`. V zobrazenok paneli zadajte do poľa _Label filters_ názov `container` a priraďte mu hodnotu ``<pfx>-ambulance- wl-webapi-container`` a v hornej časti stlačte modro sfarbené tlačidlo _Run query_.
+4. Prejdite na stránku [http://localhost/](http://localhost/) a v aplikácii _Zoznam čakajúcich v ambulancii_ vytvorte niekoľko záznamov. Následne prejdite do aplikácie _Aktuálny operačný stav systému_ (Grafana), a opäť otvorte záložku _Explore_ so zdrojom dát `Logs`. V zobrazenok paneli zadajte do poľa _Label filters_ názov `container` a priraďte mu hodnotu ``<pfx>-ambulance- wl-webapi-container`` a v hornej časti stlačte modro sfarbené tlačidlo _Run query_.
 
    Predpokladajme, že chceme vidieť iba záznamy, ktoré sa týkajú výhradne ambulancie `bobulova`. Musíme preto vytvoriť dotaz, ktorý by dokázal skonvertovať náš záznam na požadovaný formát. V panely dotazu logov stlačte na tlačidlo _Code_ a skopírujte nasledujúci text do poľa dotazu:
 

@@ -1,11 +1,12 @@
+[_Ingress_]:https://kubernetes.io/docs/concepts/services-networking/ingress/
 [age]:https://github.com/FiloSottile/age
 [aks]:https://azure.microsoft.com/en-us/services/kubernetes-service/
 [Angular]:https://angular.io/
 [api-first]:https://swagger.io/resources/articles/adopting-an-api-first-approach/
-[azure]:https://azure.microsoft.com/
 [azure pipelines]:https://docs.microsoft.com/en-us/azure/devops/pipelines/get-started/what-is-azure-pipelines?view=azure-devops
 [azure-devops]:https://azure.microsoft.com/en-us/services/devops/
 [azure-portal]:https://portal.azure.com
+[azure]:https://azure.microsoft.com/
 [babel]:https://babeljs.io/
 [Bash]:https://www.gnu.org/software/bash/
 [bit]:https://bit.dev/
@@ -20,18 +21,19 @@
 [devcontainers cli]:https://github.com/devcontainers/cli
 [Development Containers]:https://containers.dev/
 [Docker Compose]:https://docs.docker.com/compose/
+[docker hub]:https://hub.docker.com/
 [docker-containers]:https://www.docker.com/resources/what-container
 [docker-desktop]:https://www.docker.com/products/docker-desktop
 [docker-hub]:https://hub.docker.com/
-[docker hub]:https://hub.docker.com/
 [Envoy Gateway]:https://gateway.envoyproxy.io/
 [envoy proxy]:https://www.envoyproxy.io/
+[FetchAPI]:https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
 [Fluentbit]:https://fluentbit.io/
-[flux]:https://fluxcd.io/
 [flux cd]:https://fluxcd.io/
+[flux]:https://fluxcd.io/
 [fluxcd]:https://fluxcd.io/
-[gatewayapi]:https://gateway-api.sigs.k8s.io/
 [gateway api]:https://gateway-api.sigs.k8s.io/
+[gatewayapi]:https://gateway-api.sigs.k8s.io/
 [generics]:https://go.dev/blog/intro-generics
 [gin]:https://gin-gonic.com/docs/
 [git]:https://git-scm.com/
@@ -40,17 +42,17 @@
 [gitops-class]:https://github.com/SevcikMichal/WACAppsRepo
 [gitops]:https://www.gitops.tech/
 [Go]:https://go.dev/
+[Grafana Stack]:https://grafana.com/about/grafana-stack/
 [Grafana]:https://grafana.com/
 [helm]:https://helm.sh/
 [http]:https://developer.mozilla.org/en-US/docs/Web/HTTP
-[_Ingress_]:https://kubernetes.io/docs/concepts/services-networking/ingress/
 [ingress]:https://kubernetes.io/docs/concepts/services-networking/ingress/
 [Inversify]:https://github.com/inversify/InversifyJS
 [Jaeger]:https://www.jaegertracing.io/
 [jest]:https://jestjs.io/
 [jquery]:https://jquery.com/
-[jsonschema]:https://json-schema.org/
 [jsonpatch]:https://jsonpatch.com/
+[jsonschema]:https://json-schema.org/
 [jsx]:https://reactjs.org/docs/introducing-jsx.html
 [k8s-api]:https://kubernetes.io/docs/concepts/overview/kubernetes-api/
 [k8s-controller]:https://kubernetes.io/docs/concepts/architecture/controller/
@@ -76,12 +78,15 @@
 [oauth2-proxy]:https://oauth2-proxy.github.io/oauth2-proxy/
 [openapi generator online]:http://api.openapi-generator.tech/index.html
 [openapi-generator]:https://openapi-generator.tech/
-[openapi]:https://www.openapis.org/about
 [openapi-spec]:https://spec.openapis.org/oas/latest.html
+[openapi]:https://www.openapis.org/about
 [OpenID]:https://openid.net
 [openlens]:https://github.com/MuhammedKalkan/OpenLens
 [Opensearch]:https://opensearch.org/
+[Open Telemetry Collector]:https://opentelemetry.io/docs/collector/
+[OpenTelemetry Collector]:https://opentelemetry.io/docs/collector/
 [OpenTelemetry]:https://opentelemetry.io/docs/
+[Open Telemetry]:https://opentelemetry.io/docs/
 [paas]:https://azure.microsoft.com/en-in/resources/cloud-computing-dictionary/what-is-paas/
 [Postman]:https://www.getpostman.com/
 [powershell]:https://docs.microsoft.com/en-us/powershell/
@@ -89,9 +94,9 @@
 [promise]:https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
 [rancher-desktop]:https://rancherdesktop.io/
 [React]:https://reactjs.org/
-[Rego]:https://www.openpolicyagent.org/docs/latest/policy-language/
 [redis]:https://redis.io/
 [Redux]:https://redux.js.org/
+[Rego]:https://www.openpolicyagent.org/docs/latest/policy-language/
 [REST API]:https://en.wikipedia.org/wiki/Representational_state_transfer
 [REST Client]:https://marketplace.visualstudio.com/items?itemName=humao.rest-client
 [semver]:https://semver.org/lang/sk/
@@ -102,8 +107,8 @@
 [sops]:https://github.com/getsops/sops
 [stencil]:https://stenciljs.com/
 [swagger hub]:https://app.swaggerhub.com/home
-[swagger]:https://swagger.io/docs/specification/about/
 [swagger ui]:https://swagger.io/tools/swagger-ui/
+[swagger]:https://swagger.io/docs/specification/about/
 [tdd]:https://en.wikipedia.org/wiki/Test-driven_development
 [troubleshooting]:/dojo/99.Problems-Resolutions/000-README.md
 [twelves]: https://12factor.net/ 
@@ -115,4 +120,4 @@
 [webc]:https://developer.mozilla.org/en-US/docs/Web/Web_Components
 [WireShark]:https://www.wireshark.org/
 [YAML]:https://yaml.org/
-[FetchAPI]:https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+[zerolog]:https://github.com/rs/zerolog

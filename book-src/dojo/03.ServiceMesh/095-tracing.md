@@ -273,7 +273,7 @@ V predchádzajúcej kapitole sme nainštalovali systém [Grafana Stack](https://
    }
    ```
 
-   a funkciu UpdateDocument:
+   a funkciu `UpdateDocument`:
 
    ```go
    func (m *mongoSvc[DocType]) UpdateDocument(ctx context.Context, id string, document *DocType) error {
@@ -600,7 +600,7 @@ V predchádzajúcej kapitole sme nainštalovali systém [Grafana Stack](https://
     git push origin main
     ```
 
-7. Prejdite na stránku [http://localhost] a v aplikácii _Zoznam čakajúcich <pfx>_ vytvorte niekoľko záznamov. Otvorte aplikáciu _Aktuálny operačný stav systému_ (_Grafana_) a otvorte navigačný panel. Zvoľte záložku _Explore_ a v ľavej hornej časti zvoľte v rozbaľovacom okne položku _Traces_. V riadku _Query Type_ stlačte tlačidlo _Search_ a potom v riadku _Service Name_ zvoľte `ambulance_wl_api`. V pravom hornom rohu stačte modro sfarbené tlačidlo _Run query_.
+7. Prejdite na stránku [http://localhost]([http://localhost]) a v aplikácii _Zoznam čakajúcich <pfx>_ vytvorte niekoľko záznamov. Otvorte aplikáciu _Aktuálny operačný stav systému_ (_Grafana_) a otvorte navigačný panel. Zvoľte záložku _Explore_ a v ľavej hornej časti zvoľte v rozbaľovacom okne položku _Traces_. V riadku _Query Type_ stlačte tlačidlo _Search_ a potom v riadku _Service Name_ zvoľte `ambulance_wl_api`. V pravom hornom rohu stačte modro sfarbené tlačidlo _Run query_.
 
    V tabuľke _Traces_ zvoľte niektorý zo záznamov pomenovaných `wac-hospital-gateway.wac-hospital` a v panely ktorý sa nasledne otvorí ho podrobte analýze. Zodpovedá čas operácií Vašim očakávaniam? Ktorej operácii, ambulancii, a záznamu v zozname čakajúcich tento záznam o činnosti systému zodpovedá?
 
@@ -608,4 +608,4 @@ V predchádzajúcej kapitole sme nainštalovali systém [Grafana Stack](https://
 
    Zoznámte sa s používateľskym rozhraním, a jeho možnosťami. Ako by ste vyhľadali a analyzovali záznamy pri sporadických výpadkoch alebo problémoch s výkonom? Aké ďalšie informácie by ste do záznamov doplnili aby ste uľahčili analýzu?
 
->homework:> Vytvorte nové vydanie mikroslužby a nasaďte ho do spločného klastra. Vyskúšajte analyzovať zázname ktoré sú na spoločnom klastri dostupné. 
+>homework:> Vytvorte nové vydanie mikroslužby a nasaďte ho do spločného klastra. Vyskúšajte analyzovať zázname ktoré sú na spoločnom klastri dostupné.
