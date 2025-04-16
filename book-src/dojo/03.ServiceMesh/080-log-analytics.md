@@ -42,8 +42,9 @@ Pre nasadenie systému [Grafana Stack] sme pripravili manifesty, ktoré sú pris
    - ../../../infrastructure/observability @_add_@
      @_add_@
    configMapGenerator:  @_add_@
-     - name: otel-params    @_add_@
-       namespace: wac-hospital   @_add_@
+     - name: deployment-config   @_add_@
+       namespace: observability  @_add_@
+       behavior: merge  @_add_@
        options:  @_add_@
          disableNameSuffixHash: true  @_add_@
        literals:  @_add_@
@@ -51,6 +52,8 @@ Pre nasadenie systému [Grafana Stack] sme pripravili manifesty, ktoré sú pris
        # in production you may want to use parentbased_trace_id_ratio sampler or any other available  @_add_@
          - OTEL_TRACES_SAMPLER=always_on  @_add_@
          - LOG_LEVEL=debug  @_add_@
+         - OTEL_TRACES_SAMPLER_RATIO=1.0 @_add_@
+         - OTEL_TRACES_SAMPLER_PERCENTAGE=100 @_add_@
          # specify different host if `localhost` is not your top level domain name for the cluster @_add_@
          - GRAFANA_ROOT_URL:=http://localhost/grafana  @_add_@ 
      
@@ -111,29 +114,29 @@ Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá um
    
      "github.com/gin-gonic/gin"
      "github.com/google/uuid"
-     "github.com/rs/zerolog"     @__add__@
-     "github.com/rs/zerolog/log"     @__add__@
+     "github.com/rs/zerolog"       @_add_@
+     "github.com/rs/zerolog/log"       @_add_@
    )
    
    type implAmbulanceWaitingListAPI struct {
-     logger zerolog.Logger     @__add__@
+     logger zerolog.Logger       @_add_@
    }
    
    func NewAmbulanceWaitingListApi() AmbulanceWaitingListAPI {
-     return &implAmbulanceWaitingListAPI{logger: log.With().Str("component", "ambulance-wl").Logger()}      @__add__@
+     return &implAmbulanceWaitingListAPI{logger: log.With().Str("component", "ambulance-wl").Logger()}        @_add_@
    }
    
    func (o implAmbulanceWaitingListAPI) CreateWaitingListEntry(c *gin.Context) {
      updateAmbulanceFunc(c, func(c *gin.Context, ambulance *Ambulance) (*Ambulance, interface{}, int) {
-       logger := o.logger.With().     @__add__@
-         Str("method", "CreateWaitingListEntry").     @__add__@
-         Str("ambulanceId", ambulance.Id).     @__add__@
-         Str("ambulanceName", ambulance.Name).     @__add__@
-         Logger()     @__add__@
+       logger := o.logger.With().       @_add_@
+         Str("method", "CreateWaitingListEntry").       @_add_@
+         Str("ambulanceId", ambulance.Id).       @_add_@
+         Str("ambulanceName", ambulance.Name).       @_add_@
+         Logger()       @_add_@
        var entry WaitingListEntry
    
        if err := c.ShouldBindJSON(&entry); err != nil {
-         logger.Error().Err(err).Msg("Failed to bind JSON")     @__add__@
+         logger.Error().Err(err).Msg("Failed to bind JSON")       @_add_@
          return nil, gin.H{
            "status":  http.StatusBadRequest,
            "message": "Invalid request body",
@@ -142,8 +145,8 @@ Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá um
        }
    
        if entry.PatientId == "" {
-         logger.Error().Msg("Patient ID is required")     @__add__@
-         logger.Trace().Msgf("Entry: %+v", entry)     @__add__@
+         logger.Error().Msg("Patient ID is required")       @_add_@
+         logger.Trace().Msgf("Entry: %+v", entry)       @_add_@
          return nil, gin.H{
            "status":  http.StatusBadRequest,
            "message": "Patient ID is required",
@@ -152,9 +155,9 @@ Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá um
    
        if entry.Id == "" || entry.Id == "@new" {
          entry.Id = uuid.NewString()
-         logger.Debug().     @__add__@
-           Str("entry-id", entry.Id).     @__add__@
-           Msg("Generating new ID for entry")     @__add__@
+         logger.Debug().       @_add_@
+           Str("entry-id", entry.Id).       @_add_@
+           Msg("Generating new ID for entry")       @_add_@
        }
    
        conflictIndx := slices.IndexFunc(ambulance.WaitingList, func(waiting WaitingListEntry) bool {
@@ -162,7 +165,7 @@ Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá um
        })
    
        if conflictIndx >= 0 {
-         logger.Error().Msg("Entry already exists")     @__add__@
+         logger.Error().Msg("Entry already exists")       @_add_@
          return nil, gin.H{
            "status":  http.StatusConflict,
            "message": "Entry already exists",
@@ -176,15 +179,15 @@ Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá um
          return entry.Id == waiting.Id
        })
        if entryIndx < 0 {
-         logger.Error().Msg("Failed to find entry in waiting list after saving")     @__add__@
+         logger.Error().Msg("Failed to find entry in waiting list after saving")       @_add_@
          return nil, gin.H{
            "status":  http.StatusInternalServerError,
            "message": "Failed to save entry",
          }, http.StatusInternalServerError
        }
-       logger.Info().     @__add__@
-         Str("entry-id", ambulance.WaitingList[entryIndx].Id).     @__add__@
-         Msg("Succesfully created patient entry")     @__add__@
+       logger.Info().       @_add_@
+         Str("entry-id", ambulance.WaitingList[entryIndx].Id).       @_add_@
+         Msg("Succesfully created patient entry")       @_add_@
        return ambulance, ambulance.WaitingList[entryIndx], http.StatusOK
      })
    }
@@ -204,29 +207,29 @@ Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá um
    import (
      "log" @__remove__@
      ...
-     "github.com/rs/zerolog"     @__add__@
-     "github.com/rs/zerolog/log"     @__add__@
+     "github.com/rs/zerolog"       @_add_@
+     "github.com/rs/zerolog/log"       @_add_@
    )
 
    func main() {
-     output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: zerolog.TimeFormatUnix}   @__add__@
-     log.Logger = zerolog.New(output).With().   @__add__@
-       Str("service", "ambulance-wl-list").   @__add__@
-       Timestamp().   @__add__@
-       Caller().   @__add__@
-       Logger()   @__add__@
-      @__add__@
-     logLevelStr := os.Getenv("LOG_LEVEL")   @__add__@
-     defaultLevel := zerolog.InfoLevel   @__add__@
-     level, err := zerolog.ParseLevel(strings.ToLower(logLevelStr))   @__add__@
-     if err != nil {   @__add__@
-       log.Warn().Str("LOG_LEVEL", logLevelStr).Msgf("Invalid log level, using default: %s", defaultLevel)   @__add__@
-       level = defaultLevel   @__add__@
-     }   @__add__@
-     // Set the global log level   @__add__@
-     zerolog.SetGlobalLevel(level)   @__add__@
-      @__add__@
-     log.Info().Msg("Server started")   @__add__@
+     output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: zerolog.TimeFormatUnix}     @_add_@
+     log.Logger = zerolog.New(output).With().     @_add_@
+       Str("service", "ambulance-wl-list").     @_add_@
+       Timestamp().     @_add_@
+       Caller().     @_add_@
+       Logger()     @_add_@
+        @_add_@
+     logLevelStr := os.Getenv("LOG_LEVEL")     @_add_@
+     defaultLevel := zerolog.InfoLevel     @_add_@
+     level, err := zerolog.ParseLevel(strings.ToLower(logLevelStr))     @_add_@
+     if err != nil {     @_add_@
+       log.Warn().Str("LOG_LEVEL", logLevelStr).Msgf("Invalid log level, using default: %s", defaultLevel)     @_add_@
+       level = defaultLevel     @_add_@
+     }     @_add_@
+     // Set the global log level     @_add_@
+     zerolog.SetGlobalLevel(level)     @_add_@
+        @_add_@
+     log.Info().Msg("Server started")     @_add_@
      log.Printf("Server started")   @__remove__@
 
      ...
