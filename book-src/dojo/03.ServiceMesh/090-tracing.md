@@ -108,7 +108,8 @@ V predchádzajúcej kapitole sme nainštalovali systém [Grafana Stack](https://
      traceProvider := tracesdk.NewTracerProvider(tracesdk.WithBatcher(traceExporter))   @_add_@
      otel.SetTracerProvider(traceProvider)   @_add_@
      otel.SetTextMapPropagator(propagation.TraceContext{})   @_add_@
-   
+     defer  traceProvider.Shutdown(ctx)   @_add_@
+     
      log.Info().Msg("Server started")
      ...
      engine := gin.New()
@@ -423,7 +424,7 @@ V predchádzajúcej kapitole sme nainštalovali systém [Grafana Stack](https://
    }
    ```
 
-   >homework:> Obdobným postupom doplňte distribuované trasovanie aj do ostatných metód.
+   >keyboard:> Obdobným postupom doplňte distribuované trasovanie aj do ostatných metód.
 
    Otvorte súbor `${WAC_ROOT}/ambulance-webapi/internal/ambulance_wl/impl_ambulance_waiting_list_test.go` a upravte test `Test_UpdateWl_DbServiceUpdateCalled`:
 
@@ -582,7 +583,7 @@ V predchádzajúcej kapitole sme nainštalovali systém [Grafana Stack](https://
 
    Ako ste si všimli, doplnenie informácií, ktoré sú potrebné pre analýzu činnosti systému vyžaduje množstvo drobných úprav. Ich doplnenie v neskorších fázach vývoja môže byť problematické, preto je dobré mať na pamäti, že záznamy o činnosti systému sú dôležité a mali by byť súčasťou návrhu systému, doplnené hneď pri implementácii danej funkcionality a byť podrobené kontrole kvality počas kontroly - _review_ - kódu. Bez ich prítomnosti je efektívna analýza a optimalizácia distribuovaného systému takmer nemožná.
 
-   >homework:> Obdobným spôsobom doplňte trasovanie aj do ostatných častí kódu.
+   >Keyboard:> Obdobným spôsobom doplňte trasovanie aj do ostatných častí kódu.
 
 6. Uložte všetky zmeny a skontrolujte, že je kód stále funkčný. V priečinku  `${WAC_ROOT}/ambulance-webapi vykonajte príkazy:
 
@@ -608,4 +609,4 @@ V predchádzajúcej kapitole sme nainštalovali systém [Grafana Stack](https://
 
    Zoznámte sa s používateľskym rozhraním, a jeho možnosťami. Ako by ste vyhľadali a analyzovali záznamy pri sporadických výpadkoch alebo problémoch s výkonom? Aké ďalšie informácie by ste do záznamov doplnili aby ste uľahčili analýzu?
 
->homework:> Vytvorte nové vydanie mikroslužby a nasaďte ho do spločného klastra. Vyskúšajte analyzovať zázname ktoré sú na spoločnom klastri dostupné.
+>keyboard:> Vytvorte nové vydanie mikroslužby a nasaďte ho do spločného klastra. Vyskúšajte analyzovať zázname ktoré sú na spoločnom klastri dostupné.

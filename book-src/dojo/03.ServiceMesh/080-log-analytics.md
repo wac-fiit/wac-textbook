@@ -84,7 +84,7 @@ Pre nasadenie systému [Grafana Stack] sme pripravili manifesty, ktoré sú pris
 
    ![Grafana Logs](./img/080-02-Grafana-logs.png)
 
-   >homework:> Vyskúšajte si rôzne konfigurácie sledovania záznamov, napríklad pre `namespace=wac-hospital`, rôzne časové obdobie, prípadne filtrovanie záznamov so špecifickým textom alebo atribútom. Pre podrobnejšiu prácu si naštudujte aj dokumentáciu pre tvorenie dotazov [Log queries](https://grafana.com/docs/loki/latest/query/log_queries/).
+   >keyboard:> Vyskúšajte si rôzne konfigurácie sledovania záznamov, napríklad pre `namespace=wac-hospital`, rôzne časové obdobie, prípadne filtrovanie záznamov so špecifickým textom alebo atribútom. Pre podrobnejšiu prácu si naštudujte aj dokumentáciu pre tvorenie dotazov [Log queries](https://grafana.com/docs/loki/latest/query/log_queries/).
 
 Predchádzajúcim postupom sme do nášho systému nainštalovali systém [Grafana Stack] a [Open Telemetry Collector], čím sme pripravili sme si prostredie na sledovanie činnosti našich mikroslužieb. Schématicke znázornenie ako tento systém funguje je na nasledujúcom obrázku:
 
@@ -190,7 +190,7 @@ Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá um
    }
    ```
 
-   >homework:> Obdobným spôsobom upravte aj ostatné funkcie v súbore `${WAC_ROOT}/ambulance-webapi/internal/ambulance_wl/impl_ambulance_waiting_list.go`, a v ďalších súboroch webapi. v súbore `${WAC_ROOT}/ambulance-webapi/internal/db_service/mongo_svc.go` zmeňte spôsob generovania logov tak použil knižnicu [zerolog] a vytvorte štrukturované záznamy  .
+   >keyboard:> Obdobným spôsobom upravte aj ostatné funkcie v súbore `${WAC_ROOT}/ambulance-webapi/internal/ambulance_wl/impl_ambulance_waiting_list.go`, a v ďalších súboroch webapi. v súbore `${WAC_ROOT}/ambulance-webapi/internal/db_service/mongo_svc.go` zmeňte spôsob generovania logov tak použil knižnicu [zerolog] a vytvorte štrukturované záznamy  .
 
    V tejto časti sme pridali do kódu knižnicu [zerolog] a inicializovali sme logger. Následne sme do funkcie `CreateWaitingListEntry` pridali logovanie udalostí, ktoré sa v tejto funkcii dejú. V prípade, že nastane chyba, alebo sa vykoná úspešná operácia, zaznamenáme túto udalosť do logu.
 

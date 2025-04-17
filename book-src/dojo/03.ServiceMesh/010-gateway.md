@@ -315,7 +315,7 @@ patches: @_add_@
 - path: patches/ambulance-webapi.deployment.yaml @_add_@
 ```
 
->homework:> Upravte manifesty v repozitári `ambulance-webapi` tak, aby obsahovali tu pridané konfigurácie pre objekt  _Service_ `<pfx>-openapi` a pre objekt _HTTPRoute_ `<pfx>-ambulance-webapi`, pričom _HttpRoute_ objekt bude voliteľný konfiguračný komponent `with-gateway-api`. Následne upravte konfiguráciu v repozitári `ambulance-gitops` tak, aby sa tieto konfigurácie aplikovali.
+>keyboard:> Upravte manifesty v repozitári `ambulance-webapi` tak, aby obsahovali tu pridané konfigurácie pre objekt  _Service_ `<pfx>-openapi` a pre objekt _HTTPRoute_ `<pfx>-ambulance-webapi`, pričom _HttpRoute_ objekt bude voliteľný konfiguračný komponent `with-gateway-api`. Následne upravte konfiguráciu v repozitári `ambulance-gitops` tak, aby sa tieto konfigurácie aplikovali.
 
 Nakoniec upravíme deklaráciu našej mikro front-end aplikácie v súbore `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/webcomponent-content.yaml` tak, aby jej atribút `api-base` ukazoval na cestu webapi na tom istom hostiteľskom počítači:
 

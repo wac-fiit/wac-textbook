@@ -55,7 +55,8 @@ Používajte tieto ikony:
 - `>warning:>` pre dôležité informácie
 - `>build_circle:>` pre riešenie možných problémov
 - `>$apple:>` pre Mac Os špecifické informácie
-- `>homework:>` pre označenie samostatnej práce
+- `>keyboard:>` pre označenie samostatnej práce
+- `>local_library:>` pre materiály na somostatné doštudovanie
 
 ### Zvýraznené bloky kódu
 
