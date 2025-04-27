@@ -120,9 +120,9 @@ Pre riadenie politiky prístupu, nielen v rámci autorizácie používateľov, a
    default allow = false   
 
    # define authenticated user
-   is_valid_user = true { http_request.headers["x-auth-request-email"] }   
+   is_valid_user = true if { http_request.headers["x-auth-request-email"] }   
 
-   user = { "valid": valid, "email": email, "name": name} {
+   user = { "valid": valid, "email": email, "name": name} if {
        valid := is_valid_user
        email := http_request.headers["x-auth-request-email"]
        name := http_request.headers["x-auth-request-user"] 
@@ -137,7 +137,7 @@ Pre riadenie politiky prístupu, nielen v rámci autorizácie používateľov, a
    request_allowed_role["admin"] := true 
    
    # /monitoring path requires monitoring role
-   request_allowed_role["monitoring"] := true {
+   request_allowed_role["monitoring"] := true if {
        glob.match("/monitoring*", [], http_request.path)
    }
    
@@ -145,7 +145,7 @@ Pre riadenie politiky prístupu, nielen v rámci autorizácie používateľov, a
    # !!! DEMONSTRATION ONLY: this is not a good idea, because user 
    # !!! may access any path  that is not explicitely defined in request_allowed_role
    # !!! in production use oposite logic: define white-listed paths
-   request_allowed_role["user"] := true {
+   request_allowed_role["user"] := true if {
       not glob.match("/monitoring*", [], http_request.path) 
       not glob.match("/http-echo*", [], http_request.path)
    }
@@ -161,23 +161,23 @@ Pre riadenie politiky prístupu, nielen v rámci autorizácie používateľov, a
    # define roles for user
 
    # any user with valid email is user
-   user_role["user"] { 
+   user_role["user"] if { 
        user.valid
    }
    
    # !!! DEMONSTRATION ONLY: backdoor for admin role
-   user_role[ "admin" ] { 
+   user_role[ "admin" ] if { 
        [_, query] := split(http_request.path, "?")
        glob.match("am-i-admin=yes", [], query)
    }
    
    # these are admin users
-   user_role[ "admin" ] { 
+   user_role[ "admin" ] if { 
        user.email == "<kolegov@email>" @_important_@
    }
    
    # these are users with access to monitoring actions
-   user_role[ "monitoring" ] { 
+   user_role[ "monitoring" ] if { 
        user.email == "<your_github_account@email>" @_important_@
    }
    ```
@@ -191,14 +191,14 @@ Pre riadenie politiky prístupu, nielen v rámci autorizácie používateľov, a
    ```rego
    # action is allowed if there is some role that is in user roles
    # and path roles simultanously
-   action_allowed {
+   action_allowed if {
        some role 
        request_allowed_role[role]
        user_role[role]
    }
    
    # allow access if user is authenticated and action is allowed
-   allow {
+   allow if {
        user.valid
        action_allowed
    }

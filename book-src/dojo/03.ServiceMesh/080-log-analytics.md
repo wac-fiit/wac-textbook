@@ -52,7 +52,7 @@ Pre nasadenie systému [Grafana Stack] sme pripravili manifesty, ktoré sú pris
          - OTEL_TRACES_SAMPLER_RATIO=1.0 @_add_@
          - OTEL_TRACES_SAMPLER_PERCENTAGE=100 @_add_@
          # specify different host if `localhost` is not your top level domain name for the cluster @_add_@
-         - GRAFANA_ROOT_URL:=http://localhost/grafana  @_add_@ 
+         - GRAFANA_ROOT_URL=http://localhost/grafana  @_add_@ 
      
    components:
    - ../../../components/version-developers
