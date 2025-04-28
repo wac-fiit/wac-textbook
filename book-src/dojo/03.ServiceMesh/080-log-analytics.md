@@ -202,7 +202,7 @@ Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá um
    package main
 
    import (
-     "log" @__remove__@
+     "log" @_remove_@
      ...
      "github.com/rs/zerolog"       @_add_@
      "github.com/rs/zerolog/log"       @_add_@
@@ -227,7 +227,7 @@ Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá um
      zerolog.SetGlobalLevel(level)     @_add_@
         @_add_@
      log.Info().Msg("Server started")     @_add_@
-     log.Printf("Server started")   @__remove__@
+     log.Printf("Server started")   @_remove_@
 
      ...
    }
@@ -277,10 +277,10 @@ Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá um
            ports:
            - name: webapi-port
              containerPort: 8080
-           envFrom:   @__add_@
-             - configMapRef:   @__add_@
-                 name: otel-params   @__add_@
-                 voptional: true   @__add_@
+           envFrom:   @_add_@
+             - configMapRef:   @_add_@
+                 name: otel-params   @_add_@
+                 optional: true   @_add_@
            env:
            ...
     ```
