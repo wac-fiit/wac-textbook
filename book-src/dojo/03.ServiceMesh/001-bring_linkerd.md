@@ -4,15 +4,15 @@
 
 - run linkerd check -d - see output, resolve issues or apply recommendation durring installation
 - create folder ...infrastructure/linkerd
-- execute linkerd install - > .\infrastructure\linkerd\linkerd.yaml
-- execute linkerd viz install - > .\infrastructure\linkerd\viz.yaml
-- execute linkerd jaeger install - > .\infrastructure\linkerd\jaeger.yaml
+- execute linkerd install - > ./infrastructure/linkerd/linkerd.yaml
+- execute linkerd viz install - > ./infrastructure/linkerd/viz.yaml
+- execute linkerd jaeger install - > ./infrastructure/linkerd/jaeger.yaml
 
 - check the file - be aware of secrets - you may want to use some of techniques for secret management or override them manually at the cluster - we will use them but consider generated secrets as unsafe for production if you store them at git (eventually you can extract them from the file to aspecial folder that is ignored and distribute by other means)
 
 - create kustomization.yaml
 - create clusters/localhost-infra/kustomization (not shared namespaces) and create viz web patch
-- kubectl apply  -k .\clusters\localhost-infra\
+- kubectl apply  -k ./clusters/localhost-infra/
 
 - wait for all pods in running state `kubectl get pods --namespace linkerd -w`
 - `linkerd check`

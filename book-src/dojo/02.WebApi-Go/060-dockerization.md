@@ -134,7 +134,7 @@ switch ($command) {
 Upravte text `<docker-id>` tak, aby obsahoval Vaše user id na stránke [Docker Hub] a uložte zmeny. Naštartujte subsystém docker a na príkazovom riadku v priečinku `${WAC_ROOT}/ambulance-webapi` vykonajte príkaz:
 
 ```shell
-.\scripts\run.ps1 docker
+./scripts/run.ps1 docker
 ```
 
 Po úspešnom dokončení príkazu budete mať k dispozícii nový obraz softvérového kontajnera s názvom `<docker-id>/ambulance-wl-webapi:local-build`. Skontrolujte to pomocou príkazu:

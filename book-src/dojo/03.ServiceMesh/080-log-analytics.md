@@ -239,7 +239,7 @@ Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá um
 
    ```ps
    go mod tidy
-   go build .\cmd\ambulance-api-service\main.go
+   go build ./cmd/ambulance-api-service/main.go
    ```
 
 3. Upravte súbor `${WAC_ROOT}/ambulance-webapi/buid/docker/Dockerfile` v ktorom doplníme implicitnú konfiguráciu tak aby bol kontajner použiteľný aj samostatne. Význam niektorých nastavení bude zrejmý v neskorších kapitolách, tu je pre nás zaujímave najmä nastavenie hodnoty `LOG_LEVEL`:
@@ -258,7 +258,7 @@ Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá um
    ...
    ```
 
-   Pri nasadení grafana stack sme v klastri vytvorili ak objekt typu _ConfigMap_ s názvom `otel-params`, ktorý obsahuje všeobecnú konfiguráciu pre kvalitativný aspekt [_observability_](https://en.wikipedia.org/wiki/Observability_(software)) nášho systému. Upravte súbor `${WAC_ROOT}/ambulance-webapi/deployments/kustomize/install/deployment.yaml` a použite túto konfiguráciu:
+   Pri nasadení grafana stack sme v klastri vytvorili aj objekt typu _ConfigMap_ s názvom `otel-params`, ktorý obsahuje všeobecnú konfiguráciu pre kvalitativný aspekt [_observability_](https://en.wikipedia.org/wiki/Observability_(software)) nášho systému. Upravte súbor `${WAC_ROOT}/ambulance-webapi/deployments/kustomize/install/deployment.yaml` a použite túto konfiguráciu:
 
    ```yaml
 

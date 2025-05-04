@@ -80,7 +80,7 @@ docker compose --file ./deployments/docker-compose/compose.yaml down
 
 Tento príkaz spraví presný opak variantu up. Všetky kontajnery, ktoré boli vytvorené príkazom `up` budú zastavené a odstránené. Všetky sieťové rozhrania, ktoré boli vytvorené príkazom `up` budú odstránené.
 
-Upravíme spôsob naštartovania našej aplikácie. Otvorte súbor `${WAC_ROOT}\ambulance-webapi\scripts\run.ps1` a upravte ho:
+Upravíme spôsob naštartovania našej aplikácie. Otvorte súbor `${WAC_ROOT}/ambulance-webapi/scripts/run.ps1` a upravte ho:
 
 ```ps
 ...

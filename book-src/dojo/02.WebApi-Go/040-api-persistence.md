@@ -563,7 +563,7 @@ func main() {
 
 ### 3. Implementácia obsluhy požiadaviek
 
-Teraz pristúpime k implementácii obsluhy požiadaviek. Začneme s triedou `implAmbulancesAPI`. Otvorte súbor `${WAC_ROOT}\ambulance-webapi\internal\ambulance_wl\impl_ambulances.go` a upravte metódu `CreateAmbulance`:
+Teraz pristúpime k implementácii obsluhy požiadaviek. Začneme s triedou `implAmbulancesAPI`. Otvorte súbor `${WAC_ROOT}/ambulance-webapi/internal/ambulance_wl/impl_ambulances.go` a upravte metódu `CreateAmbulance`:
 
 ```go
 package ambulance_wl

@@ -68,7 +68,10 @@ V predchádzajúcej kapitole sme nainštalovali systém [Grafana Stack](https://
    - https://github.com/envoyproxy/gateway/releases/download/v1.2.8/install.yaml
    - gateway-class.yaml
    - gateway.yaml
+   - envoy-patch-policy.yaml
    - envoy-proxy.yaml   @_add_@
+
+   ...
    ```
 
    Archivujte zmeny v repozitári:
@@ -100,6 +103,7 @@ V predchádzajúcej kapitole sme nainštalovali systém [Grafana Stack](https://
    
      // initialize trace exporter   @_add_@
      ctx, cancel := context.WithCancel(context.Background())   @_add_@
+     defer cancel()   @_add_@
      traceExporter, err := autoexport.NewSpanExporter(ctx)   @_add_@
      if err != nil {   @_add_@
        log.Fatal().Err(err).Msg("Failed to initialize trace exporter")   @_add_@
@@ -119,7 +123,7 @@ V predchádzajúcej kapitole sme nainštalovali systém [Grafana Stack](https://
    }
    ```
 
-3. Upravíme súbor `${WAC_ROOT}/ambulance-webapi/internal\db_service\mongo_svc.go`:
+3. Upravíme súbor `${WAC_ROOT}/ambulance-webapi/internal/db_service/mongo_svc.go`:
 
    ```go
    package db_service
@@ -184,17 +188,17 @@ V predchádzajúcej kapitole sme nainštalovali systém [Grafana Stack](https://
      opts.ApplyURI(uri).SetConnectTimeout(10 * time.Second)   @_add_@
      if client, err := mongo.Connect(ctx, opts); err != nil {   @_add_@
      if client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri).SetConnectTimeout(10*time.Second)); err != nil {  @_remove_@
-       span.SetStatus(codes.Error, "MongoDB connection error")
+       span.SetStatus(codes.Error, "MongoDB connection error")   @_add_@
        return nil, err
      } else {
        m.client.Store(client)
-       span.SetStatus(codes.Ok, "MongoDB connection established")
+       span.SetStatus(codes.Ok, "MongoDB connection established")   @_add_@
        return client, nil
      }
    }
    ```
 
-   Technicky vzaté máme našu službu pripravenú nato aby vytvorila záznam o spracovaní požiadavky a jej predanie na službu mongodb. Tiež sme vytvorili záznam o pripojení k databáze. Pre podrobnejšiu analýzu musíme vytvoriť aj záznamy pre jednotlivé operácie v našej službe. V rovnakom súbore `${WAC_ROOT}/ambulance-webapi/internal\db_service\mongo_svc.go` upravte funkciu `CreateDocument`:
+   Technicky vzaté máme našu službu pripravenú nato aby vytvorila záznam o spracovaní požiadavky a jej predanie na službu mongodb. Tiež sme vytvorili záznam o pripojení k databáze. Pre podrobnejšiu analýzu musíme vytvoriť aj záznamy pre jednotlivé operácie v našej službe. V rovnakom súbore `${WAC_ROOT}/ambulance-webapi/internal/db_service/mongo_svc.go` upravte funkciu `CreateDocument`:
 
    ```go
    func (m *mongoSvc[DocType]) CreateDocument(ctx context.Context, id string, document *DocType) error {
@@ -278,15 +282,15 @@ V predchádzajúcej kapitole sme nainštalovali systém [Grafana Stack](https://
 
    ```go
    func (m *mongoSvc[DocType]) UpdateDocument(ctx context.Context, id string, document *DocType) error {
-     ctx, span := m.tracer.Start(
-       ctx,
-       "CreateDocument",
-       trace.WithAttributes(
-         attribute.String("mongodb.collection", m.Collection),
-         attribute.String("entry.id", id),
-       ),
-     )
-     defer span.End()
+     ctx, span := m.tracer.Start(   @_add_@
+       ctx,   @_add_@
+       "CreateDocument",   @_add_@
+       trace.WithAttributes(   @_add_@
+         attribute.String("mongodb.collection", m.Collection),   @_add_@
+         attribute.String("entry.id", id),   @_add_@
+       ),   @_add_@
+     )   @_add_@
+     defer span.End()   @_add_@
    
      ctx, contextCancel := context.WithTimeout(ctx, m.Timeout)
      defer contextCancel()
@@ -301,10 +305,10 @@ V predchádzajúcej kapitole sme nainštalovali systém [Grafana Stack](https://
      switch result.Err() {
      case nil:
      case mongo.ErrNoDocuments:
-       span.SetStatus(codes.Error, "Document not found")
+       span.SetStatus(codes.Error, "Document not found")   @_add_@
        return ErrNotFound
      default: // other errors - return them
-       span.SetStatus(codes.Error, result.Err().Error())
+       span.SetStatus(codes.Error, result.Err().Error())   @_add_@
        return result.Err()
      }
      _, err = collection.ReplaceOne(ctx, bson.D{{Key: "id", Value: id}}, document)
@@ -589,7 +593,7 @@ V predchádzajúcej kapitole sme nainštalovali systém [Grafana Stack](https://
 
    ```ps
    go mod tidy
-   go build .\cmd\ambulance-api-service\main.go
+   go build ./cmd/ambulance-api-service/main.go
    go test ./...
    ```
 
