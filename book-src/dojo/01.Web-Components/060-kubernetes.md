@@ -236,7 +236,8 @@ metadata:
   name: <pfx>-ambulance-ufe
 spec:
   frontendClass: md-shell # default obsiahnutý v základe polyfea md-shell
-  service: http://<pfx>-ambulance-ufe.wac-hospital # referencia na službu odkiaľ sa má načítať modul
+  service: 
+    name: <pfx>-ambulance-ufe # referencia na službu odkiaľ sa má načítať modul
   modulePath: build/ambulance-ufe.esm.js # cesta v rámci služby kde sa modul nachádza
 ```
 
