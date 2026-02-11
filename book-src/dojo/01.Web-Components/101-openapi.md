@@ -620,6 +620,17 @@ spec:
 
 >$apple:> Ak ste predtým zmenili číslo portu, nezabudnite aj tu nastaviť správny port.
 
+Upravte súbor `${WAC_ROOT}/ambulance-ufe/tsconfig.json` a nastavte príznaky `noUnusedLocals` a `noUnusedParameters` na hodnotu `false`, aby ste sa zbavili upozornení z generovaného kódu:
+
+```json
+    ...
+    "target": "es2022",
+    "noUnusedLocals": false,  @_important_@
+    "noUnusedParameters": false,  @_important_@
+    "jsx": "react",
+    ...
+```
+
 Následne v priečinku `${WAC_ROOT}/ambulance-gitops` vykonajte komit a push:
 
 ```ps
