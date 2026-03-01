@@ -204,9 +204,6 @@ spec:
       - context-name: rail-content
       - context-name: drawer-content
 ```
-
->warning:> Meno elementu `<pfx>-ambulance-wl-list` musí zodpovedať komponentu, ktorý sme vytvorili predtým, pozri súbor `${WAC_ROOT}/ambulance-ufe/src/components/<pfx>-ambulance-wl-list/<pfx>-ambulance-wl-list.tsx`
-
 Tento súbor je neštandardným objektom - _Custom Resource_ -  systému kubernetes. V ďalšom bode budeme vytvárať manifesty pre mikro-front-end _controller_, ktorý tieto objekty obhospodáruje. V zásade tu vykonávame registráciu mikro aplikácie - webového komponentu - do hlavnej aplikačnej obálky.
 
 Všimnite si že používame referenciu na `microFrontend: polyfea-md-shell` a `element: polyfea-md-app`. Oba sú súčasťou riadiča, ktorý si popíšeme v bode 5.
@@ -226,6 +223,8 @@ spec:
       - context-name: main-content
       - path: "^(\\.?/)?<pfx>-ambulance-wl(/.*)?$"
 ```
+
+>warning:> Meno elementu `<pfx>-ambulance-wl-list` musí zodpovedať komponentu, ktorý sme vytvorili predtým, pozri súbor `${WAC_ROOT}/ambulance-ufe/src/components/<pfx>-ambulance-wl-list/<pfx>-ambulance-wl-list.tsx`
 
 Teraz nám však chýba referencia na microfrontend pre náš nový element. Vytvoríme súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/microfrontend.yaml` s obsahom:
 
