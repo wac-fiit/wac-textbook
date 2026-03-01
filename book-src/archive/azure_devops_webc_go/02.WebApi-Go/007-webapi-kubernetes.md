@@ -117,7 +117,7 @@ deklarácii konfigurácie do špecifických prostredí - klastrov.
       Nastavuje, ktorý docker obraz má Flux sledovať - _ambulance-webapi_. Vytvorte súbor `.../webcloud-gitops/flux-system/ambulance-webapi-image-repo.yaml` s obsahom:
 
         ```yaml
-        apiVersion: image.toolkit.fluxcd.io/v1beta1
+        apiVersion: image.toolkit.fluxcd.io/v1
         kind: ImageRepository
         metadata:
           name: ambulance-webapi
@@ -139,7 +139,7 @@ deklarácii konfigurácie do špecifických prostredí - klastrov.
       Nastavuje kritérium, podľa ktorého sa vyberie verzia docker obrazu. Vytvorte súbor `.../webcloud-gitops/flux-system/ambulance-webapi-image-policy.yaml` s obsahom:
 
         ```yaml
-        apiVersion: image.toolkit.fluxcd.io/v1beta1
+        apiVersion: image.toolkit.fluxcd.io/v1
         kind: ImagePolicy
         metadata:
           name: ambulance-webapi
