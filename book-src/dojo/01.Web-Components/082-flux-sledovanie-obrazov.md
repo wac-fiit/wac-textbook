@@ -62,7 +62,7 @@ images:
 
 Všimnite si markre v komentároch - je dôležité, aby referovali správne názvy _image police_, vytvorených v predchádzajúcom kroku.
 
-Teraz upravte súbory `${WAC_ROOT}/ambulance-gitops/clusters/localhost/install/kustomization.yaml` a `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/kustomization.yaml`. Do oboch pridajte nasledujúcu sekciu:
+Teraz upravte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/install/kustomization.yaml`. Pridajte nasledujúcu sekciu:
 
 ```yaml
 ...
@@ -70,7 +70,7 @@ components:
 - ../../../components/version-developers
 ```
 
-Týmto spôsobom cez kustomizáciu upravíme všetky miesta v referencovaných yaml súboroch, kde sa nachádza obraz `<docker_id>/ambulance-ufe` alebo `ghcr.io/polyfea/polyfea-controller`.
+Týmto spôsobom cez kustomizáciu upravíme všetky miesta v referencovaných yaml súboroch, kde sa nachádza obraz `<docker_id>/ambulance-ufe`.
 
 ### 3. Pridanie komponentu pre automatickú aktualizáciu verzií Docker obrazov
 
