@@ -593,6 +593,17 @@ V súbore `${WAC_ROOT}/ambulance-ufe/package.json` doplňte nový skript:
 
 Funkcionalita príkazu je obdobná ako v prípade príkazu `npm run test`. Výhodou je, že môžeme využívať rozšírenia pre [Jest] v našom vývojovom prostredí alebo niektoré  predpripravené [GitHub Akcie](https://github.com/marketplace?type=actions&query=jest+) v priebežnej integrácii.
 
+Upravte súbor `${WAC_ROOT}/ambulance-ufe/tsconfig.json` a nastavte príznaky `noUnusedLocals` a `noUnusedParameters` na hodnotu `false`, aby ste sa zbavili upozornení z generovaného kódu:
+
+```json
+    ...
+    "target": "es2022",
+    "noUnusedLocals": false,  @_important_@
+    "noUnusedParameters": false,  @_important_@
+    "jsx": "react",
+    ...
+```
+
 ### 9. Archivácia zmien a nasadenie aplikácie
 
 Archivujte svoj kód príkazmi:
@@ -610,7 +621,7 @@ Po vytvorení novej verzie obrazu sa táto nasadí na server. Pokiaľ máte klas
 spec:
 ...
   element: <pfx>-ambulance-wl-app
-  attributes:
+  attributes: @_add_@
     - name: api-base @_add_@
       value: http://localhost:5000/api @_add_@
     - name: ambulance-id @_add_@
@@ -619,17 +630,6 @@ spec:
 ```
 
 >$apple:> Ak ste predtým zmenili číslo portu, nezabudnite aj tu nastaviť správny port.
-
-Upravte súbor `${WAC_ROOT}/ambulance-ufe/tsconfig.json` a nastavte príznaky `noUnusedLocals` a `noUnusedParameters` na hodnotu `false`, aby ste sa zbavili upozornení z generovaného kódu:
-
-```json
-    ...
-    "target": "es2022",
-    "noUnusedLocals": false,  @_important_@
-    "noUnusedParameters": false,  @_important_@
-    "jsx": "react",
-    ...
-```
 
 Následne v priečinku `${WAC_ROOT}/ambulance-gitops` vykonajte komit a push:
 
