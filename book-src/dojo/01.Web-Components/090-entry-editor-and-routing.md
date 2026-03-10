@@ -545,9 +545,9 @@ spec:
 
 # aplication context element
   element: <pfx>-ambulance-wl-app    @_add_@
-  attributes:
-    - name: base-path
-      value: /<pfx>-ambulance-wl/
+  attributes:    @_add_@
+    - name: base-path    @_add_@
+      value: /<pfx>-ambulance-wl/    @_add_@
 ```
 
 Zmeny archivujte príkazmi v priečinku `${WAC_ROOT}/ambulance-gitops`:
