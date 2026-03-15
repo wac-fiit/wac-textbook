@@ -487,7 +487,7 @@ describe('<pfx>-ambulance-wl-list', () => {
     fetchMock.resetMocks(); @_add_@
   }); @_add_@
   
-  it('renders sample entries', async () => {
+  it('renders sample entries', async () => { @_important_@
     // Mock the API response using sampleEntries
     fetchMock.mockResponseOnce(JSON.stringify(sampleEntries));@_add_@
   
@@ -552,7 +552,7 @@ describe('<pfx>-ambulance-wl-list', () => {
 ...
 ```
 
-Všimnite si ako simulujeme chybovú odpoveď z API serveru pomocou metódy `networkError`. V teste očakávame, že sa zobrazí chybové hlásenie a že sa nezobrazí žiadny záznam v zozname pacientov.
+Všimnite si ako simulujeme chybovú odpoveď z API serveru pomocou metódy `mockRejectOnce`. V teste očakávame, že sa zobrazí chybové hlásenie a že sa nezobrazí žiadny záznam v zozname pacientov.
 
 >info:> Testovaniu negatívnych scenárov - takzvaných _rainy days use cases_ - je v praxi potrebné venovať náležitú pozornosť. Vývoj častokrát prebieha v umelých prostrediach, za ideálnych podmienok sieťového pripojenia a pri dostatku systémových objektov. Obmedzenia v reálnych prostrediach môžu mať za dôsledok oneskorenie dodania produktu alebo úplné odmietnutie produktu zo strany používateľov. Ako bolo uvedené, v tomto cvičení sa testovaniu venujeme len okrajovo, rozsah tu uvedených testov by bol v praxi nedostatočný.
 
@@ -621,7 +621,9 @@ Po vytvorení novej verzie obrazu sa táto nasadí na server. Pokiaľ máte klas
 spec:
 ...
   element: <pfx>-ambulance-wl-app
-  attributes: @_add_@
+  attributes:
+    - name: base-path
+      value: /<pfx>-ambulance-wl/
     - name: api-base @_add_@
       value: http://localhost:5000/api @_add_@
     - name: ambulance-id @_add_@
