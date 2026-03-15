@@ -216,7 +216,7 @@ objektu `gitops-repo`, vykonajte aj príkaz `kubectl apply -k clusters/localhost
 Nakoniec overte, či sú všetky nasadené objekty pripravené a či sú všetky pody v stave `Running`:
 
 ```ps
-kubectl get all -n wac-hospital
+kubectl get all -l app.kubernetes.io/name=<pfx>-ambulance-wl -n wac-hospital
 ```
 
 Výstup by mal okrem iného obsahovať Váš deployment `<pfx>-ambulance-ufe-deployment` a k tomu zodpovedajúci pod. Pokiaľ sú oba nasadené, môžete prejsť na stránku [spoločného klastra](https://wac-2025.westeurope.cloudapp.azure.com/fea), kde v zozname aplikácií uvidíte aj svoju aplikáciu.
