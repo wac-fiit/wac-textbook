@@ -65,3 +65,93 @@ Keďže ide o verejne prístupný zdroj, prístup je chránený menom a heslom, 
 ---
 
 >info:> Podobným spôsobom postupujte pri nasadzovaní Vášho semestrálneho projektu. Vytvorte príslušné manifesty, upravte verziu vydania, podľa toho nakoľko je stabilná, a nasaďte ju do produkčného klastra.
+
+## Overenie stavu nasadenia pomocou `WAC Project Status`
+
+Nástroj [WAC Project Status](https://wac-hospital.westeurope.cloudapp.azure.com/fea/project-status) umožňuje študentom sledovať stav nasadenia komponentov ich projektu v spoločnom klastri. Aby nástroj vedel správne identifikovať objekty patriace k Vášmu projektu, je potrebné doplniť do konfigurácie štítky (_labels_) a zaregistrovať projekt pomocou súboru `project.yaml`.
+
+Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/wac-aks/gitops/project.yaml` s nasledujúcim obsahom:
+
+```yaml
+apiVersion: wac-fiit.github.io/v1alpha1
+kind: Project
+metadata:
+  name: <project name> # napr. <pfx>-ambulance-wl
+spec:
+  title: <project title> # napr. "Zoznam čakajúcich <pfx>"
+  description: <project description> # napr. "Spravuje zoznam pacientov čakajúcich na vyšetrenie v ambulancii"
+  authors: "<authors>" # Zadajte mená autorov
+  azureLink: "https://<sub-domain>.azurewebsites.net"
+  frontendRepoUrl: "https://github.com/<your-account>/<frontend-repository>"
+  backendRepoUrl: "https://github.com/<your-account>/<backend-repository>"
+  gitopsRepoUrl: "https://github.com/<your-account>/<gitops-repository>"
+```
+
+Pridajte odkaz na tento súbor do `${WAC_ROOT}/ambulance-gitops/clusters/wac-aks/gitops/kustomization.yaml`:
+
+```yaml
+...
+resources:
+- cd.kustomization.yaml
+- install.kustomization.yaml
+- git-repository.yaml
+- project.yaml @_add_@
+```
+
+Nástroj identifikuje objekty v klastri podľa štítku `wac-fiit.github.io/project` (musí sa zhodovať s menom projektu) a `wac-fiit.github.io/component` (komponent aplikácie: `frontend`, `backend`).
+
+Doplňte štítok `wac-fiit.github.io/project` do súboru `${WAC_ROOT}/ambulance-gitops/clusters/wac-aks/kustomization.yaml` (aplikuje sa na gitops objekty):
+
+```yaml
+...
+labels:
+  - pairs:
+      app.kubernetes.io/name: <pfx>-apps
+      app.kubernetes.io/instance: release
+      app.kubernetes.io/version: "1.0.0"
+      wac-fiit.github.io/project: <project name> @_add_@
+...
+```
+
+Podobne doplňte štítok `wac-fiit.github.io/project` do súboru `${WAC_ROOT}/ambulance-gitops/clusters/wac-aks/install/kustomization.yaml` (aplikuje sa na aplikácie):
+
+```yaml
+...
+labels:
+  - pairs:
+      ...
+      wac-fiit.github.io/project: <project name> @_add_@
+...
+```
+
+Doplňte štítok `wac-fiit.github.io/component` pre frontend aplikáciu do súboru `${WAC_ROOT}/ambulance-gitops/apps/<frontend app>/kustomization.yaml`:
+
+```yaml
+...
+labels:
+  - pairs:
+      ...
+      wac-fiit.github.io/component: frontend @_add_@
+...
+```
+
+Doplňte štítok `wac-fiit.github.io/component` pre backend (WebApi) aplikáciu do súboru `${WAC_ROOT}/ambulance-gitops/apps/<backend app>/kustomization.yaml`:
+
+```yaml
+...
+labels:
+  - pairs:
+      ...
+      wac-fiit.github.io/component: backend @_add_@
+...
+```
+
+Uložte zmeny a archivujte ich do repozitára. V priečinku `${WAC_ROOT}/ambulance-gitops` vykonajte príkazy:
+
+```ps
+git add .
+git commit -m "Registrácia projektu pre WAC Project Status"
+git push
+```
+
+Po aplikovaní zmien operátorom [Flux CD] môžete skontrolovať stav Vášho projektu na stránke [WAC Project Status](https://wac-hospital.westeurope.cloudapp.azure.com/fea/project-status), kde uvidíte stav nasadených komponentov.
