@@ -177,7 +177,7 @@ V predchádzajúcej kapitole sme nainštalovali systém [Grafana Stack](https://
    
      var uri = fmt.Sprintf("mongodb://%v:%v", m.ServerHost, m.ServerPort)
      span.SetAttributes(attribute.String("mongodb.uri", uri)) @_add_@
-     log.Printf("Using URI: " + uri)
+	   log.Printf("Using URI: %s", uri)
    
      if len(m.UserName) != 0 {
        uri = fmt.Sprintf("mongodb://%v:%v@%v:%v", m.UserName, m.Password, m.ServerHost, m.ServerPort)

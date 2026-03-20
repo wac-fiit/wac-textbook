@@ -15,7 +15,7 @@ Vytvorte súbor `${WAC_ROOT}/ambulance-webapi/deployments/docker-compose/compose
 ```yaml
 services: 
   mongo_db:
-    image: mongo:7.0-rc
+    image: mongo:8.2.6
     container_name: mongo_db @_important_@
     restart: always
     ports:

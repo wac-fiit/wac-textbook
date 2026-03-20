@@ -260,7 +260,7 @@ import (
     "sync/atomic"
     "time"
 
-    "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/bson" @_important_@
     "go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -292,6 +292,8 @@ type mongoSvc[DocType interface{}] struct {
     clientLock sync.Mutex
 }
 ```
+
+>info:> Pokial sa spoliehate na automatické doplňovanie závislostí v IDE, je možné že sa vám namiesto `go.mongodb.org/mongo-driver/bson` importuje `go.mongodb.org/mongo-driver/v2/bson`. V idealnom prípade by ste mali používať verziu `v2`. Z dôvodu neskorého odhalenia tejto závislosti sme sa rozhodli použiť otestovanú verziu `v1`, ktorá je stabilná a zároveň nám umožní zachovať kontinuitu v návode. V prípade, že by ste chceli použiť verziu `v2`, budete musieť upraviť kód podľa tejto verzie, čo by však nemalo byť náročné. V prípade záujmu o použitie tejto verzie vám odporúčame zoznámiť sa s jej dokumentáciou a prípadne s jej zmenami oproti verzii `v1`.
 
 Rozhranie DbService je generickým rozhraním, konkrétny typ inštancie bude určený pri jej vytváraní naviazaním na typ `DocType`. Vo zvyšku našej implementácie budeme predpokladať, že pracujeme s [dokumentovou databázou](https://en.wikipedia.org/wiki/Document-oriented_database), ale nebudeme zavádzať explicitné závislosti na konkrétnej implementácii. V našom prípade bude konkrétnou implementáciou trieda `mongoSvc`, ktorá bude využívať knižnicu [mongo-go-driver](https://github.com/mongodb/mongo-go-driver). Všimnite si, že tento typ nie je mimo package `db_service` viditeľný (začína malým písmenom), čo znamená, že ho budeme môcť použiť iba v rámci tohto balíčka.
 
@@ -387,7 +389,7 @@ func (m *mongoSvc[DocType]) connect(ctx context.Context) (*mongo.Client, error) 
     defer contextCancel()
 
     var uri = fmt.Sprintf("mongodb://%v:%v", m.ServerHost, m.ServerPort)
-    log.Printf("Using URI: " + uri)
+	log.Printf("Using URI: %s", uri)
 
     if len(m.UserName) != 0 {
         uri = fmt.Sprintf("mongodb://%v:%v@%v:%v", m.UserName, m.Password, m.ServerHost, m.ServerPort)
