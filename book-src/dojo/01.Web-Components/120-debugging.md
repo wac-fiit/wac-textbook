@@ -104,7 +104,7 @@ Nástroje ladenia fungujú v prostredí, kde je k dispozícii ako kompilovaný k
 
 ```tsx
 render() {
-  console.debug("<pfx>-ambulance-wl-app.render() - path: %s", this.relativePath);
+  console.debug("<pfx>-ambulance-wl-app.render() - path: %s", this.relativePath); @_add_@
   ...
 ```
 
