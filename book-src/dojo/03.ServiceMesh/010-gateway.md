@@ -51,14 +51,14 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- https://github.com/envoyproxy/gateway/releases/download/latest/install.yaml
+- https://github.com/envoyproxy/gateway/releases/download/v1.7.1/install.yaml
 - gateway-class.yaml
 - gateway.yaml
 ```
 
 Tento manifest obsahuje objekty potrebné pre nasadenie [Envoy Gateway] implementácie [Gateway API] a prípravu klastra pre potreby nasadenia jednotlivých mikroslužieb.
 
->info:> Použitím `latest` vydania pre `envoyproxy gateway` máme k dispozícii vždy najčerstvejšie vydanie tohto softvéru, avšak za cenu možných vývojárskych chýb. Preto v prípade chýb pri štarte envoy kontajnerov uprednostnite posledné stabilné vydanie pred `latest` vydaním.
+>info:> V prípade použitia `latest` vydania pre `envoyproxy gateway` máme k dispozícii vždy najčerstvejšie vydanie tohto softvéru, avšak za cenu možných vývojárskych chýb. Preto uprednostnite posledné stabilné vydanie pred `latest` vydaním.
 
 Upravte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/kustomization.yaml`
 
@@ -69,8 +69,6 @@ resources:
 ...
 - ../../../infrastructure/envoy-gateway @_add_@
 
-patches: 
-...
 ```
 
 Upravte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/gitops/prepare.kustomization.yaml`
