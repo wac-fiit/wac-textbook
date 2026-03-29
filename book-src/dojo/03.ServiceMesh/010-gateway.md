@@ -10,7 +10,7 @@ Na základe skúseností z implementácie [_Ingress_], sa začala pripravovať n
 
 ### 1. Nasadenie Gateway API
 
-V tomto kroku vytvoríme konfiguráciu pre nasadenie [Envoy Gateway] implementácie [Gateway API]. Vytvorte súbor `${WAC_ROOT}/ambulance_gitops/infrastructure/envoy-gateway/gateway-class.yaml` s nasledujúcim obsahom:
+V tomto kroku vytvoríme konfiguráciu pre nasadenie [Envoy Gateway] implementácie [Gateway API]. Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/gateway-class.yaml` s nasledujúcim obsahom:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1beta1
@@ -23,7 +23,7 @@ spec:
 
 [Envoy Gateway] controller umožnuje priradenie práve jednej inštancie [GatewayClass](https://gateway-api.sigs.k8s.io/api-types/gatewayclass/). Je možné nasadiť viacero radičov [Envoy Gateway], každý by musel mať ale priradený iný názov `controllerName`. V našom prípade použijeme názov `gateway.envoyproxy.io/gatewayclass-controller`, ktorý je používaný v štandardnej konfigurácii [Envoy Gateway].
 
-Ďalej vytvorte súbor: `${WAC_ROOT}/ambulance_gitops/infrastructure/envoy-gateway/gateway.yaml` s nasledujúcim obsahom:
+Ďalej vytvorte súbor: `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/gateway.yaml` s nasledujúcim obsahom:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1beta1
@@ -44,7 +44,7 @@ spec:
 
 Táto konfigurácia vytvorí v rámci klastra bod pripojenia, na ktorom bude implementácia [Gateway API] čakať na prichádzajúce požiadavky a spracovávať ich podľa pravidiel definovaných v objektoch typu [`HTTPRoute`](https://gateway-api.sigs.k8s.io/api-types/httproute/).
 
-Vytvorte súbor: `${WAC_ROOT}/ambulance_gitops/infrastructure/envoy-gateway/kustomization.yaml` s nasledujúcim obsahom:
+Vytvorte súbor: `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/kustomization.yaml` s nasledujúcim obsahom:
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
