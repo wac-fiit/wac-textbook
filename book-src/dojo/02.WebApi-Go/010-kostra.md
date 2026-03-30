@@ -23,7 +23,7 @@ Príkaz vytvorí súbor `${WAC_ROOT}/ambulance-webapi/go.mod` s obsahom v tvare:
 ```go
 module github.com/<github-id>/ambulance-webapi
 
-go 1.22
+go 1.26.1
 ```
 
 ### 3. Organizácia Súborov a Nastavenie API Špecifikácie

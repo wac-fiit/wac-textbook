@@ -35,7 +35,7 @@ Všimnite si, že princíp GitOps (_jediný zdroj pravdy je git repo_) zostáva 
 2. Teraz nastavíme, ktorý docker obraz má Flux sledovať. Náš _ambulance-ufe_ docker obraz je verejne prístupný, tzn. že nie je treba riešiť autentifikáciu. Vytvorte súbor `.../webcloud-gitops/flux-system/ambulance-ufe-image-repo.yaml` s obsahom:
 
     ```yaml
-    apiVersion: image.toolkit.fluxcd.io/v1beta1
+    apiVersion: image.toolkit.fluxcd.io/v1
     kind: ImageRepository
     metadata:
       name: ambulance-ufe
@@ -56,7 +56,7 @@ Všimnite si, že princíp GitOps (_jediný zdroj pravdy je git repo_) zostáva 
 3. Ďalší Flux komponent `ImagePolicy` nastavuje kritérium, podľa ktorého sa vyberie verzia docker obrazu. Vytvorte súbor `.../webcloud-gitops/flux-system/ambulance-ufe-image-policy.yaml` s obsahom:
 
     ```yaml
-    apiVersion: image.toolkit.fluxcd.io/v1beta1
+    apiVersion: image.toolkit.fluxcd.io/v1
     kind: ImagePolicy
     metadata:
       name: ambulance-ufe
@@ -106,7 +106,7 @@ Všimnite si, že princíp GitOps (_jediný zdroj pravdy je git repo_) zostáva 
 5. Vytvoríme nový komponent `ImageUpdateAutomation`, kde zadefinujeme miesto, kde sa nachádzajú súbory, ktoré sa majú modifikovať. Vytvorte súbor  `.../webcloud-gitops/flux-system/ambulance-ufe-imageupdateautomation.yaml` s obsahom:
 
      ```yaml
-     apiVersion: image.toolkit.fluxcd.io/v1beta1
+     apiVersion: image.toolkit.fluxcd.io/v1
      kind: ImageUpdateAutomation
      metadata:
        name: ambulance-ufe
@@ -124,7 +124,7 @@ Všimnite si, že princíp GitOps (_jediný zdroj pravdy je git repo_) zostáva 
            author:
              email: fluxcdbot@users.noreply.github.com
              name: fluxcdbot
-           messageTemplate: '{{range .Updated.Images}}{{println .}}{{end}}'
+           messageTemplate: '{{- range $c := .Changed.Changes }}{{ println $c.NewValue }}{{- end }}'
          push:
            branch: main
        update:

@@ -204,9 +204,6 @@ spec:
       - context-name: rail-content
       - context-name: drawer-content
 ```
-
->warning:> Meno elementu `<pfx>-ambulance-wl-list` musí zodpovedať komponentu, ktorý sme vytvorili predtým, pozri súbor `${WAC_ROOT}\ambulance-ufe\src\components\<pfx>-ambulance-wl-list\<pfx>-ambulance-wl-list.tsx`
-
 Tento súbor je neštandardným objektom - _Custom Resource_ -  systému kubernetes. V ďalšom bode budeme vytvárať manifesty pre mikro-front-end _controller_, ktorý tieto objekty obhospodáruje. V zásade tu vykonávame registráciu mikro aplikácie - webového komponentu - do hlavnej aplikačnej obálky.
 
 Všimnite si že používame referenciu na `microFrontend: polyfea-md-shell` a `element: polyfea-md-app`. Oba sú súčasťou riadiča, ktorý si popíšeme v bode 5.
@@ -227,6 +224,8 @@ spec:
       - path: "^(\\.?/)?<pfx>-ambulance-wl(/.*)?$"
 ```
 
+>warning:> Meno elementu `<pfx>-ambulance-wl-list` musí zodpovedať komponentu, ktorý sme vytvorili predtým, pozri súbor `${WAC_ROOT}/ambulance-ufe/src/components/<pfx>-ambulance-wl-list/<pfx>-ambulance-wl-list.tsx`
+
 Teraz nám však chýba referencia na microfrontend pre náš nový element. Vytvoríme súbor `${WAC_ROOT}/ambulance-gitops/apps/<pfx>-ambulance-ufe/microfrontend.yaml` s obsahom:
 
 ```yaml
@@ -236,7 +235,8 @@ metadata:
   name: <pfx>-ambulance-ufe
 spec:
   frontendClass: md-shell # default obsiahnutý v základe polyfea md-shell
-  service: http://<pfx>-ambulance-ufe.wac-hospital # referencia na službu odkiaľ sa má načítať modul
+  service: 
+    name: <pfx>-ambulance-ufe # referencia na službu odkiaľ sa má načítať modul
   modulePath: build/ambulance-ufe.esm.js # cesta v rámci služby kde sa modul nachádza
 ```
 

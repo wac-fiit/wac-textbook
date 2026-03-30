@@ -84,7 +84,7 @@
 5. V tomto kroku pripravíme manifesty pre sledovanie zmien v registri kontajnerov. Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/gitops/ambulance-webapi.image-repository.yaml`:
 
    ```yaml
-   apiVersion: image.toolkit.fluxcd.io/v1beta2
+   apiVersion: image.toolkit.fluxcd.io/v1
    kind: ImageRepository
    metadata:
      name: ambulance-webapi
@@ -97,7 +97,7 @@
    Ďalej vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/gitops/ambulance-webapi.image-policy.yaml`:
 
    ```yaml
-   apiVersion: image.toolkit.fluxcd.io/v1beta1
+   apiVersion: image.toolkit.fluxcd.io/v1
    kind: ImagePolicy
    metadata:
      name: ambulance-webapi

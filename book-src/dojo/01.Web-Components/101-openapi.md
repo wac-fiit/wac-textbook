@@ -487,7 +487,7 @@ describe('<pfx>-ambulance-wl-list', () => {
     fetchMock.resetMocks(); @_add_@
   }); @_add_@
   
-  it('renders sample entries', async () => {
+  it('renders sample entries', async () => { @_important_@
     // Mock the API response using sampleEntries
     fetchMock.mockResponseOnce(JSON.stringify(sampleEntries));@_add_@
   
@@ -552,7 +552,7 @@ describe('<pfx>-ambulance-wl-list', () => {
 ...
 ```
 
-Všimnite si ako simulujeme chybovú odpoveď z API serveru pomocou metódy `networkError`. V teste očakávame, že sa zobrazí chybové hlásenie a že sa nezobrazí žiadny záznam v zozname pacientov.
+Všimnite si ako simulujeme chybovú odpoveď z API serveru pomocou metódy `mockRejectOnce`. V teste očakávame, že sa zobrazí chybové hlásenie a že sa nezobrazí žiadny záznam v zozname pacientov.
 
 >info:> Testovaniu negatívnych scenárov - takzvaných _rainy days use cases_ - je v praxi potrebné venovať náležitú pozornosť. Vývoj častokrát prebieha v umelých prostrediach, za ideálnych podmienok sieťového pripojenia a pri dostatku systémových objektov. Obmedzenia v reálnych prostrediach môžu mať za dôsledok oneskorenie dodania produktu alebo úplné odmietnutie produktu zo strany používateľov. Ako bolo uvedené, v tomto cvičení sa testovaniu venujeme len okrajovo, rozsah tu uvedených testov by bol v praxi nedostatočný.
 
@@ -593,6 +593,17 @@ V súbore `${WAC_ROOT}/ambulance-ufe/package.json` doplňte nový skript:
 
 Funkcionalita príkazu je obdobná ako v prípade príkazu `npm run test`. Výhodou je, že môžeme využívať rozšírenia pre [Jest] v našom vývojovom prostredí alebo niektoré  predpripravené [GitHub Akcie](https://github.com/marketplace?type=actions&query=jest+) v priebežnej integrácii.
 
+Upravte súbor `${WAC_ROOT}/ambulance-ufe/tsconfig.json` a nastavte príznaky `noUnusedLocals` a `noUnusedParameters` na hodnotu `false`, aby ste sa zbavili upozornení z generovaného kódu:
+
+```json
+    ...
+    "target": "es2022",
+    "noUnusedLocals": false,  @_important_@
+    "noUnusedParameters": false,  @_important_@
+    "jsx": "react",
+    ...
+```
+
 ### 9. Archivácia zmien a nasadenie aplikácie
 
 Archivujte svoj kód príkazmi:
@@ -611,6 +622,8 @@ spec:
 ...
   element: <pfx>-ambulance-wl-app
   attributes:
+    - name: base-path
+      value: /<pfx>-ambulance-wl/
     - name: api-base @_add_@
       value: http://localhost:5000/api @_add_@
     - name: ambulance-id @_add_@

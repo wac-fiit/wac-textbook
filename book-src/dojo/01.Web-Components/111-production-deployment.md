@@ -50,7 +50,7 @@ components:
 
 Náš spoločný klaster sme tu nazvali `wac-aks`, čo referuje na nasadenie do klastra služby [Azure Kubernetes Services](https://azure.microsoft.com/en-us/products/kubernetes-service). Obsah je obdobný s obsahom z klastra `localhost`, avšak zmenili sme komponent v sekcii `components`.
 
-Vytvorte súbor `${WAC_ROOT}\ambulance-gitops/components/version-release/kustomization.yaml` s obsahom:
+Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/components/version-release/kustomization.yaml` s obsahom:
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1alpha1
@@ -177,7 +177,7 @@ git push
 
 ### 4. Ručné nasadenie konfigurácie pre priebežné nasadenie
 
-Aby sme uviedli do činnosti priebežné nasadenie pre našu konfiguráciu, musíme ju prvýkrát nasadiť ručne. K tomu budete potrebovať prístup k spoločnému klastru. Na základe _Pokynov k predmetu_ si stiahnite konfiguráciu pre spoločný klaster - `wac-202?-student.kubeconfig.yaml` a [skombinujte ju s už existujúcou konfiguráciou](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/). Z dlhodobého hľadiska je asi najpraktickejším spôsobom udržiavať konfigurácie pre jednotlivé klastre v samostatných súboroch a nastaviť vo Vašom prostredí premennú `KUBECONFIG` tak, aby ukazovala na zoznam jednotlivých klastrov. Skopírujte konfiguráciu pre spoločný klaster do súboru `$HOME/.kube/wac-student.kubeconfig.yaml` a nastavte vo svojom prostredí premennú `$env:KUBECONFIG` na hodnotu `$HOME\.kube\config;$HOME\.kube\wac-student.kubeconfig.yaml`. V prípade linux prostredia použite ako oddelovač ciest znak `:` namiesto znaku `;`:
+Aby sme uviedli do činnosti priebežné nasadenie pre našu konfiguráciu, musíme ju prvýkrát nasadiť ručne. K tomu budete potrebovať prístup k spoločnému klastru. Na základe _Pokynov k predmetu_ si stiahnite konfiguráciu pre spoločný klaster - `wac-202?-student.kubeconfig.yaml` a [skombinujte ju s už existujúcou konfiguráciou](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/). Z dlhodobého hľadiska je asi najpraktickejším spôsobom udržiavať konfigurácie pre jednotlivé klastre v samostatných súboroch a nastaviť vo Vašom prostredí premennú `KUBECONFIG` tak, aby ukazovala na zoznam jednotlivých klastrov. Skopírujte konfiguráciu pre spoločný klaster do súboru `$HOME/.kube/wac-student.kubeconfig.yaml` a nastavte vo svojom prostredí premennú `$env:KUBECONFIG` na hodnotu `$HOME/.kube/config;$HOME/.kube/wac-student.kubeconfig.yaml`. V prípade linux prostredia použite ako oddelovač ciest znak `:` namiesto znaku `;`:
 
 ```ps
 cp wac-202?-student.kubeconfig.yaml $HOME/.kube/wac-student.kubeconfig.yaml
@@ -216,7 +216,7 @@ objektu `gitops-repo`, vykonajte aj príkaz `kubectl apply -k clusters/localhost
 Nakoniec overte, či sú všetky nasadené objekty pripravené a či sú všetky pody v stave `Running`:
 
 ```ps
-kubectl get all -n wac-hospital
+kubectl get all -l app.kubernetes.io/name=<pfx>-ambulance-wl -n wac-hospital
 ```
 
 Výstup by mal okrem iného obsahovať Váš deployment `<pfx>-ambulance-ufe-deployment` a k tomu zodpovedajúci pod. Pokiaľ sú oba nasadené, môžete prejsť na stránku [spoločného klastra](https://wac-2025.westeurope.cloudapp.azure.com/fea), kde v zozname aplikácií uvidíte aj svoju aplikáciu.

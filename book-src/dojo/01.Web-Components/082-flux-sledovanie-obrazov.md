@@ -14,7 +14,7 @@ Teraz máme nasadenú `latest` verziu kontajnera (viď súbor `${WAC_ROOT}/ambul
 V prvom kroku určíme, ktorý [repozitár](https://fluxcd.io/flux/components/image/imagerepositories/) softvérového kontajnera má Flux sledovať. Náš _ambulance-ufe_ docker obraz je verejne prístupný, tzn. že nie je treba riešiť autentifikáciu. Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/cluster/localhost/gitops/ambulance-ufe.image-repository.yaml` s obsahom:
 
 ```yaml
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImageRepository
 metadata:
   name: ambulance-ufe
@@ -29,7 +29,7 @@ spec:
 Ďalší Flux komponent [_ImagePolicy_](https://fluxcd.io/flux/components/image/imagepolicies/) nastavuje kritérium, podľa ktorého sa vyberie príslušná verzia docker obrazu. Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/cluster/localhost/gitops/ambulance-ufe.image-policy.yaml` s obsahom:
 
 ```yaml
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImagePolicy
 metadata:
   name: ambulance-ufe
@@ -62,7 +62,7 @@ images:
 
 Všimnite si markre v komentároch - je dôležité, aby referovali správne názvy _image police_, vytvorených v predchádzajúcom kroku.
 
-Teraz upravte súbory `${WAC_ROOT}/ambulance-gitops/clusters/localhost/install/kustomization.yaml` a `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/kustomization.yaml`. Do oboch pridajte nasledujúcu sekciu:
+Teraz upravte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/install/kustomization.yaml`. Pridajte nasledujúcu sekciu:
 
 ```yaml
 ...
@@ -70,14 +70,14 @@ components:
 - ../../../components/version-developers
 ```
 
-Týmto spôsobom cez kustomizáciu upravíme všetky miesta v referencovaných yaml súboroch, kde sa nachádza obraz `<docker_id>/ambulance-ufe` alebo `ghcr.io/polyfea/polyfea-controller`.
+Týmto spôsobom cez kustomizáciu upravíme všetky miesta v referencovaných yaml súboroch, kde sa nachádza obraz `<docker_id>/ambulance-ufe`.
 
 ### 3. Pridanie komponentu pre automatickú aktualizáciu verzií Docker obrazov
 
 Vytvoríme nový komponent `ImageUpdateAutomation`, kde zadefinujeme miesto, kde sa nachádzajú súbory, ktoré sa majú modifikovať. Vytvorte súbor  `${WAC_ROOT}/ambulance-gitops/clusters/localhost/gitops/image-update-automation.yaml` s obsahom:
 
 ```yaml
-apiVersion: image.toolkit.fluxcd.io/v1beta1
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImageUpdateAutomation
 metadata:
   name: image-updater
@@ -101,14 +101,14 @@ spec:
         Automation name: {{ .AutomationObject }}
         
         Files:
-        {{ range $filename, $_ := .Updated.Files -}}
+        {{ range $filename, $_ := .Changed.FileChanges -}}
         - {{ $filename }}
         {{ end -}}
-        
-        Images:
-        {{ range .Updated.Images -}}
-        - {{.}}
-        {{ end -}}
+
+        Changes:
+        {{- range $_, $change := .Changed.Changes }}
+        - {{ $change.OldValue }} -> {{ $change.NewValue }}
+        {{- end }}
     push:
       branch: main  @_important_@
   update:

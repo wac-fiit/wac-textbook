@@ -16,6 +16,8 @@ npm init stencil
 
 >info:> V rámci vykonávania tohto príkazu vám budú doinštalované chýbajúce knižnice pre vytvorenie projektu.
 
+>warning:> Pokiaľ vám príkaz vráti chybu `npm error command sh -c "create-stencil"` je možné použiť alternatívny príkaz `npx create-stencil`.
+
 Ako druh projektu zvoľte `component` a ako meno `ambulance-ufe`. StencilJS umožňuje vytvoriť aj samostatnú SPA/PWA aplikáciu, v našom prípade máme ale záujem iba o vytvorenie
 sady webových komponentov, ktoré budeme používať v spoločnej aplikácii. Z praktického
 hľadiska je rozdiel najmä vo vytváraní konečného balíka pre nasadenie našej aplikácie/webového komponentu.

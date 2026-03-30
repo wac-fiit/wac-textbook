@@ -146,13 +146,13 @@ export class <Pfx>AmbulanceWlEditor {
   @State() entry: WaitingListEntry;  @_add_@
   @State() errorMessage:string;  @_add_@
   @State() isValid: boolean;  @_add_@
-
+ @_add_@
   private formElement: HTMLFormElement;  @_add_@
-
+ @_add_@
   async componentWillLoad() {  @_add_@
       this.getWaitingEntryAsync();  @_add_@
   }  @_add_@
-
+ @_add_@
   private async getWaitingEntryAsync(): Promise<WaitingListEntry> {   @_add_@
     if ( !this.entryId ) {   @_add_@
       this.isValid = false;   @_add_@
@@ -199,7 +199,7 @@ render() {
       <Host>
         <form ref={el => this.formElement = el}> @_add_@
           <md-filled-text-field label="Meno a Priezvisko" 
-            required value={this.entry?.name} @_add_@
+            required pattern=".*\S.*" value={this.entry?.name} @_add_@
             oninput={ (ev: InputEvent) => {  @_add_@
               if(this.entry) {this.entry.name = this.handleInputEvent(ev)}  @_add_@
             } }>  @_add_@
@@ -207,7 +207,7 @@ render() {
           </md-filled-text-field>
 
           <md-filled-text-field label="Registračné číslo pacienta" 
-            required value={this.entry?.patientId} @_add_@
+            required pattern=".*\S.*" value={this.entry?.patientId} @_add_@
             oninput={ (ev: InputEvent) => { @_add_@
               if(this.entry) {this.entry.patientId = this.handleInputEvent(ev)}  @_add_@
             } }>  @_add_@
@@ -267,7 +267,7 @@ render() {
             onClick={() => this.editorClosed.emit("cancel")}>
             Zrušiť
           </md-outlined-button>
-          <md-filled-button id="confirm" disabled={ !this.isValid }  @_important_@
+          <md-filled-button id="confirm"
             onClick={() => this.updateEntry() }  @_important_@
             >
             <md-icon slot="icon">save</md-icon>
@@ -289,19 +289,35 @@ render() {
 
 private handleInputEvent( ev: InputEvent): string {  @_add_@
   const target = ev.target as HTMLInputElement;  @_add_@
+  this.validateForm('silent');  @_add_@
+  return target.value  @_add_@
+}  @_add_@
+  @_add_@
+private validateForm(mode: 'silent' | 'show-errors'): boolean {  @_add_@
   // check validity of elements  @_add_@
   this.isValid = true;  @_add_@
   for (let i = 0; i < this.formElement.children.length; i++) {  @_add_@
-      const element = this.formElement.children[i]  @_add_@
-      if ("reportValidity" in element) {  @_add_@
-      const valid = (element as HTMLInputElement).reportValidity();  @_add_@
-      this.isValid &&= valid;  @_add_@
-      }  @_add_@
+    const element = this.formElement.children[i] as HTMLElement & {  @_add_@
+      checkValidity?: () => boolean;  @_add_@
+      reportValidity?: () => boolean;  @_add_@
+    };  @_add_@
+  @_add_@
+    let valid = true;  @_add_@
+    if (mode === 'show-errors' && element.reportValidity) {  @_add_@
+      valid = element.reportValidity();  @_add_@
+    } else if (element.checkValidity) {  @_add_@
+      valid = element.checkValidity();  @_add_@
+    }  @_add_@
+    this.isValid &&= valid;  @_add_@
   }  @_add_@
-  return target.value  @_add_@
+  return this.isValid;  @_add_@
 }  @_add_@
 
 private async updateEntry() {      @_add_@
+  if (!this.validateForm('show-errors')) { @_add_@
+    return; @_add_@
+  } @_add_@
+ @_add_@
   try { @_add_@
     const configuration = new Configuration({ @_add_@
       basePath: this.apiBase, @_add_@
@@ -399,21 +415,6 @@ render() {
       );
 ...
 }
-```
-
-Poslednú úpravu vykonáme v súbore `${WAC_ROOT}/ambulance-ufe/src/components/<pfx>-ambulance-wl-list/<pfx>-ambulance-wl-list.tsx` a to takú, že nastavíme správne id pri výbere položky zoznamu:
-
-```tsx
-...
-render() {
-  ...
-  {this.waitingPatients.map((patient) => @_important_@
-    <md-list-item onClick={ () => this.entryClicked.emit(patient.id)}> @_important_@
-      <div slot="headline">{patient.name}</div>
-      <div slot="supporting-text">{"Predpokladaný vstup: " + patient.estimatedStart.toLocaleString()}</div>
-        <md-icon slot="start">person</md-icon>
-    </md-list-item>
-  ...
 ```
 
 ### 3. Overenie funkcionality aplikácie

@@ -20,7 +20,7 @@ Teraz máme nasadenú `latest` verziu kontajnera (viď súbor `${WAC_ROOT}/ambul
 1. V prvom kroku určíme, ktorý [repozitár](https://fluxcd.io/flux/components/image/imagerepositories/) softvérového kontajnera má Flux sledovať. Náš _ambulance-ufe_ docker obraz je verejne prístupný, tzn. že nie je treba riešiť autentifikáciu. Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/cluster/localhost/gitops/ambulance-ufe.image-repository.yaml` s obsahom:
 
     ```yaml
-    apiVersion: image.toolkit.fluxcd.io/v1beta2
+    apiVersion: image.toolkit.fluxcd.io/v1
     kind: ImageRepository
     metadata:
       name: ambulance-ufe
@@ -35,7 +35,7 @@ Teraz máme nasadenú `latest` verziu kontajnera (viď súbor `${WAC_ROOT}/ambul
     Vytvorte tiež súbor `${WAC_ROOT}/ambulance-gitops/cluster/localhost/gitops/ufe-controller.image-repository.yaml` s obsahom:
 
     ```yaml
-    apiVersion: image.toolkit.fluxcd.io/v1beta2
+    apiVersion: image.toolkit.fluxcd.io/v1
     kind: ImageRepository
     metadata:
       name: ufe-controller
@@ -48,7 +48,7 @@ Teraz máme nasadenú `latest` verziu kontajnera (viď súbor `${WAC_ROOT}/ambul
 2. Ďalší Flux komponent [_ImagePolicy_](https://fluxcd.io/flux/components/image/imagepolicies/) nastavuje kritérium, podľa ktorého sa vyberie príslušná verzia docker obrazu. Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/cluster/localhost/gitops/ambulance-ufe.image-policy.yaml` s obsahom:
 
    ```yaml
-   apiVersion: image.toolkit.fluxcd.io/v1beta2
+   apiVersion: image.toolkit.fluxcd.io/v1
    kind: ImagePolicy
    metadata:
      name: ambulance-ufe
@@ -67,7 +67,7 @@ Teraz máme nasadenú `latest` verziu kontajnera (viď súbor `${WAC_ROOT}/ambul
    a súbor  `${WAC_ROOT}/ambulance-gitops/cluster/localhost/gitops/ufe-controller.image-policy.yaml`
 
    ```yaml
-   apiVersion: image.toolkit.fluxcd.io/v1beta2
+   apiVersion: image.toolkit.fluxcd.io/v1
    kind: ImagePolicy
    metadata:
      name: ufe-controller
@@ -113,7 +113,7 @@ Teraz máme nasadenú `latest` verziu kontajnera (viď súbor `${WAC_ROOT}/ambul
 4. Vytvoríme nový komponent `ImageUpdateAutomation`, kde zadefinujeme miesto, kde sa nachádzajú súbory, ktoré sa majú modifikovať. Vytvorte súbor  `${WAC_ROOT}/ambulance-gitops/clusters/localhost/gitops/image-update-automation.yaml` s obsahom:
 
    ```yaml
-   apiVersion: image.toolkit.fluxcd.io/v1beta1
+   apiVersion: image.toolkit.fluxcd.io/v1
    kind: ImageUpdateAutomation
    metadata:
      name: image-updater
@@ -137,14 +137,14 @@ Teraz máme nasadenú `latest` verziu kontajnera (viď súbor `${WAC_ROOT}/ambul
             Automation name: {{ .AutomationObject }}
             
             Files:
-            {{ range $filename, $_ := .Updated.Files -}}
+            {{ range $filename, $_ := .Changed.FileChanges -}}
             - {{ $filename }}
             {{ end -}}
-            
-            Images:
-            {{ range .Updated.Images -}}
-            - {{.}}
-            {{ end -}}
+
+            Changes:
+            {{- range $_, $change := .Changed.Changes }}
+            - {{ $change.OldValue }} -> {{ $change.NewValue }}
+            {{- end }}
        push:
          branch: main  @_important_@
      update:

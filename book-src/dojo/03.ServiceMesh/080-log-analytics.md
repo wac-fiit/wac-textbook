@@ -52,7 +52,7 @@ Pre nasadenie systému [Grafana Stack] sme pripravili manifesty, ktoré sú pris
          - OTEL_TRACES_SAMPLER_RATIO=1.0 @_add_@
          - OTEL_TRACES_SAMPLER_PERCENTAGE=100 @_add_@
          # specify different host if `localhost` is not your top level domain name for the cluster @_add_@
-         - GRAFANA_ROOT_URL:=http://localhost/grafana  @_add_@ 
+         - GRAFANA_ROOT_URL=http://localhost/grafana  @_add_@ 
      
    components:
    - ../../../components/version-developers
@@ -202,7 +202,7 @@ Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá um
    package main
 
    import (
-     "log" @__remove__@
+     "log" @_remove_@
      ...
      "github.com/rs/zerolog"       @_add_@
      "github.com/rs/zerolog/log"       @_add_@
@@ -227,7 +227,7 @@ Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá um
      zerolog.SetGlobalLevel(level)     @_add_@
         @_add_@
      log.Info().Msg("Server started")     @_add_@
-     log.Printf("Server started")   @__remove__@
+     log.Printf("Server started")   @_remove_@
 
      ...
    }
@@ -239,7 +239,7 @@ Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá um
 
    ```ps
    go mod tidy
-   go build .\cmd\ambulance-api-service\main.go
+   go build ./cmd/ambulance-api-service/main.go
    ```
 
 3. Upravte súbor `${WAC_ROOT}/ambulance-webapi/buid/docker/Dockerfile` v ktorom doplníme implicitnú konfiguráciu tak aby bol kontajner použiteľný aj samostatne. Význam niektorých nastavení bude zrejmý v neskorších kapitolách, tu je pre nás zaujímave najmä nastavenie hodnoty `LOG_LEVEL`:
@@ -258,7 +258,7 @@ Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá um
    ...
    ```
 
-   Pri nasadení grafana stack sme v klastri vytvorili ak objekt typu _ConfigMap_ s názvom `otel-params`, ktorý obsahuje všeobecnú konfiguráciu pre kvalitativný aspekt [_observability_](https://en.wikipedia.org/wiki/Observability_(software)) nášho systému. Upravte súbor `${WAC_ROOT}/ambulance-webapi/deployments/kustomize/install/deployment.yaml` a použite túto konfiguráciu:
+   Pri nasadení grafana stack sme v klastri vytvorili aj objekt typu _ConfigMap_ s názvom `otel-params`, ktorý obsahuje všeobecnú konfiguráciu pre kvalitativný aspekt [_observability_](https://en.wikipedia.org/wiki/Observability_(software)) nášho systému. Upravte súbor `${WAC_ROOT}/ambulance-webapi/deployments/kustomize/install/deployment.yaml` a použite túto konfiguráciu:
 
    ```yaml
 
@@ -277,10 +277,10 @@ Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá um
            ports:
            - name: webapi-port
              containerPort: 8080
-           envFrom:   @__add_@
-             - configMapRef:   @__add_@
-                 name: otel-params   @__add_@
-                 voptional: true   @__add_@
+           envFrom:   @_add_@
+             - configMapRef:   @_add_@
+                 name: otel-params   @_add_@
+                 optional: true   @_add_@
            env:
            ...
     ```

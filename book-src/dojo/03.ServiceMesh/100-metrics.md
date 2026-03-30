@@ -28,7 +28,7 @@ Mnoho relevantných metrík už je zozbieraných a sprístupnených automaticky.
      ...
      defer traceProvider.Shutdown(ctx)
    
-     // initialize metric exporter
+     // initialize metric exporter   @_add_@
      metricReader, err := autoexport.NewMetricReader(ctx)   @_add_@
      if err != nil {   @_add_@
        log.Fatal().Err(err).Msg("Failed to initialize metric reader")   @_add_@
@@ -189,7 +189,7 @@ Mnoho relevantných metrík už je zozbieraných a sprístupnených automaticky.
   
    ```ps
    go mod tidy
-   go build .\cmd\ambulance-api-service\main.go
+   go build ./cmd/ambulance-api-service/main.go
    go test ./...
    ```
 
