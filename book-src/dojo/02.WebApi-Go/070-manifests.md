@@ -290,9 +290,9 @@ patches:
     name: <pfx>-ambulance-webapi
 ```
 
-Ďalej náš súbor obsahuje referenciu na úpravu manifestu pre nasadenie nášho webapi - `patches/webapi.deployment.yaml`. Táto úprava je potrebná preto, aby sme mohli použiť hodnoty z konfiguračnej mapy a objektu [_Secret_](https://kubernetes.io/docs/concepts/configuration/secret/) v rámci konfigurácie našej služby. V tomto prípade realizujeme úpravu pomocou manifestu typu [JSONPatch]. Dôvodom je najmä fakt, že potrebujeme zmazať pôvodné vlastnosti `value` v definíciach premenných prostredia.
+Ďalej náš súbor obsahuje referenciu na úpravu manifestu pre nasadenie nášho webapi - `patches/webapi.deployment.yaml`. Táto úprava je potrebná preto, aby sme mohli použiť hodnoty z konfiguračnej mapy a objektu [_Secret_](https://kubernetes.io/docs/concepts/configuration/secret/) v rámci konfigurácie našej služby. V tomto prípade realizujeme úpravu pomocou manifestu typu [_strategic merge_](https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/patchesstrategicmerge/). Dôvodom je najmä fakt, že potrebujeme zmazať pôvodné vlastnosti `value` v definíciach premenných prostredia.
 
->info:> Alternatívou by bolo vytvoriť dve záplaty typu [_strategic merge_](https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/patchesstrategicmerge/), pričom prvá by zmazala pôvodné záznamy v sekcii `env` pomocou `$patch: delete` directívy a druhá záplata by ich pridala s použitím záznamov s vlastnosťou `valueFrom`. Z dôvodu ukážky použitia [JSONPatch]  sme tento spôsob nezvolili, hoci z hľadiska dlhodobého vývoja by bol asi primeranejší.
+>info:> Alternatívou by bolo vytvoriť dve záplaty typu [JSONPatch], pričom prvá by zmazala pôvodné záznamy v sekcii `env` pomocou `$patch: delete` directívy a druhá záplata by ich pridala s použitím záznamov s vlastnosťou `valueFrom`. Z dôvodu ukážky použitia [_strategic merge_](https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/patchesstrategicmerge/)  sme tento spôsob nezvolili, hoci z hľadiska dlhodobého vývoja by bol asi primeranejší.
 
 Vytvorte súbor `${WAC_ROOT}/ambulance-webapi/deployments/kustomize/install/patches/webapi.deployment.yaml` s nasledujúcim obsahom:
 
