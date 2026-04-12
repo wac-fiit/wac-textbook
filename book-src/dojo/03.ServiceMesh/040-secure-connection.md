@@ -57,7 +57,7 @@ Za účelom vydávania certifikátov nasadíme do klastra službu [cert-manager]
    
    resources:
    # check the version is up-to-date
-   - https://github.com/cert-manager/cert-manager/releases/download/v1.13.1/cert-manager.yaml
+   - https://github.com/cert-manager/cert-manager/releases/download/v1.20.2/cert-manager.yaml
    - development.issuer.yaml
    - lets-encrypt.issuer.yaml
    
@@ -65,14 +65,14 @@ Za účelom vydávania certifikátov nasadíme do klastra službu [cert-manager]
    - patch: |-
       - op: add
         path: /spec/template/spec/containers/0/args/-
-        value: --feature-gates=ExperimentalGatewayAPISupport=true @_important_@
+        value: --enable-gateway-api=true
      target:
        kind: Deployment
        name: cert-manager
        namespace: cert-manager
    ```
 
-    V tomto súbore sme vytvorili konfiguráciu pre _cert-manager_ a pridali sme do nej dva objekty typu _Issuers_. Navyše sme pridali aj patch, ktorý povolí experimentálnu podporu pre [_Gateway API_][gatewayapi].
+    V tomto súbore sme vytvorili konfiguráciu pre _cert-manager_ a pridali sme do nej dva objekty typu _Issuers_. Navyše sme pridali aj patch, ktorý povolí  podporu pre [_Gateway API_][gatewayapi].
 
 4. Pridáme _cert-manager_ do nášho klastra. Upravte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/kustomization.yaml`:
 
