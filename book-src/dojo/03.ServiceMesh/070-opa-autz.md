@@ -261,30 +261,39 @@ Pre riadenie politiky prístupu, nielen v rámci autorizácie používateľov, a
     ...
     ```
 
-5. Podobne ako v prípade autentifikácie pomocou `oauth2-proxy`, pridáme aj autorizáciu medzi zoznam filtrov v [Envoy Proxy]. Upravte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/envoy-patch-policy.yaml`:
+5. Podobne ako v prípade autentifikácie pridáme aj autorizáciu medzi zoznam filtrov v [Envoy Proxy]. Upravte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/authz.security-policy.yaml`:
+
+    ```yaml
+    apiVersion: gateway.envoyproxy.io/v1alpha1
+    kind: SecurityPolicy
+    metadata:
+      name: authorization
+    spec:
+        targetRefs:
+        - kind: HTTPRoute
+          name: http-echo @_important_@
+        - kind: HTTPRoute
+          name: <pfx>-ambulance-webapi @_important_@
+        extAuth:
+          grpc:
+            backendRefs:
+              - name: opa-plugin
+                port: 9191
+          headersToExtAuth:
+            - x-forwarded-preferred-username
+            - x-forwarded-user
+            - x-forwarded-email
+    ```
+
+    Všimnite si, že v tomto prípade aplikujeme autorizáciu len pre služby `http-echo` a `<pfx>-ambulance-webapi`. V praxi by sme mohli aplikovať autorizáciu pre všetky služby, alebo by sme mohli definovať rôzne politiky pre rôzne služby.  MUsíme si ale uvedomiť, že zároveň musíme zabezpečiť, aby niektoré služby boli prístupne ešte pred samotnou autorizáciou, napríklad služby pre autentifikáciu používateľov (Dex), alebo služby pre získanie TLS certifikátov (cert-manager), ktoré sú nevyhnutné pre správnu funkčnosť nášho service mesh-u. Máme k dispozícii rôzne stratégie, napríklad môžme vytvoriť ďalšie podriadené Gateway objekty pre rôzne skupiny služieb (_napr. public vs. private_), alebo môžeme použiť rôzne politiky pre rôzne cesty v rámci toho istého Gateway objektu. V našom prípade sa ale spokojíme s aplikovaním autorizácie len pre niektoré služby, ktoré sú v našom klastri nasadené.
+
+    Upravte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/kustomization.yaml` a pridajte referenciu na tento nový bezpečnostný objekt:
 
     ```yaml
     ...
-    spec:
-      ...
-      jsonPatches:
-        - type: "type.googleapis.com/envoy.config.listener.v3.Listener"
-        ...
-        - type: "type.googleapis.com/envoy.config.listener.v3.Listener"             @_add_@
-          name:  wac-hospital/wac-hospital-gateway/fqdn             @_add_@
-          operation:             @_add_@
-            op: add             @_add_@
-            path: "/filter_chains/0/filters/0/typed_config/http_filters/1"             @_add_@
-            value:             @_add_@
-              name: authorization.ext_authz             @_add_@
-              typed_config:             @_add_@
-                "@type": type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz             @_add_@
-                transport_api_version: V3             @_add_@
-                grpc_service:             @_add_@
-                  google_grpc:             @_add_@
-                    stat_prefix: opa             @_add_@
-                    target_uri: opa-plugin.wac-hospital:9191             @_add_@
-                  timeout: 3s             @_add_@
+    resources:
+    ...
+    - authz.security-policy.yaml @_add_@
     ```
 
 6. Uložte zmeny a archivujte ich vo vzdialenom repozitári:
@@ -301,9 +310,7 @@ Pre riadenie politiky prístupu, nielen v rámci autorizácie používateľov, a
     kubectl -n wac-hospital get pods -w
     ```
 
-    Overte, že stav objektu _Envoy Patch Policy_ je `Programmed`
-
-    >info:> V prípade, že sa stav nemení na Programmed, je potrebné reštartovať pody envoy gateway.
+    Overte, že stav objektov _SecurityPolicy_ je `Accepted`
 
     ```ps
     kubectl -n wac-hospital get epp -o=yaml

@@ -23,7 +23,7 @@ Pre účely autentifikácie použijeme službu [oauth2-proxy](https://oauth2-pro
    * _Application name_: `WAC hospital`
    * _Homepage URL_: `https://wac-hospital.loc`
    * _Application description_: `Aplikácia vytvorená na cvičeniach WAC - <vaše meno>`
-   * _Authorization callback URL_: `https://wac-hospital.loc/authn/callback`
+   * _Authorization callback URL_: `https://wac-hospital.westeurope.cloudapp.azure.com/dex/callback`
 
    Prvé tri položky budú prezentované používateľom pri poskytovaní súhlasu so zdieľaním informácií. Posledná položka je dôležitá v samotnom protokole OIDC - používatelia budú po autentifikácii na stránke GitHub presmerovaní jedine na túto URL, a poskytovateľ identít akceptuje jedine požiadavky o autentifikovanie používateľov, ktoré presmerujú používateľa na niektorú z registrovaných _authorization callback_ URL. Týmto spôsobom je zabránené, aby sa škodlivá stránka mohla vydávať za vašu aplikáciu a získať prístup k údajom používateľa bez jeho predchadzajúceho súhlasu.
 
@@ -64,279 +64,261 @@ Pre účely autentifikácie použijeme službu [oauth2-proxy](https://oauth2-pro
            disableNameSuffixHash: true     @_add_@
    ```
 
-4. Vytvorte konfiguráciu pre mikro službu [ouath2-proxy](https://oauth2-proxy.github.io/oauth2-proxy/). Vytvorte adresár `${WAC_ROOT}/ambulance-gitops/infrastructure/oauth2-proxy` a v ňom súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/oauth2-proxy/deployment.yaml` s obsahom
+4. GitHub neposkytuje OIDC protokol priamo, ale podporuje štandardný protokol [OAuth2](https://oauth.net/2/), ktorý je základom OIDC. Na premostenie tejto nekompatibility použijeme službu [Dex](https://dexidp.io/), ktorá poskytuje OIDC rozhranie nad rôznymi poskytovateľmi identít, vrátane GitHubu.
 
-```yaml
-  apiVersion: apps/v1
-  kind: Deployment
-  metadata:
-    name: &PODNAME oauth2-proxy
-  spec:
-    replicas: 1
-    selector:
-      matchLabels:
-        pod: *PODNAME
-    template:
-      metadata: 
-        labels:
-          pod: *PODNAME
-      spec:
-        containers:
-        - name: oauth2-proxy  
-          image: bitnami/oauth2-proxy
-          args: 
-          - --upstream="static://200" @_important_@
-          - --set-xauthrequest @_important_@
-          - --set-authorization-header
-          - --silence-ping-logging
-          env:
-          - name: OAUTH2_PROXY_HTTP_ADDRESS
-            # listen on standard interface - localhost will not work
-            value: ":4180"
-  
-          - name: OAUTH2_PROXY_PROXY_PREFIX
-            # oauth2-proxy route listens on path /authn
-            value: /authn @_important_@
+   Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/dex/deployment.yaml` s nasledujúcim obsahom
 
-          - name: OAUTH2_PROXY_PROVIDER
-            value: github @_important_@
+   ```yaml
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: dex
+   spec:
+     replicas: 1
+     selector:
+       matchLabels:
+         app: dex
+     template:
+       metadata:
+         labels:
+           app: dex
+       spec:
+         serviceAccountName: dex  @_important_@
+         containers:
+         - name: dex
+           image: ghcr.io/dexidp/dex:v2.45.1
+           args: ["dex", "serve", "/etc/dex/cfg/config.yaml"] @_important_@
+           ports:
+           - name: http
+             containerPort: 5556
+           env:
+           - name: GITHUB_CLIENT_ID @_important_@
+             valueFrom:
+               secretKeyRef:
+                 name: oidc @_important_@
+                 key: client-id
+           - name: GITHUB_CLIENT_SECRET @_important_@
+             valueFrom:
+               secretKeyRef:
+                 name: oidc @_important_@
+                 key: client-secret
+           - name: ENVOY_CLIENT_SECRET @_important_@
+             valueFrom:
+               secretKeyRef:
+                 name: oidc-dex @_important_@
+                 key: client-secret 
+           volumeMounts:
+           - name: config
+             mountPath: /etc/dex/cfg
+         volumes:
+         - name: config
+           configMap:
+             name: dex-config @_important_@
+   ```
 
-          - name: OAUTH2_PROXY_CLIENT_ID
-            valueFrom:
-              secretKeyRef:
-                name: oidc-client  @_important_@
-                key: client-id
-  
-          - name: OAUTH2_PROXY_CLIENT_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: oidc-client @_important_@
-                key: client-secret
-  
-          - name: OAUTH2_PROXY_REDIRECT_URL
-            # must match redirection registered at GitHub Oauth2 Application form
-            value: https://wac-hospital.loc/authn/callback     @_important_@
-  
-          - name: OAUTH2_PROXY_COOKIE_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: oidc-client
-                key: cookie-secret
-  
-          - name: OAUTH2_PROXY_SESSION_STORE_TYPE
-            # alternatively use redis and configure it
-            value: cookie
+   Všimnite si, že v tejto konfigurácii referencujeme hodnoty z _Secret_-u `oidc`, ktorý sme vytvorili v    predchádzajúcom kroku. V tejto konfigurácii sme použili aj _ConfigMap_ `dex-config`, ktorú vytvoríme v ďalšom kroku    a ktorá obsahuje konfiguračný súbor služby [Dex](https://dexidp.io/docs/configuration/).
 
-          - name: OAUTH2_PROXY_COOKIE_PREFIX
-            value: __Secure-
-          - name: OAUTH2_PROXY_COOKIE_SAMESITE
-            value: lax
-            
-          - name: OAUTH2_PROXY_EMAIL_DOMAINS
-            # only authenticate - we will authorize users later
-            value: "*"
+   Ďalej vytvorte súbow `${WAC_ROOT}/ambulance-gitops/infrastructure/dex/service.yaml` s obsahom
 
-          - name: OAUTH2_PROXY_SKIP_PROVIDER_BUTTON
-            # change to true to skip provider selection page. Here false for    demonstration only
-            value: "false"
+   ```yaml
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: dex
+   spec:
+     selector:
+       app: dex
+     ports:
+     - protocol: TCP
+       port: 5556
+       targetPort: 5556
+   ```
 
-          - name: OAUTH2_PROXY_SKIP_AUTH_ROUTES
-            # regex of routes where anonymous users are allowed
-            # either here or create separate gateway/listener for anonymous users
-            value: (\/.well-known\/|\/favicon.ico)
-  
-          resources:
-            limits:
-              cpu: '0.2'
-              memory: '320M'
-            requests:
-              cpu: '0.01'
-              memory: '128M'
-          livenessProbe:
-            httpGet:
-              path: /ready
-              scheme: HTTP
-              port: 4180
-            initialDelaySeconds: 5
-            periodSeconds: 15
-          readinessProbe:
-            httpGet:
-              path: /ready
-              scheme: HTTP
-              port: 4180
-            initialDelaySeconds: 5
-            periodSeconds: 5
-```
-
-  Všimnite se, že referencujeme hodnoty zo _Secret_-u `oidc-client`, ktoré sme vytvorili v predchádzajúcom kroku. V tejto konfigurácii využívame na správu sedení (session) takzvaný [_Secure Cookie_](https://en.wikipedia.org/wiki/Secure_cookie), v ktorom sú zašifrované údaje o sedení a token identifikujúci používateľa. Alternatívou by bolo ukladať tieto informácie v úložisku [redis], čo sme pre zjednodušenie vynechali.
-
-  Všimnite si voľbu `OAUTH2_PROXY_EMAIL_DOMAINS=*`. Toto nastavenie umožňuje, aby do systému vstúpili ľubovoľní autentifikovaní používatelia. Ak by sme ju zmenili napríklad na `OAUTH2_PROXY_EMAIL_DOMAINS=stuba.sk`, obmedzili by sme prístup len pre používateľov, ktorí sú vlastníkmi elektronických schránok spravovaných v doméne `stuba.sk`, to znamená pre študentov a zamestnancov STU Bratislava.  Premenná `OAUTH2_PROXY_AUTHENTICATED_EMAILS_FILE` by nám umožnila ďalej limitovať prístup len pre konkrétnych používateľov, v cvičení túto možnosť ale nepoužijeme, a v ďalšom kroku si ukážeme ako autorizovať používateľov na základe informácií o používateľovi, ktoré nám poskytne služba [oauth2-proxy].
-
-  V argumentoch pre kontajner sme použili niekoľko [dôležitých konfiguračných nastavení](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview), voľba `--upstream="static://200"`, určuje, že v prípade úspešnej autentifikácie vráti táto služba odozvu s kódom 200, a voľba `--set-xauthrequest` určuje, že služba bude používať hlavičky typu `X-Auth-Request` na prenos informácie o autentifikovanom používateľovi. Tieto hlavičky budeme neskôr používať na autorizáciu používateľov.
-
-5. Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/oauth2-proxy/service.yaml`
-
-    ```yaml
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: oauth2-proxy
-    spec: 
-      ports:
-      - name: http
-        port: 80
-        protocol: TCP
-        targetPort: 4180
-    ```
-
-    Ďalej vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/oauth2-proxy/http-route.yaml`
+   Službu Dex potrebuje sprístupniť aj pre externý prístup keďže bude obsluhovať komunikáciu OAuth2 protokolu so    serverom GitHub. Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/dex/http-route.yaml` s obsahom
 
    ```yaml
    apiVersion: gateway.networking.k8s.io/v1
    kind: HTTPRoute
    metadata:
-     name: oauth2-proxy
+     name: dex
    spec:
      parentRefs:
        - name: wac-hospital-gateway
+         sectionName: fqdn @_important_@
      rules:
        - matches:
            - path:
                type: PathPrefix
-               value: /authn
+               value: /dex
          backendRefs:
            - group: ""
              kind: Service
-             name: oauth2-proxy
-             port: 80
+             name: dex
+             port: 5556
    ```
 
-   Objekt typu `HTTPRoute` budeme v ďalšom kroku referencovať pri úprave konfigurácie _Gateway_.
+   V tomto prípade sme nakonfigurovali túto route len pre listnera "fqdn", to znamená, že služba Dex bude    prostredníctvom https protokolu.
 
-   Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/oauth2-proxy/kustomization.yaml`, ktorý tieto konfiguračné súbory zintegruje
+   Po overení používateľa bude Dex spravovať lokálne sedenia (_sessions_). V našej konfigurácii k tomu bude používať    vlastné definície kubernetesu, a k tomu potrebuje oprávnenia na ich vytváranie a mazanie. Vytvorte súbor `$   {WAC_ROOT}/ambulance-gitops/infrastructure/dex/rbac.yaml` s obsahom
 
+   ```yaml
+   apiVersion: v1
+   kind: ServiceAccount
+   metadata:
+     name: dex @_important_@
+   ---
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: ClusterRole
+   metadata:
+     name: dex
+   rules:
+   - apiGroups: ["dex.coreos.com"] @_important_@
+     resources: ["*"]
+     verbs: ["*"]
+   - apiGroups: ["apiextensions.k8s.io"]
+     resources: ["customresourcedefinitions"]
+     verbs: ["list", "get", "create", "update"]  @_important_@
+   ---
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: ClusterRoleBinding
+   metadata:
+     name: dex
+   roleRef:
+     apiGroup: rbac.authorization.k8s.io
+     kind: ClusterRole
+     name: dex
+   subjects:
+   - kind: ServiceAccount
+     name: dex
+     namespace: wac-hospital
+   ```
+
+   Teraz vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/dex/config.yaml` s obsahom
+
+   ```yaml
+   
+   issuer: https://wac-hospital.loc/dex  # URL, kde pobeží Dex @_important_@
+   storage:
+     type: kubernetes
+     config:
+       inCluster: true
+   oauth2:
+     skipApprovalScreen: true
+   web:
+     http: 0.0.0.0:5556
+   
+   connectors:  # GitHub OAuth provider
+   - type: github
+     id: github
+     name: GitHub
+     config:
+       clientID: $GITHUB_CLIENT_ID  @_important_@
+       clientSecret: $GITHUB_CLIENT_SECRET  @_important_@
+       redirectURI: https://wac-hospital.loc/dex/callback  @_important_@
+   
+   staticClients:  # WAC hospital client of Dex
+   - id: envoy-gateway
+     redirectURIs:
+     - 'https://wac-hospital.loc/authn/callback' @_important_@
+     name: 'Envoy Gateway'
+     secret: envoy-gateway-secret-265305158967 @_important_@
+   
+   telemetry:
+     tracing:
+       enabled: false
+       
+   ```
+  
+   Nakoniec tieto súbory zintegrujeme pomocou súboru `${WAC_ROOT}/ambulance-gitops/infrastructure/dex/kustomization.   yaml`
+  
    ```yaml
    apiVersion: kustomize.config.k8s.io/v1beta1
    kind: Kustomization
    
    namespace: wac-hospital
-   
    commonLabels:
-     app.kubernetes.io/part-of: wac-hospital
-     app.kubernetes.io/component: oauth2-proxy
+     app.kubernetes.io/component: dex
    
    resources:
    - deployment.yaml
    - service.yaml
    - http-route.yaml
+   - rbac.yaml
+   
+   configMapGenerator:
+   - name: dex-config
+     files:
+     - config.yaml
    ```
 
-   a zahrňte `oauth-proxy` do konfigurácie klastra úpravou súboru `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/kustomization.yaml`
+5. Aby sme mohli vyššie nakonfigurovanú službu využiť, musíme upraviť konfiguráciu [Envoy Gateway]. Z technického hľadiska implementuje [Envoy Gateway] návrhový vzor [Kubernetes Controller](https://kubernetes.io/docs/concepts/architecture/controller/) - sleduje zmeny v registrovaných objektoch skupiny [Gateway API] a následne vytvorí novú inštanciu služby [Envoy Proxy], ktorej konfigurácia je určená na základe registrovaných zdrojov. [Envoy Proxy] je vysoko efektívna implementácie reverznej proxy, ktorá umožňuje konfigurovať detaily spracovania a smerovania požiadaviek do klastra (tu vo všeobecnom zmysle klastra výpočtových prostredkov, nie je limitovaná len na kubernetes klaster).
 
-   ```yaml
-   ...
-   resources:
-   ...
-   - ../../../infrastructure/cert-manager
-   - ../../../infrastructure/oauth2-proxy  @_add_@
-   ```
+   Jedným z objektov podporovaných [Envoy Gateway] je objekt typu [_SecretPolicy_](https://gateway.envoyproxy.io/docs/api/extension_types/#securitypolicy). Tento využijeme na konfiguráciu Authentifikácie pomocou OIDC. Taktiež z výsledného JWT tokenu získame informácie o používateľovi a umiestnime ich do hlavičiek ktoré budeme ďalej preposielať našim službám.
 
-6. Aby sme mohli vyššie nakonfigurovanú službu využiť, musíme upraviť konfiguráciu [Envoy Gateway]. Z technického hľadiska implementuje [Envoy Gateway] návrhový vzor [Kubernetes Controller](https://kubernetes.io/docs/concepts/architecture/controller/) - sleduje zmeny v registrovaných objektoch skupiny [Gateway API] a následne vytvorí novú inštanciu služby [Envoy Proxy], ktorej konfigurácia je určená na základe registrovaných zdrojov. [Envoy Proxy] je vysoko efektívna implementácie reverznej proxy, ktorá umožňuje konfigurovať detaily spracovania a smerovania požiadaviek do klastra (tu vo všeobecnom zmysle klastra výpočtových prostredkov, nie je limitovaná len na kubernetes klaster). Jedným z konceptov [Envoy Proxy] je takzvaný [HTTP filter](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/http/http_filters), ktorý umožňuje upraviť parametre spracovania HTTP požiadaviek. V našom prípade budeme využívať filter [_External Authorization_](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/ext_authz_filter), ktorý predá riadenie našej službe `oauth2-proxy`, a jedine pokiaľ táto vráti pozitívny stavový kód (menší než 400), umožní ďalšie spracovanie požiadavky, v opačnom prípade vráti chybový stav `403 Forbidden`.
-
-   [Envoy Gateway] umožňuje rozšíriť konfiguráciu dynamicky vytváraných inštancií [envoy proxy] pomocou objektu typu [_Envoy Patch Policy_](https://gateway.envoyproxy.io/latest/user/extensibility/envoy-patch-policy/). K dispozícii je aj nástroj [_egctl_](https://gateway.envoyproxy.io/latest/contributions/design/egctl/), ktorý umožňuje získať aktuálnu konfiguráciu, vytvorenú na základe registrovaných zdrojov. My tento typ objektov využijeme na pridanie konfigurácie [_External Authorization_](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/ext_authz_filter) do konfigurácie [Envoy Gateway].
-
-   >info:> Jedná sa o pokročilú techniku, ktorá predpokladá znalosť konfigurácie [Envoy Proxy]. Keďže je pravdepodobné, že sa s _Envoy Proxy_ pri práci s komplexnejšími systémami v praxi stretnete, doporučujeme sa s jej detailami oboznámiť. Podrobnejšie informácie nájdete v [dokumentácii](https://www.envoyproxy.io/docs/envoy/latest/intro/intro).
-
-   Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/envoy-patch-policy.yaml` s obsahom
+   Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/security-policy.yaml` s obsahom
 
    ```yaml
    apiVersion: gateway.envoyproxy.io/v1alpha1
-   kind: EnvoyPatchPolicy
-   metadata: 
-       name: oauth2-ext-authz
-       namespace: wac-hospital
+   kind: SecurityPolicy
+   metadata:
+     name: wac-hospital-oidc-auth
    spec:
-       targetRef:
-         group: gateway.networking.k8s.io
+       targetRefs:
+       - group: gateway.networking.k8s.io
          kind: Gateway
          name: wac-hospital-gateway
-       type: JSONPatch
-       jsonPatches:
-         - type: "type.googleapis.com/envoy.config.listener.v3.Listener"
-           # The listener name is of the form <GatewayNamespace>/<GatewayName>/<GatewayListenerName>
-           name:  wac-hospital/wac-hospital-gateway/fqdn  @_important_@
-           operation:
-             op: add
-             # if there is only single listener per tls endpoint then replace "/filter_chains/0" 
-             # with "/default_filter_chain" 
-             # use config `egctl config envoy-proxy listener -A` to find out actual xDS configuration
-             path: "/filter_chains/0/filters/0/typed_config/http_filters/0"  @_important_@
-             value:
-               name: authentication.ext_authz
-               typed_config:
-                 "@type": type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz
-                 http_service:
-                   server_uri:
-                     uri: http://oauth2-proxy.wac-hospital @_important_@
-                     timeout: 30s
-                     # The cluster name is of the form <RouteType>/<RouteNamespace>/<RouteName>/rule/   <RuleIndex>
-                     # use  `egctl config envoy-proxy cluster -A` to find out actual xDS configuration
-                     cluster: httproute/wac-hospital/oauth2-proxy/rule/0  @_important_@
-                   authorizationRequest:
-                     allowedHeaders:
-                       patterns:
-                       - exact: authorization
-                       - exact: cookie
-                   authorizationResponse:
-                     allowedUpstreamHeaders:
-                       patterns:
-                       - exact: authorization
-                       - prefix: x-auth
+       
+       oidc:
+         provider:
+           issuer: https:/wac-hospital.loc/dex
+           authorizationEndpoint: https://wac-hospital.loc/dex/auth
+           tokenEndpoint: https://wac-hospital.loc/dex/token
+         clientIDRef: 
+           name: oidc-dex
+         clientSecret: 
+           name: oidc-dex
+         redirectURL: https://wac-hospital.loc/authn/callback # callback Envoy Gateway @_important_@
+         forwardAccessToken: true
+         cookieNames:
+           idToken: wac-hospital-id-token
+           accessToken: wac-hospital-access-token
+         scopes:
+         - profile
+         - email
+         - openid
+         - federated:id
+       jwt:
+         optional: false
+         providers:
+         - claimToHeaders:        
+           - claim: name
+             header: x-forwarded-preferred-username @_important_@
+           - claim: name
+             header: x-forwarded-user @_important_@
+           - claim: email
+             header: x-forwarded-email @_important_@
+           extractFrom:
+             cookies:
+             - wac-hospital-id-token
+           name: dex-sso
+           remoteJWKS:
+             uri: https://wac-hospital.loc/dex/keys
    ```
 
-   Tento patch sa aplikuje na _listener_ `wac-hospital/wac-hospital-gateway/fqdn`, to znamená autorizácia pomocou [OpenID] protokolu sa vyvolá, len keď pristúpime na stránky na adrese `https://wac-hospital.loc`. V súbore  `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/gateway.yaml` si môžete prezrieť ako je _listener_ s menom `fqdn` nakonfigurovaný.
-
-   >info:> Okrem filtra [External Authorization](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/ext_authz_filter.html) by sme mohli použiť filter [OAuth2](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/oauth2_filter.html), pre účely tohto cvičenia ale lepšie poslúži prvý uvedený.
-
-   &nbsp;
-  
-   >warning:> [Envoy Gateway] je stále aktívne vyvíjaný, je možné, že v budúcnosti bude konfigurácia OpenID protokolu doplnená ako súčasť základnej konfigurácie.
-
-   Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/params/envoy-gateway.yaml` s obsahom
+   v súbore `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/kustomization.yaml` doplňte referenciu na tento súbor
 
    ```yaml
-   apiVersion: gateway.envoyproxy.io/v1alpha1
-   kind: EnvoyGateway
-   gateway:
-     controllerName: gateway.envoyproxy.io/gatewayclass-controller
-   logging:
-     level:
-       default: info
-   provider:
-     type: Kubernetes
-   extensionApis:
-     enableEnvoyPatchPolicy: true @_important_@
-   ```
-
-   Tento súbor upravuje konfiguračný súbor [_EnvoyGateway_](https://gateway.envoyproxy.io/latest/api/extension_types/#envoygateway), konkrétne povoľuje použitie objektu [_Envoy Patch Policy_](https://gateway.envoyproxy.io/latest/user/extensibility/envoy-patch-policy/).
-
-   Upravte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/kustomization.yaml` a pridajte referenciu k novovytvorenej konfigurácii
-
-   ```yaml
+   apiVersion: kustomize.config.k8s.io/v1beta1
+   kind: Kustomization
+   
    resources:
-   ...
+   - https://github.com/envoyproxy/gateway/releases/download/v1.7.1/install.yaml
+   - gateway-class.yaml
    - gateway.yaml
-   - envoy-patch-policy.yaml @_add_@
-     @_add_@
-   configMapGenerator:    @_add_@
-     - name: envoy-gateway-config    @_add_@
-       namespace: envoy-gateway-system    @_add_@
-       behavior: replace    @_add_@
-       files:    @_add_@
-         - params/envoy-gateway.yaml    @_add_@
+   - security-policy.yaml @_add_@
    ```
 
-7. Uložte zmeny a archivujte ich vo vzdialenom repozitári:
+6. Uložte zmeny a archivujte ich vo vzdialenom repozitári:
 
    ```ps
     git add .
@@ -350,30 +332,23 @@ Pre účely autentifikácie použijeme službu [oauth2-proxy](https://oauth2-pro
     kubectl -n wac-hospital get kustomization -w
     ```
 
-    Overte, že stav objektu _Envoy Patch Policy_ je `Programmed`
-    >info:> V prípade, že sa stav nemení na Programmed je potrebné reštartovať pody envoy gateway.
+    Overte, že stav objektu _Security Policy_ je `Accepted`.
 
     ```ps
-    kubectl -n wac-hospital get epp -o=yaml
+    kubectl -n wac-hospital get securitypolicies -o=yaml
     ```
 
-8. Otvorte v prehliadači novú záložku a otvorte _Nástroje pre vývojárov -> Sieť_.  V tejto záložke prejdite na stránku [https://wac-hospital.loc](https://wac-hospital.loc) a zvoľte voľbu _Protokol natrvalo_ (respektíve _Zachovať denník_). Nezabudnite, že v súbore `etc/host` musíte mať správne pridelenú IP adresu k záznamu `wac-hospital.loc`. Prehliadač vás upozorní na bezpečnostné riziko z dôvodu použitia neovereného TLS certifikátu. Zvoľte _Pokračovať_ a _Rozumiem bezpečnostnému riziku_.
+7. Otvorte v prehliadači novú záložku a otvorte _Nástroje pre vývojárov -> Sieť_.  V tejto záložke prejdite na stránku [https://wac-hospital.loc](https://wac-hospital.loc) a zvoľte voľbu _Protokol natrvalo_ (respektíve _Zachovať denník_). Nezabudnite, že v súbore `etc/host` musíte mať správne pridelenú IP adresu k záznamu `wac-hospital.loc`. Prehliadač vás upozorní na bezpečnostné riziko z dôvodu použitia neovereného TLS certifikátu. Zvoľte _Pokračovať_ a _Rozumiem bezpečnostnému riziku_.
 
     >build_circle:> V niektorých prípadoch môže byť voľba _Pokračovať_ nedostupná. V takom prípade ponechajte okno prehliadača ako aktívnu aplikáciu a na klávesnici vyťukajte `THISISUNSAFE`. Táto možnosť (_back-doors_) je v prehliadačoch Google ponechaná pre dobre informovaných profesionálov, akými sú napríklad softvéroví inžinieri.
-
-    Na obrazovke vidíte prihlasovaciu stránku _OAuth2 Proxy_ (našej konfigurovanej služby) s voľbou _Sign in with GitHub_. Stlačte na túto voľbu.
-
-    ![Prihlasovacia stránka OAuth2 Proxy](./img/oauth2-sign-in.png)
-
-    >info:> Konfiguráciou služby OAuth2 Proxy možno prihlasovaciu stránku zmeniť, prípadne tento krok preskočiť a byť presmerovaný priamo na stránky GitHub.
 
     Následne budete presmerovaný na stránku GitHub, kde budete vyzvaný na udelenie súhlasu so zdieľaním vašich identifikačných údajov s aplikáciou _WAC Hospital_. Súhlas udeľte, po čom budete presmerovaný do aplikácie vo vašom klastri.
 
     Prezrite si záznam sieťovej komunikácie v _Nástroji vývojárov_. Môžete vidieť, ako je prehliadač niekoľkokrát presmerovaný medzi jednotlivými entitami OIDC protokolu. Časť protokolu pritom prebieha na pozadí medzi _OAuth2 Proxy_ a poskytovateľom identít Git Hub.
 
-    _OAuth2 Proxy_ si teraz bude pamätať Vaše prihlásenie počas nasledujúcich 168 hodín (platnosť cookie) a platforma GitHub si pamätá udelenie oprávnenia pre Vašu aplikáciu. Pri opätovnom načítaní preto budete automaticky presmerovaný na stránky aplikácie a iba pri dlhšom nepoužívaní aplikácie budete opätovne vyzvaný na prihlásenie. Alternatívne sa môžete skúsiť prihlásiť z nového súkromného okna prehliadača, ktoré nezdieľa vašu identitu (cookies a pod.) s ostatnými  oknami prehliadača.
+    _Dex_ si teraz bude pamätať Vaše prihlásenie počas nasledujúcich 168 hodín (platnosť cookie) a platforma GitHub si pamätá udelenie oprávnenia pre Vašu aplikáciu. Pri opätovnom načítaní preto budete automaticky presmerovaný na stránky aplikácie a iba pri dlhšom nepoužívaní aplikácie budete opätovne vyzvaný na prihlásenie. Alternatívne sa môžete skúsiť prihlásiť z nového súkromného okna prehliadača, ktoré nezdieľa vašu identitu (cookies a pod.) s ostatnými  oknami prehliadača.
 
-9. Mikro služba _oauth2-proxy_ poskytuje identitu prihláseného používateľa v hlavičkách preposielaných požiadaviek. Aby sme si to overili, doplníme do nášho klastra jednoduchú službu [http-echo](https://github.com/mendhak/docker-http-https-echo). Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/apps/http-echo/deployment.yaml`
+8. Chceme ešte overiť či služby v našom klastri dostávajú správne nastavené hlavičky s identitou používateľa. Za týmto účelom doplníme do nášho klastra jednoduchú službu [http-echo](https://github.com/mendhak/docker-http-https-echo). Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/apps/http-echo/deployment.yaml`
 
    ```yaml
    apiVersion: apps/v1
@@ -484,8 +459,8 @@ Pre účely autentifikácie použijeme službu [oauth2-proxy](https://oauth2-pro
     kubectl -n wac-hospital get pods -w
     ```
 
-    Prejdite na stránku [https://wac-hospital.loc/http-echo](https://wac-hospital.loc/http-echo) a prezrite si vygenerovaný JSON súbor. V časti `headers` si všimnite hlavičky `x-auth-request-email`, a `x-auth-request-user`, ktoré boli do požiadavky doplnené službou `oauth2-proxy`.
+    Prejdite na stránku [https://wac-hospital.loc/http-echo](https://wac-hospital.loc/http-echo) a prezrite si vygenerovaný JSON súbor. V časti `headers` si všimnite hlavičky `x-auth-request-email`, a `x-auth-request-user`.
 
     > Odporúčame nainštalovať si do prehliadača niektorý z prídavkov pre zobrazovanie JSON súborov, ktorý je užitočným nástrojom pri vývoji webových aplikácií. Príkladom takéhoto rozšírenia pre prehliadač Chrome je napríklad [JSONFormatter](https://github.com/callumlocke/json-formatter)
 
-Naša aplikácia je teraz schopná identifikovať používateľov a v určitom rozsahu aj kontrolovať, kto môže k našim stránkam pristúpiť.
+Naša aplikácia je teraz schopná identifikovať používateľov.
