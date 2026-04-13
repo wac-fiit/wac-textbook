@@ -120,16 +120,16 @@ Pre riadenie politiky prístupu, nielen v rámci autorizácie používateľov, a
    default allow = false   
 
    # define authenticated user
-   is_valid_user = true if { http_request.headers["x-auth-request-email"] }   
+   is_valid_user = true if { http_request.headers["x-forwarded-email"] }   
 
    user = { "valid": valid, "email": email, "name": name} if {
        valid := is_valid_user
-       email := http_request.headers["x-auth-request-email"]
-       name := http_request.headers["x-auth-request-user"] 
+       email := http_request.headers["x-forwarded-email"]
+       name := http_request.headers["x-forwarded-user"] 
    }
    ```
 
-   Vyššie uvedený zápis vytvára pravidlo `is_valid_user`, ktoré je splnené za predpokladu, že v prichádzajúcej požiadavke sa nachádza hlavička s názvom `x-auth-request-email`. Pravidlo `user` vytvára objekt, ktorý obsahuje informácie o používateľovi, ktorý sa prihlásil do systému. Ďalej na koniec toho istého súboru `${WAC_ROOT}/ambulance-gitops/infrastructure/opa-plugin/params/policy.rego` pridajte definíciu pravidiel pre požadované oprávnenia (role) pre špecifické požiadavky:
+   Vyššie uvedený zápis vytvára pravidlo `is_valid_user`, ktoré je splnené za predpokladu, že v prichádzajúcej požiadavke sa nachádza hlavička s názvom `x-forwarded-email`. Pravidlo `user` vytvára objekt, ktorý obsahuje informácie o používateľovi, ktorý sa prihlásil do systému. Ďalej na koniec toho istého súboru `${WAC_ROOT}/ambulance-gitops/infrastructure/opa-plugin/params/policy.rego` pridajte definíciu pravidiel pre požadované oprávnenia (role) pre špecifické požiadavky:
 
    ```rego
    # define required roles for paths
@@ -212,7 +212,7 @@ Pre riadenie politiky prístupu, nielen v rámci autorizácie používateľov, a
    # set header to indicate that this policy was used to validate the request
    headers["x-validated-by"] := "opa-checkpoint"
    
-   headers["x-auth-request-roles"] := concat(", ", [ role | 
+   headers["x-forwarded-roles"] := concat(", ", [ role | 
        some r
        user_role[r] 
        role := r
@@ -261,39 +261,82 @@ Pre riadenie politiky prístupu, nielen v rámci autorizácie používateľov, a
     ...
     ```
 
-5. Podobne ako v prípade autentifikácie pridáme aj autorizáciu medzi zoznam filtrov v [Envoy Proxy]. Upravte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/authz.security-policy.yaml`:
+5. Podobne ako v prípade autentifikácie pridáme aj autorizáciu do objektu _SecurityPolicy_. Upravte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/authn.security-policy.yaml` a pridajte `extAuth` policy:
 
     ```yaml
     apiVersion: gateway.envoyproxy.io/v1alpha1
     kind: SecurityPolicy
     metadata:
-      name: authorization
+      name: authn
+      namespace: wac-hospital
     spec:
         targetRefs:
-        - kind: HTTPRoute
-          name: http-echo @_important_@
-        - kind: HTTPRoute
-          name: <pfx>-ambulance-webapi @_important_@
-        extAuth:
-          grpc:
-            backendRefs:
-              - name: opa-plugin
-                port: 9191
-          headersToExtAuth:
-            - x-forwarded-preferred-username
-            - x-forwarded-user
-            - x-forwarded-email
+        ...
+    
+        oidc:
+        ...
+        jwt:
+        ...
+        extAuth:      @_add_@
+          grpc:     @_add_@
+            backendRefs:      @_add_@
+              - name: opa-plugin      @_add_@
+                port: 9191      @_add_@
+          headersToExtAuth:     @_add_@
+            - x-forwarded-preferred-username      @_add_@
+            - x-forwarded-user      @_add_@
+            - x-forwarded-email     @_add_@
+    ---
+    ...
     ```
 
-    Všimnite si, že v tomto prípade aplikujeme autorizáciu len pre služby `http-echo` a `<pfx>-ambulance-webapi`. V praxi by sme mohli aplikovať autorizáciu pre všetky služby, alebo by sme mohli definovať rôzne politiky pre rôzne služby.  MUsíme si ale uvedomiť, že zároveň musíme zabezpečiť, aby niektoré služby boli prístupne ešte pred samotnou autorizáciou, napríklad služby pre autentifikáciu používateľov (Dex), alebo služby pre získanie TLS certifikátov (cert-manager), ktoré sú nevyhnutné pre správnu funkčnosť nášho service mesh-u. Máme k dispozícii rôzne stratégie, napríklad môžme vytvoriť ďalšie podriadené Gateway objekty pre rôzne skupiny služieb (_napr. public vs. private_), alebo môžeme použiť rôzne politiky pre rôzne cesty v rámci toho istého Gateway objektu. V našom prípade sa ale spokojíme s aplikovaním autorizácie len pre niektoré služby, ktoré sú v našom klastri nasadené.
+    Všimnite si, že v tomto prípade aplikujeme autorizáciu na úrovni gateway rovnako ako autentifikáciu. V praxi by sme mohli aplikovať autorizáciu pre všetky služby, alebo by sme mohli definovať rôzne politiky pre rôzne `HTTPRoute` objekty.
 
-    Upravte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/kustomization.yaml` a pridajte referenciu na tento nový bezpečnostný objekt:
+    štandardné poradie vykonávania týchto operacie je v [Envoy Proxy] také, že najprs sa vykoná časť `extAuth` sekcie a až potom  časť definovaná v `oidc` a `jwt` sekcii. Musíme toto poradie preto zmeniť. Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/envoy-proxy.yaml` s nasledujúcim obsahom:
+
+    ```yaml
+    apiVersion: gateway.envoyproxy.io/v1alpha1
+    kind: EnvoyProxy
+    metadata:
+      name: custom-filter-order
+      namespace: wac-hospital
+    spec:
+      provider:
+        type: Kubernetes
+      filterOrder:
+        - name: envoy.filters.http.ext_authz
+          after: envoy.filters.http.jwt_authn
+    ```
+
+    Upravte súbo `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/gateway.yaml` a pridajte referenciu na tento nový objekt:
+
+    ```yaml
+    apiVersion: gateway.networking.k8s.io/v1beta1
+    kind: Gateway
+    metadata:
+      name: wac-hospital-gateway
+      ...
+    spec:
+      gatewayClassName: wac-hospital-gateway-class
+    
+      infrastructure:   @_add_@
+        parametersRef:    @_add_@
+          group: gateway.envoyproxy.io    @_add_@
+          kind: EnvoyProxy    @_add_@
+          name: custom-filter-order   @_add_@
+       
+      listeners:
+      ...
+    ```
+
+    Upravte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/kustomization.yaml` a pridajte referenciu:
 
     ```yaml
     ...
     resources:
     ...
-    - authz.security-policy.yaml @_add_@
+    - envoy-proxy.yaml @_add_@
+    ...
     ```
 
 6. Uložte zmeny a archivujte ich vo vzdialenom repozitári:
@@ -322,9 +365,9 @@ Pre riadenie politiky prístupu, nielen v rámci autorizácie používateľov, a
 
    ```json
    ...
-   "x-auth-request-email": "<your github email>",
-   "x-auth-request-user": "<your github user id>",
-   "x-auth-request-roles": "admin, monitoring, user",
+   "x-forwarded-email": "<your github email>",
+   "x-forwarded-user": "<your github user id>",
+   "x-forwarded-roles": "admin, monitoring, user",
    ...
    ```
 
