@@ -261,7 +261,7 @@ Pre riadenie politiky prístupu, nielen v rámci autorizácie používateľov, a
     ...
     ```
 
-5. Podobne ako v prípade autentifikácie pridáme aj autorizáciu do objektu _SecurityPolicy_. Upravte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/authn.security-policy.yaml` a pridajte `extAuth` policy:
+5. Podobne ako v prípade autentifikácie pridáme aj autorizáciu do objektu [_SecurityPolicy_](https://gateway.envoyproxy.io/docs/api/extension_types/#securitypolicy). Upravte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/authn.security-policy.yaml` a pridajte [`extAuth`](https://gateway.envoyproxy.io/docs/api/extension_types/#extauth) policy:
 
     ```yaml
     apiVersion: gateway.envoyproxy.io/v1alpha1
@@ -292,7 +292,7 @@ Pre riadenie politiky prístupu, nielen v rámci autorizácie používateľov, a
 
     Všimnite si, že v tomto prípade aplikujeme autorizáciu na úrovni gateway rovnako ako autentifikáciu. V praxi by sme mohli aplikovať autorizáciu pre všetky služby, alebo by sme mohli definovať rôzne politiky pre rôzne `HTTPRoute` objekty.
 
-    štandardné poradie vykonávania týchto operacie je v [Envoy Proxy] také, že najprs sa vykoná časť `extAuth` sekcie a až potom  časť definovaná v `oidc` a `jwt` sekcii. Musíme toto poradie preto zmeniť. Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/envoy-proxy.yaml` s nasledujúcim obsahom:
+    Štandardné poradie vykonávania týchto operacie je v [Envoy Proxy] také, že najprv sa vykoná časť `extAuth` sekcie a až potom  časť definovaná v `oidc` a `jwt` sekcii. Musíme toto poradie preto zmeniť. Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/envoy-proxy.yaml` s nasledujúcim obsahom, ktorý upraví [poradie vykonávania filtrov](https://gateway.envoyproxy.io/docs/api/extension_types/#envoyproxyspec) v [Envoy Proxy]:
 
     ```yaml
     apiVersion: gateway.envoyproxy.io/v1alpha1
@@ -308,7 +308,7 @@ Pre riadenie politiky prístupu, nielen v rámci autorizácie používateľov, a
           after: envoy.filters.http.jwt_authn
     ```
 
-    Upravte súbo `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/gateway.yaml` a pridajte referenciu na tento nový objekt:
+    Upravte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/gateway.yaml` a pridajte referenciu na tento nový objekt:
 
     ```yaml
     apiVersion: gateway.networking.k8s.io/v1beta1
