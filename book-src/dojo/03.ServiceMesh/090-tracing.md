@@ -4,77 +4,49 @@ Analýza logov nám výrazne uľahčí sledovanie stavu systému a analýzu prí
 
 Zjednodušene opísané, v kontexte distribuovaného trasovania je požiadavke vstupujúcej do systému (prípadne samostatnej požiadavke vzniknutej v rámci systému samotného) priradený takzvaný _trace-id_, ktorý sa propaguje pri volaniach jednotlivých subsystémov - mikroslužieb, knižníc alebo komponentov mikroslužieb. Každý subsystém potom definuje rozsah výpočtu - [_span_](https://opentelemetry.io/docs/concepts/signals/traces/#spans), ktorému priraďuje príslušné [atribúty](https://opentelemetry.io/docs/concepts/signals/traces/#attributes) potrebné pre identifikáciu služby, typu výpočtu, prípadne parametre výpočtu a udalosti vznikajúce počas výpočtu. _Span_ má priradený [_span context_](https://opentelemetry.io/docs/concepts/signals/traces/#span-context) alebo tiež nazývaný [_trace context_](https://opentelemetry.io/docs/concepts/signals/traces/#span-context). Trace context obsahuje identifikátor pôvodnej požiadavky - _trace_id_ - v ktorej kontexte je výpočet vykonávaný, ako aj rozsah výpočtu - _span-id_, ktoré zahŕňajú príslušný výpočet. Tieto záznamy sú následne odoslané do služby - _collector_ - ktorá tieto záznamy odošle na trvalé uloženie pre neskoršiu analýzu. Pre efektívnu analýzu je potrebné aby sa _trace_id_ a _span_id_ propagovali medzi jednotlivými službami, ktoré sa podieľajú na spracovaní požiadavky. V prípade, že niektorá zo služieb neumožňuje prenos týchto identifikátorov, je potrebné ich do tejto služby doplniť, v opačnom prípade budeme mať v záznamoch medzery, ktoré umožnia len čiastočnú analýzu spracovania požiadavky.
 
-V predchádzajúcej kapitole sme nainštalovali systém [Grafana Stack](https://grafana.com/about/grafana-stack/) a systém  [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/). V súbore `${WAC_ROOT}/ambulance-gitops/clusters/localhost/prepare/kustomization.yaml` sme nastavili vzorkovaciu frekvenciu na hodnotu `always_on`, respektíve 100% vzoriek. Táto hodnota je vhodná pre testovacie a vývojové prostredie, v produkčných sýstemoch býva rádovo v jednotkách percent, tak aby nedošlo k zbytočnému zahlcovaniu systému a zároveň bol zachované dostatočné množstvo vzoriek pre prípadnú analýzu systému. V tejto kapitole doplníme do našej webapi služby generovanie záznamov, ktoré následne budeme analyzovať.
+V predchádzajúcej kapitole sme nainštalovali aplikáciu [Jaeger v2](https://www.jaegertracing.io/) a systém  [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/). V (konfigurácii služby `otel-collector`)[https://github.com/wac-fiit/manifests/blob/main/observability/packages/otel-collector/manifests/otel.env] je nastavená vzorkovacia frekvencia na hodnotu `always_on`, respektíve 100% vzoriek. Táto hodnota je vhodná pre testovacie a vývojové prostredie, v produkčných sýstemoch býva rádovo v jednotkách percent, tak aby nedošlo k zbytočnému zahlcovaniu systému a zároveň bol zachované dostatočné množstvo vzoriek pre prípadnú analýzu systému. V tejto kapitole doplníme do našej webapi služby generovanie záznamov, ktoré následne budeme analyzovať.
 
-1. V prvom kroku doplníme konfiguráciu pre odosielanie záznamov zo služby [Gateway API](https://gateway-api.sigs.k8s.io/). Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/envoy-proxy.yaml` s nasledujúcim obsahom:
+1. V prvom kroku doplníme konfiguráciu pre odosielanie záznamov zo služby [Gateway API](https://gateway-api.sigs.k8s.io/). Otvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/envoy-proxy.yaml` a upravte obsah:
 
    ```yaml
    apiVersion: gateway.envoyproxy.io/v1alpha1
    kind: EnvoyProxy
    metadata:
-     name: wac-hospital
+     name: custom-filter-order
      namespace: wac-hospital
    spec:
-     logging:
-       level:
-         default: debug
-     telemetry:
-       tracing:
-         samplingRate: 100 # 100% for development purposes
-         provider:
-           backendRefs:
-           - kind: Service
-             name: otel-collector
-             namespace: observability
-             port: 4317
-           type: OpenTelemetry
-       metrics:
-         sinks:
-         - type: OpenTelemetry
-           openTelemetry: 
-             backendRefs:
-             - kind: Service
-               name: otel-collector
-               namespace: observability
-               port: 4317
+     provider:
+       type: Kubernetes
+     filterOrder:
+       - name: envoy.filters.http.ext_authz
+         after: envoy.filters.http.jwt_authn
+     logging:   @_add_@
+       level:   @_add_@
+        default: debug    @_add_@
+     telemetry:   @_add_@
+       tracing:   @_add_@
+         samplingRate: 100 # 100% for development purposes    @_add_@
+         provider:    @_add_@
+           backendRefs:   @_add_@
+           - kind: Service    @_add_@
+             name: otel-collector   @_add_@
+             namespace: observability   @_add_@
+             port: 4317   @_add_@
+           type: OpenTelemetry    @_add_@
+       metrics:   @_add_@
+         sinks:   @_add_@
+         - type: OpenTelemetry    @_add_@
+           openTelemetry:     @_add_@
+             backendRefs:   @_add_@
+             - kind: Service    @_add_@
+               name: otel-collector   @_add_@
+               namespace: observability   @_add_@
+               port: 4317   @_add_@
    ```
 
-   Otvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/gateway.yaml` a upravte ho
+  Týmito zmenami sme pridali podporu pre distribuované trasovanie pomocou OpenTelemetry na úrovni našej Gateway API, čo v praxi znamená, že všetky požiadavky do nášho systému budú sledované a zaznamenávane od okamžiku ich prijatia na úrovni Gateway API. 
 
-   ```yaml
-   apiVersion: gateway.networking.k8s.io/v1beta1
-   kind: Gateway
-   metadata:
-     name: wac-hospital-gateway
-     namespace: wac-hospital
-   spec:
-     gatewayClassName: wac-hospital-gateway-class
-     infrastructure:     @_add_@
-       parametersRef:     @_add_@
-         group: gateway.envoyproxy.io     @_add_@
-         kind: EnvoyProxy     @_add_@
-         name: wac-hospital     @_add_@
-     listeners:
-     ...
-   ```
-
-   Doplňte do súboru `${WAC_ROOT}/ambulance-gitops/infrastructure/envoy-gateway/kustomization.yaml`:
-
-   ```yaml
-   apiVersion: kustomize.config.k8s.io/v1beta1
-   kind: Kustomization
-   
-   resources:
-   - https://github.com/envoyproxy/gateway/releases/download/v1.2.8/install.yaml
-   - gateway-class.yaml
-   - gateway.yaml
-   - envoy-patch-policy.yaml
-   - envoy-proxy.yaml   @_add_@
-
-   ...
-   ```
-
-   Archivujte zmeny v repozitári:
+  Archivujte zmeny v repozitári:
 
    ```ps
     git add .
@@ -605,9 +577,9 @@ V predchádzajúcej kapitole sme nainštalovali systém [Grafana Stack](https://
     git push origin main
     ```
 
-7. Prejdite na stránku [http://localhost]([http://localhost]) a v aplikácii _Zoznam čakajúcich <pfx>_ vytvorte niekoľko záznamov. Otvorte aplikáciu _Aktuálny operačný stav systému_ (_Grafana_) a otvorte navigačný panel. Zvoľte záložku _Explore_ a v ľavej hornej časti zvoľte v rozbaľovacom okne položku _Traces_. V riadku _Query Type_ stlačte tlačidlo _Search_ a potom v riadku _Service Name_ zvoľte `ambulance_wl_api`. V pravom hornom rohu stačte modro sfarbené tlačidlo _Run query_.
+7. Prejdite na stránku [http://localhost]([http://localhost]) a v aplikácii _Zoznam čakajúcich <pfx>_ vytvorte niekoľko záznamov. Otvorte aplikáciu _Jaeger v2_. V bočnom panely zo zonamu služieb (_Services_) zvoľte Vašu službu `<pfx>-ambulance_wl_api`
 
-   V tabuľke _Traces_ zvoľte niektorý zo záznamov pomenovaných `wac-hospital-gateway.wac-hospital` a v panely ktorý sa nasledne otvorí ho podrobte analýze. Zodpovedá čas operácií Vašim očakávaniam? Ktorej operácii, ambulancii, a záznamu v zozname čakajúcich tento záznam o činnosti systému zodpovedá?
+   V pravom panely sa zobrazia záznamy o požiadavkách, ktoré boli spracované touto službou. Kliknutím na záznam sa zobrazí detailný pohľad na spracovanie požiadavky, vrátane všetkých operácií, ktoré boli vykonané v rámci tejto požiadavky a ich vzťahov a to skrz všetky služby, ktoré sa podieľali na spracovaní požiadavky. Vďaka tomu je možné získať komplexný pohľad na spracovanie požiadavky a identifikovať potenciálne problémy s výkonom alebo chybami v spracovaní požiadavky.
 
    ![Analýza distribuovaných záznamov](./img/095-trace-analyse.png)
 

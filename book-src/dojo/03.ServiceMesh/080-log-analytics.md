@@ -2,9 +2,10 @@
 
 Náš systém sa postupne rozrastá o nové mikroslužby, ktoré obsluhujú rôzne aspekty našej aplikácie. Zároveň predpokladáme rozrastanie sa aj samotnej funkcionality aplikácie, čo bude viesť k pridávaniu ďalších mikroslužieb do systému. Napriek všetkej snahe o dodanie čo najkvalitnejších komponentov, musíme predpokladať, že počas prevádzky systému bude dochádzať k situáciám, kedy sa správanie systému bude odchylovať od predpokladaného špecifikovaného správania. V takýchto situáciách je potrebné mať k dispozícii nástroje, ktoré nám umožnia zistiť, čo sa v systéme deje a kde sa nachádza problém. Zároveň potrebujeme mať k dispozícii informácie o tom, ako je súčasný systém využívaný a zaťažovaný, aby sme prípadným problémom dokázali včas predchádzať. V kontexte [DevOps](https://en.wikipedia.org/wiki/DevOps) vývoja sa tieto schopnosti a aktivity očakávajú od samotného vývojového tímu. V tejto a nasledujúcej časti si ukážeme, ako takéto nástroje nasadiť do systému a ako sledovanie (monitorovanie) systému podporiť aj pri implementácii mikroslužieb.
 
-Na sledovanie činnosti systému budeme využívať systém [Grafana Stack](https://grafana.com/about/grafana-stack/) a systém/ knižnice [OpenTelemetry](https://opentelemetry.io/). [Open Telemetry] je dnes de facto štandardom v oblast monitorovanie a zberu údajov zo softvérových systémov. Systém [Grafana Stack] poskytuje nástroje na analýzy a vizualizáciu údajov, ako aj na ďaľšie spracovanie týchto údajov. Existuje viacero alternatívnych riešení k systému [Grafana Stack], za povšimnutie stojí napríklad systém [SigNoz](https://signoz.io/), alebo [Uptrace](https://github.com/uptrace/uptrace).
+Na sledovanie a vizualizáciu činnosti systému budeme využívať aplikácie (Jaeger v2)[https://www.jaegertracing.io/], (Victoria Logs)[https://docs.victoriametrics.com/victorialogs/] a (Victoria Metrics)[https://victoriametrics.com/]. Pre zber a smerovanie sledovacích údajov z našich mikroslužieb do týchto aplikácií využijeme systém ystém/ knižnice [OpenTelemetry](https://opentelemetry.io/). [Open Telemetry] je dnes de facto štandardom v oblast monitorovanie a zberu údajov zo softvérových systémov. Na vizualizáciu a analýzu sme mohli využiť aj iné nástroje napríklad ;;
+[Grafana Stack](https://grafana.com/about/grafana-stack/), [SigNoz](https://signoz.io/), alebo [Uptrace](https://github.com/uptrace/uptrace).
 
-Pre nasadenie systému [Grafana Stack] sme pripravili manifesty, ktoré sú prispôsobené projektu týchto cvičení. Manifesty sú dostupné [tu](https://github.com/wac-fiit/manifests/tree/main/observability). Pre reálne nasadenie odporúčame naštudovať si aj oficiálnu dokumentáciu, pretože tu uvedená konfigurácia je optimalizované pre nasadenie na klastri s limitovanou kapacitou.
+Pre nasadenie systému observability stacku sme pripravili manifesty, ktoré sú prispôsobené projektu týchto cvičení. Manifesty sú dostupné [tu](https://github.com/wac-fiit/manifests/tree/main/observability). Pre reálne nasadenie odporúčame naštudovať si aj oficiálnu dokumentáciu, pretože tu uvedená konfigurácia je optimalizované pre nasadenie na klastri s limitovanou kapacitou.
 
 1. Vytvorte adresár `${WAC_ROOT}/ambulance-gitops/infrastructure/observability` a v ňom súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/observability/kustomization.yaml`:
 
@@ -14,11 +15,6 @@ Pre nasadenie systému [Grafana Stack] sme pripravili manifesty, ktoré sú pris
 
    resources:
    - https://github.com/wac-fiit/manifests//observability/gitops?ref=main
-   # in case your cluster is too small (e.g. not enough CPU/memory on laptop) you may 
-   # use following line instead of the above one, 
-   # to install only open Open*Telemetry Collector with exports into its log stream
-   # - https://github.com/wac-fiit/manifests//observability/otel-collector-logging/gitops?ref=main
-
    # if you do not have yet certmanager installed: 
    #- https://github.com/wac-fiit/manifests//cert-manager/gitops?ref=main
    ```
@@ -37,22 +33,6 @@ Pre nasadenie systému [Grafana Stack] sme pripravili manifesty, ktoré sú pris
    - ../../../infrastructure/fluxcd
    - ../../../infrastructure/envoy-gateway
    - ../../../infrastructure/observability @_add_@
-     @_add_@
-   configMapGenerator:  @_add_@
-     - name: deployment-config   @_add_@
-       namespace: observability  @_add_@
-       behavior: merge  @_add_@
-       options:  @_add_@
-         disableNameSuffixHash: true  @_add_@
-       literals:  @_add_@
-       # for development purposes we use always_on sampler,   @_add_@
-       # in production you may want to use parentbased_trace_id_ratio sampler or any other available  @_add_@
-         - OTEL_TRACES_SAMPLER=always_on  @_add_@
-         - LOG_LEVEL=debug  @_add_@
-         - OTEL_TRACES_SAMPLER_RATIO=1.0 @_add_@
-         - OTEL_TRACES_SAMPLER_PERCENTAGE=100 @_add_@
-         # specify different host if `localhost` is not your top level domain name for the cluster @_add_@
-         - GRAFANA_ROOT_URL=http://localhost/grafana  @_add_@ 
      
    components:
    - ../../../components/version-developers
@@ -62,7 +42,7 @@ Pre nasadenie systému [Grafana Stack] sme pripravili manifesty, ktoré sú pris
 
    ```ps
    git add .
-   git commit -m "Add grafana stack"
+   git commit -m "Add observability stack"
    git push
    ```
 
@@ -72,29 +52,22 @@ Pre nasadenie systému [Grafana Stack] sme pripravili manifesty, ktoré sú pris
    kubectl -n observability get kustomization -w
    ```
 
-2. Po aplikovani zmien sa do klastra nainštalujú komponenty systému [Grafana Stack]. Otvorte v prehliadači stránku [http://localhost](http://localhost) a vyberte aplikáciu _Aktuálny operačný stav systému_. Pri správnej inštalácii by sa mala objaviť okno aplikácie Grafana s prednastaveným informačným panelom "System Overview".
+2. Po aplikovani zmien sa do klastra nainštalujú nové komponenty. Otvorte v prehliadači stránku [http://localhost](http://localhost) a vyberte aplikáciu _Victoria Logs_. Pri správnej inštalácii by sa mala objaviť okno aplikácie s prehľadom posledne vygenerovaných a zozbieraných logov systému..
 
-   >build_circle:> V niektorých prípadoch, v závislosti od načasovania sa môže zobraziť informácia _Dashboard not found_. V takom prípade je potrebné počkať, kým sa nainštaluje systém [Grafana Stack] a znovu načítať stránku.
+   
+   ![Victoria Logs](./img/victoria-logs.png)
 
-   V pravom hornom okne rámčeka Grafana kliknite na ikonu menu menu a v bočnom paneli stlačte na záložku _Explore_. V okne _Explore_ sa zobrazí zoznam dostupných zdrojov údajov. V hornej časti vyberte v rozbalovacom zozname položku "Logs".
+3. V zobrazenok paneli zadajte do poľa _Log Query_ výraz `k8s.container.name:"polyfea-controller"` a v hornej časti stlačte modro sfarbené tlačidlo _Execute query_. V spodnej časti okna sa zobrazí zoznam logov, ktoré boli zaznamenané v posledných piatich minútach (podľa nastaveia v hornom panely aplikácie) všetkými kontajnermi s názvom `polyfea-controller`
 
-   ![Grafana Logs](./img/080-01-Grafana-logs.png)
+   >keyboard:> Vyskúšajte si rôzne konfigurácie sledovania záznamov, napríklad pre `k8s.namespace.name:wac-hospital`, rôzne časové obdobie, prípadne filtrovanie záznamov so špecifickým textom alebo atribútom. Pre podrobnejšiu prácu si naštudujte aj dokumentáciu pre tvorenie dotazov [Log queries](https://docs.victoriametrics.com/victorialogs/logsql/).
 
-3. V zobrazenok paneli zadajte do poľa _Label filters_ názov `container` a priraďte mu hodnotu `polyfea-controller` a v hornej časti stlačte modro sfarbené tlačidlo _Run query_. V spodnej časti okna sa zobrazí zoznam logov, ktoré boli zaznamenané v poslednej hodine kontajnermi s názvom `polyfea-controller`
+Predchádzajúcim postupom sme do nášho systému nainštalovali služby pre sledovanie stavu systému pomocou [Open Telemetry Collector], čím sme pripravili prostredie na sledovanie činnosti našich mikroslužieb. Schématicke znázornenie ako tento systém funguje je na nasledujúcom obrázku:
 
-   ![Grafana Logs](./img/080-02-Grafana-logs.png)
+![Telemetry Stack](./img/telemetry.svg)
 
-   >keyboard:> Vyskúšajte si rôzne konfigurácie sledovania záznamov, napríklad pre `namespace=wac-hospital`, rôzne časové obdobie, prípadne filtrovanie záznamov so špecifickým textom alebo atribútom. Pre podrobnejšiu prácu si naštudujte aj dokumentáciu pre tvorenie dotazov [Log queries](https://grafana.com/docs/loki/latest/query/log_queries/).
+Pokiaľ by sme chceli sledovať činnosť našej aplikácie v kontajneri `<pfx>-ambulance-wl-webapi-container`, boli by zatiaľ nedostatočné, keďže sme až doteraz tomuto aspektu vývoja nevenovali dostatočnú pozornosť. Predstavte si, že by ste po nasadení aplikácie do produkcie dostávali od zákaznikov informácie typu, že v ranných hodinách sa musia pacienti registrovať do zoznamu čakajúcich niekoľkokrát, kým sa im podarí úspešne vytvoriť záznam. Aké informácie by ste potrebovali v zázname činnosti vidieť aby ste získali aspoň základný prehľad o tom, čo môže túto chybu spôsobovať? Aké informácie by ste potrebovali z logov, aby ste vedeli, že sa naozaj jedná o problém s Vašou aplikáciou a nie s iným komponentom systému? Na to aby ste tieto otázky vedeli zodpovedať je potrebné kód obohatiť o generovanie relevantných záznamov - _logov_.
 
-Predchádzajúcim postupom sme do nášho systému nainštalovali systém [Grafana Stack] a [Open Telemetry Collector], čím sme pripravili sme si prostredie na sledovanie činnosti našich mikroslužieb. Schématicke znázornenie ako tento systém funguje je na nasledujúcom obrázku:
-
-![Grafana Stack](./img/080-03-grafana-stack.png)
-
-V tejto kapitole využívame subsystém [Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/), ktorého úlohou je zozbierať všetky logy z kontajnerov v systéme kubernetes a poslať ich do subsystému _Loki_, ktorý ich uloží do databázy. Následne je možné tieto logy analyzovať pomocou aplikácie _Grafana_.
-
-Pokiaľ by sme chceli sledovať činnosť našej aplikácie v kontajneri `<pfx>-ambulance- wl-webapi-container`, boli by zatiaľ nedostatočné, keďže sme až doteraz tomuto aspektu vývoja nevenovali dostatočnú pozornosť. Predstavte si, že by ste po nasadení aplikácie do produkcie dostávali od zákaznikov informácie typu, že v ranných hodinách sa musia pacienti registrovať do zoznamu čakajúcich niekoľkokrát, kým sa im podarí úspešne vytvoriť záznam. Aké informácie by ste potrebovali v zázname činnosti vidieť aby ste získali aspoň základný prehľad o tom, čo môže túto chybu spôsobovať? Aké informácie by ste potrebovali z logov, aby ste vedeli, že sa naozaj jedná o problém s Vašou aplikáciou a nie s iným komponentom systému? Na to aby ste tieto otázky vedeli zodpovedať je potrebné kód obohatiť o generovanie relevantných záznamov - _logov_.
-
-Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá umožňuje vytvárať štrukturované JSON logy. Štrukturované JSON logy umožňujú dosiahnuť vyššiu úroveň flexibility a efektivity pri spracovaní logov. V porovnaní s klasickými textovými logmi, štrukturované JSON logy umožňujú jednoduchšie filtrovanie a analýzu údajov. Vďaka tomu je možné rýchlo identifikovať problémy a získať prehľad o výkonnosti aplikácie.
+Na tento účel budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá umožňuje vytvárať štrukturované JSON logy. Štrukturované JSON logy umožňujú dosiahnuť vyššiu úroveň flexibility a efektivity pri spracovaní logov. V porovnaní s klasickými textovými logmi, štrukturované JSON logy umožňujú jednoduchšie filtrovanie a analýzu údajov. Vďaka tomu je možné rýchlo identifikovať problémy a získať prehľad o výkonnosti aplikácie.
 
 1. Otvorte súbor `${WAC_ROOT}/ambulance-webapi/internal/ambulance_wl/impl_ambulance_waiting_list.go` a upravte ho. Všimnite si, že vždy zapisuje log pokiaľ dôjde k chybe, ktorú nevieme spracovať, a v prípade úspešného behu zobrzíme len strohú informáciu o vytvorení záznamu.
 
@@ -233,7 +206,7 @@ Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá um
    }
    ```
 
-   V tejto funkcie sme nastavil globálnu úroveň logovania na hodnotu, ktorú sme nastavili v premennej prostredia a pridali základné atribúty pre generované logy.
+   V tejto funkcie sme nastavili globálnu úroveň logovania na hodnotu, ktorú sme nastavili v premennej prostredia a pridali základné atribúty pre generované logy.
 
    V príkazovom riadku vykonajte nasledujúce príkazy a overte či je program v kompilovateľnom stave:
 
@@ -293,14 +266,8 @@ Budeme používať knižnicu [zerolog](https://github.com/rs/zerolog), ktorá um
     git push
     ```
 
-4. Prejdite na stránku [http://localhost/](http://localhost/) a v aplikácii _Zoznam čakajúcich v ambulancii_ vytvorte niekoľko záznamov. Následne prejdite do aplikácie _Aktuálny operačný stav systému_ (Grafana), a opäť otvorte záložku _Explore_ so zdrojom dát `Logs`. V zobrazenok paneli zadajte do poľa _Label filters_ názov `container` a priraďte mu hodnotu ``<pfx>-ambulance- wl-webapi-container`` a v hornej časti stlačte modro sfarbené tlačidlo _Run query_.
+4. Prejdite na stránku [http://localhost/](http://localhost/) a v aplikácii _Zoznam čakajúcich v ambulancii_ vytvorte niekoľko záznamov. Následne prejdite do aplikácie _Victoria Logs_ (Grafana). V zobrazenok paneli zadajte do poľa _Log query_ výraz `k8s.container.name:<pfx>-ambulance-wl-webapi-container` a v hornej časti stlačte modro sfarbené tlačidlo _Execute query_.
 
-   Predpokladajme, že chceme vidieť iba záznamy, ktoré sa týkajú výhradne ambulancie `bobulova`. Musíme preto vytvoriť dotaz, ktorý by dokázal skonvertovať náš záznam na požadovaný formát. V panely dotazu logov stlačte na tlačidlo _Code_ a skopírujte nasledujúci text do poľa dotazu:
-
-   ```plain
-   {container="cv1-ambulance-wl-webapi-container"} |= `` | json | line_format `{{.log}}` | json | ambulanceId = `bobulova`
-   ```
-
-  Následne stlačte tlačidlo _Run query_. V panely logov vidíte len záznamy, ktoré sa týkajú ambulancie `bobulova`, štrukturované s detailami záznamov, ako sme ich uviedli v našej aplikácií.
+   Predpokladajme, že chceme vidieť iba záznamy, ktoré sa týkajú výhradne ambulancie `bobulova`. Vďaka tomu, že sme v našom kóde zadefinovali konvenciu, že všetky záznamy týkajúce sa ambulancie budú obsahovat atribút `ambulanceId`, ktorý bude obsahovat identifikátor ambulancie, môžeme tento atribút použiť na filtrovanie záznamov. Do poľa _Log query_ zadefinujeme výraz `k8s.container.name:<pfx>-ambulance-wl-webapi-container AND "ambulanceId":"bobulova"` a stlačíme tlačidlo _Execute query_. V spodnej časti okna sa zobrazí zoznam logov, ktoré byly zaznamenané v posledných piatich minutách s názvem `<pfx>-ambulance-wl-webapi-container` a ktoré obsahujú atribút `ambulanceId` s hodnotou `bobulova`.
 
   >info:> Aby sme boli schopný efektívne využívať štrukturované záznamy, je nutné zjednotiť kódovanie informácii a ich interpretáciu v štrukturovaných záznamoch. Napríklad by sme v našom projekte mohli definovať konvenciu, že všetky záznamy, ktoré sa týkajú ambulancie budú mať v štruktúre záznamu atribút `ambulanceId`, ktorý bude obsahovať identifikátor ambulancie. To nam následne umožní filtrovať záznamy podľa ambulancie a získať tak prehľad o činnosti systému skrz rôzne miroslužby. Dobrým príkladom ako zjednotiť všeobecne používane atribúty je napríklad projekt [OpenTelemetry Semantic Conventions](https://opentelemetry.io/docs/specs/otel/semantic_conventions/overview/), ktorý definuje konvencie pre rôzne atribúty a ich hodnoty, ktoré sa používajú v štrukturovaných záznamoch. V prípade, že sa rozhodnete používať tieto konvencie, je dobré si ich preštudovať a zadefinovať ich rozšírenie pre potreby vašej aplikácie.
