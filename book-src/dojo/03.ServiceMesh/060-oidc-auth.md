@@ -133,6 +133,7 @@ Pre účely autentifikácie použijeme službu [oauth2-proxy](https://oauth2-pro
    Službu Dex potrebuje sprístupniť aj pre externý prístup keďže bude obsluhovať komunikáciu OAuth2 protokolu so    serverom GitHub. Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/infrastructure/dex/http-route.yaml` s obsahom
 
    ```yaml
+   apiVersion: gateway.networking.k8s.io/v1
    kind: HTTPRoute
    metadata:
      name: dex
@@ -377,8 +378,8 @@ Pre účely autentifikácie použijeme službu [oauth2-proxy](https://oauth2-pro
 6. Pre vyššie uvedenú _SecurityPolicy_ ešte musíme definovať _Secret_ `oidc-dex`. Vytvorte súbor `${WAC_ROOT}/ambulance-gitops/clusters/localhost/secrets/params/oidc-dex.env` s nasledujúcim obsahom (hodnoty odpovedajú hodnotam v súbore `config.yaml` služby Dex):
 
     ```env
-    client-id: envoy-gateway
-    client-secret: envoy-gateway-secret-265305158967 @_important_@
+    client-id=envoy-gateway
+    client-secret=envoy-gateway-secret-265305158967 @_important_@
     ```
 
    Otvorte okno príkazového riadku a prejdite do adresára `${WAC_ROOT}/ambulance-gitops/clusters/localhost/secrets/params`. Zašifrujte _Secret_ pomocou príkazu
