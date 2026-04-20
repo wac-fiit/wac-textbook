@@ -44,15 +44,15 @@ V predchádzajúcej kapitole sme nainštalovali aplikáciu [Jaeger v2](https://w
                port: 4317   @_add_@
    ```
 
-  Týmito zmenami sme pridali podporu pre distribuované trasovanie pomocou OpenTelemetry na úrovni našej Gateway API, čo v praxi znamená, že všetky požiadavky do nášho systému budú sledované a zaznamenávane od okamžiku ich prijatia na úrovni Gateway API. 
+   Týmito zmenami sme pridali podporu pre distribuované trasovanie pomocou OpenTelemetry na úrovni našej Gateway API, čo v praxi znamená, že všetky požiadavky do nášho systému budú sledované a zaznamenávane od okamžiku ich prijatia na úrovni Gateway API.
 
-  Archivujte zmeny v repozitári:
+   Archivujte zmeny v repozitári:
 
    ```ps
-    git add .
-    git commit -m "distributed tracing"
-    git push origin main
-    ```
+   git add .
+   git commit -m "distributed tracing"
+   git push origin main
+   ```
 
 2. V súbore `${WAC_ROOT}/ambulance-webapi/cmd/ambulance-api-service/main.go` doplníme podporu pre distribuované trasovanie. Budeme využívať knižnicu [`autoexport`](https://github.com/open-telemetry/opentelemetry-go-contrib/blob/main/README.md), ktorú je možné konfigurovať pomocou premenných prostredia tak aby sme umožnili export záznam do rôznych systémov, napríklad ak by cieľové prostredie nepodporovalo subsystém [OpenTelemetry Collector] ale starší systém _Jaeger_ alebo _Zipkin_. Zároveň  s pomocou knižnice `otelgin` zabezpečíme aby boli zaznamenané všetky požiadavky spracovávané našou službou a predané informácie o _trace-id_ a _span-id_ do ďalších služieb:
 
@@ -559,7 +559,7 @@ V predchádzajúcej kapitole sme nainštalovali aplikáciu [Jaeger v2](https://w
 
    Ako ste si všimli, doplnenie informácií, ktoré sú potrebné pre analýzu činnosti systému vyžaduje množstvo drobných úprav. Ich doplnenie v neskorších fázach vývoja môže byť problematické, preto je dobré mať na pamäti, že záznamy o činnosti systému sú dôležité a mali by byť súčasťou návrhu systému, doplnené hneď pri implementácii danej funkcionality a byť podrobené kontrole kvality počas kontroly - _review_ - kódu. Bez ich prítomnosti je efektívna analýza a optimalizácia distribuovaného systému takmer nemožná.
 
-   >Keyboard:> Obdobným spôsobom doplňte trasovanie aj do ostatných častí kódu.
+   >keyboard:> Obdobným spôsobom doplňte trasovanie aj do ostatných častí kódu.
 
 6. Uložte všetky zmeny a skontrolujte, že je kód stále funkčný. V priečinku  `${WAC_ROOT}/ambulance-webapi vykonajte príkazy:
 
