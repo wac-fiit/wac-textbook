@@ -623,7 +623,7 @@ func (o *implAmbulancesAPI) CreateAmbulance(c *gin.Context) {
         ambulance.Id = uuid.New().String()   @_add_@
     }   @_add_@
 @_add_@
-    err = db.CreateDocument(c, ambulance.Id, &ambulance)   @_add_@
+    err = db.CreateDocument(c.Request.Context(), ambulance.Id, &ambulance)   @_add_@
 @_add_@
     switch err {   @_add_@
     case nil:   @_add_@
@@ -689,7 +689,7 @@ func (o *implAmbulancesAPI) DeleteAmbulance(c *gin.Context) {
     }    @_add_@
     @_add_@
     ambulanceId := c.Param("ambulanceId")    @_add_@
-    err := db.DeleteDocument(c, ambulanceId)    @_add_@
+    err := db.DeleteDocument(c.Request.Context(), ambulanceId)    @_add_@
     @_add_@
     switch err {    @_add_@
     case nil:    @_add_@
@@ -797,7 +797,7 @@ func updateAmbulanceFunc(ctx *gin.Context, updater ambulanceUpdater) {
 
     ambulanceId := ctx.Param("ambulanceId")
 
-    ambulance, err := db.FindDocument(ctx, ambulanceId)
+    ambulance, err := db.FindDocument(ctx.Request.Context(), ambulanceId)
 
     switch err {
     case nil:
@@ -837,7 +837,7 @@ func updateAmbulanceFunc(ctx *gin.Context, updater ambulanceUpdater) {
     updatedAmbulance, responseObject, status := updater(ctx, ambulance)
 
     if updatedAmbulance != nil {
-        err = db.UpdateDocument(ctx, ambulanceId, updatedAmbulance)
+        err = db.UpdateDocument(ctx.Request.Context(), ambulanceId, updatedAmbulance)
     } else {
         err = nil // redundant but for clarity
     }

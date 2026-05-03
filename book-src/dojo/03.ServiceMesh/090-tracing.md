@@ -149,7 +149,7 @@ V predchádzajúcej kapitole sme nainštalovali aplikáciu [Jaeger v2](https://w
    
      var uri = fmt.Sprintf("mongodb://%v:%v", m.ServerHost, m.ServerPort)
      span.SetAttributes(attribute.String("mongodb.uri", uri)) @_add_@
-	   log.Printf("Using URI: %s", uri)
+     log.Printf("Using URI: %s", uri)
    
      if len(m.UserName) != 0 {
        uri = fmt.Sprintf("mongodb://%v:%v@%v:%v", m.UserName, m.Password, m.ServerHost, m.ServerPort)
@@ -284,8 +284,47 @@ V predchádzajúcej kapitole sme nainštalovali aplikáciu [Jaeger v2](https://w
        return result.Err()
      }
      _, err = collection.ReplaceOne(ctx, bson.D{{Key: "id", Value: id}}, document)
+     span.SetStatus(codes.Ok, "Document updated")   @_add_@
      return err
    }
+   ```
+
+   a nakoniec funkciu `DeleteDocument`:
+
+   ```go
+   func (m *mongoSvc[DocType]) DeleteDocument(ctx context.Context, id string) error {
+     ctx, span := m.tracer.Start(   @_add_@
+       ctx,   @_add_@
+       "DeleteDocument",   @_add_@
+       trace.WithAttributes(   @_add_@
+         attribute.String("mongodb.collection", m.Collection),   @_add_@
+         attribute.String("entry.id", id),   @_add_@
+       ),   @_add_@
+     )   @_add_@
+     defer span.End()   @_add_@
+
+     ctx, contextCancel := context.WithTimeout(ctx, m.Timeout)
+     defer contextCancel()
+     client, err := m.connect(ctx)
+     if err != nil {
+       return err
+     }
+     db := client.Database(m.DbName)
+     collection := db.Collection(m.Collection)
+     result := collection.FindOne(ctx, bson.D{{Key: "id", Value: id}})
+     switch result.Err() {
+     case nil:
+     case mongo.ErrNoDocuments:
+       span.SetStatus(codes.Error, "Document not found")   @_add_@
+       return ErrNotFound
+     default: // other errors - return them
+       span.SetStatus(codes.Error, result.Err().Error())   @_add_@
+       return result.Err()
+     }
+     _, err = collection.DeleteOne(ctx, bson.D{{Key: "id", Value: id}})
+     span.SetStatus(codes.Ok, "Document deleted")   @_add_@
+     return err
+   }   
    ```
 
    Všetky tri funkcie sme doplnili o vytvorenie _span_ záznamu a priradenie atribútov, ktoré budú súčasťou záznamu. Explicitné nastavenie výsledku operácie  - `SetStatus` nie je povinné, ale najme pri chybových stavoch nám pomôže rýchlejšie identifikovať možný zdroj problému. AKo ste si všimli, _trace context_, teda `trace-id` a `span-id` sú predavané medzi operáciu pomocou argumentu typu _context.Context_. Tento kontext je možné predávať medzi jednotlivými operáciami a tak zabezpečiť, že všetky operácie vykonávané v rámci jedného _trace_ budú mať rovnaký _trace-id_ a správnu hierarchiu _span-id_.
