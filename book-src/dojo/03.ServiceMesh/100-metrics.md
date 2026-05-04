@@ -199,7 +199,7 @@ Mnoho relevantných metrík už je zozbieraných a sprístupnených automaticky.
      git push origin main
    ```
 
-4. Prejdite na stránku [http://localhost]([http://localhost]) a v aplikácii _Zoznam čakajúcich <pfx>_ vytvorte, upravte a vymažte  niekoľko záznamov. Otvorte aplikáciu _Victoria Metrics_. V poli _Query_ adajte výraz `ambulance_waiting_list_entries_created_total{ambulanceId="bobulova"}`. Stlačte tlačidlo _Add Query_ a v novom poli _Query 2_ zadajte výraz `ambulance_waiting_list_entries_updated_total{ambulanceId="bobulova"}`. Opäť stlačte tlačidlo _Add Query_ a v novom poli _Query 3_ zadajte výraz `ambulance_waiting_list_entries_deleted_total{ambulanceId="bobulova"}`. Stlačte tlačidlo _Execute Query_. 
+4. Prejdite na stránku [http://localhost]([http://localhost]) a v aplikácii _Zoznam čakajúcich <pfx>_ vytvorte, upravte a vymažte  niekoľko záznamov. Otvorte aplikáciu _Victoria Metrics_. V poli _Query_ adajte výraz `ambulance_waiting_list_entries_created_total{ambulance_id="bobulova"}`. Stlačte tlačidlo _Add Query_ a v novom poli _Query 2_ zadajte výraz `ambulance_waiting_list_entries_updated_total{ambulance_id="bobulova"}`. Opäť stlačte tlačidlo _Add Query_ a v novom poli _Query 3_ zadajte výraz `ambulance_waiting_list_entries_deleted_total{ambulance_id="bobulova"}`. Stlačte tlačidlo _Execute Query_. 
 
    V spodnej časti obrazovky sa zobrazí graf, ktorý zobrazuje počet vytvorených, upravených a vymazaných záznamov čakajúcich pacientov.
 
