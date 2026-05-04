@@ -93,6 +93,7 @@ Na tento účel budeme používať knižnicu [zerolog](https://github.com/rs/zer
    }
    
    func NewAmbulanceWaitingListApi() AmbulanceWaitingListAPI {
+     return &implAmbulanceWaitingListAPI{}        @_remove_@
      return &implAmbulanceWaitingListAPI{logger: log.With().Str("component", "ambulance-wl").Logger()}        @_add_@
    }
    
@@ -182,8 +183,7 @@ Na tento účel budeme používať knižnicu [zerolog](https://github.com/rs/zer
    )
 
    func main() {
-     output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: zerolog.TimeFormatUnix}     @_add_@
-     log.Logger = zerolog.New(output).With().     @_add_@
+     log.Logger = zerolog.New(os.Stdout).With().     @_add_@
        Str("service", "ambulance-wl-list").     @_add_@
        Timestamp().     @_add_@
        Caller().     @_add_@
@@ -222,16 +222,16 @@ Na tento účel budeme používať knižnicu [zerolog](https://github.com/rs/zer
    FROM scratch
 
    # to avoid connection errors in standalone case otel exporters are disabled by default
-   ENV OTEL_TRACES_EXPORTER=none
-   ENV OTEL_METRICS_EXPORTER=none
-   ENV OTEL_LOGS_EXPORTER=none
-   ENV LOG_LEVEL=info
-   
-   ENV OTEL_SERVICE_NAME=ambulance-wl-api
+   ENV OTEL_TRACES_EXPORTER=none   @_add_@
+   ENV OTEL_METRICS_EXPORTER=none   @_add_@
+   ENV OTEL_LOGS_EXPORTER=none   @_add_@
+   ENV LOG_LEVEL=info   @_add_@
+      @_add_@
+   ENV OTEL_SERVICE_NAME=ambulance-wl-api   @_add_@
    ...
    ```
 
-   Pri nasadení grafana stack sme v klastri vytvorili aj objekt typu _ConfigMap_ s názvom `otel-params`, ktorý obsahuje všeobecnú konfiguráciu pre kvalitativný aspekt [_observability_](https://en.wikipedia.org/wiki/Observability_(software)) nášho systému. Upravte súbor `${WAC_ROOT}/ambulance-webapi/deployments/kustomize/install/deployment.yaml` a použite túto konfiguráciu:
+   Pri nasadení observability stack sme v klastri vytvorili aj objekt typu _ConfigMap_ s názvom `otel-params`, ktorý obsahuje všeobecnú konfiguráciu pre kvalitativný aspekt [_observability_](https://en.wikipedia.org/wiki/Observability_(software)) nášho systému. Upravte súbor `${WAC_ROOT}/ambulance-webapi/deployments/kustomize/install/deployment.yaml` a použite túto konfiguráciu:
 
    ```yaml
 
@@ -268,6 +268,6 @@ Na tento účel budeme používať knižnicu [zerolog](https://github.com/rs/zer
 
 4. Prejdite na stránku [http://localhost/](http://localhost/) a v aplikácii _Zoznam čakajúcich v ambulancii_ vytvorte niekoľko záznamov. Následne prejdite do aplikácie _Victoria Logs_ (Grafana). V zobrazenok paneli zadajte do poľa _Log query_ výraz `k8s.container.name:<pfx>-ambulance-wl-webapi-container` a v hornej časti stlačte modro sfarbené tlačidlo _Execute query_.
 
-   Predpokladajme, že chceme vidieť iba záznamy, ktoré sa týkajú výhradne ambulancie `bobulova`. Vďaka tomu, že sme v našom kóde zadefinovali konvenciu, že všetky záznamy týkajúce sa ambulancie budú obsahovat atribút `ambulanceId`, ktorý bude obsahovat identifikátor ambulancie, môžeme tento atribút použiť na filtrovanie záznamov. Do poľa _Log query_ zadefinujeme výraz `k8s.container.name:<pfx>-ambulance-wl-webapi-container AND "ambulanceId":"bobulova"` a stlačíme tlačidlo _Execute query_. V spodnej časti okna sa zobrazí zoznam logov, ktoré byly zaznamenané v posledných piatich minutách s názvem `<pfx>-ambulance-wl-webapi-container` a ktoré obsahujú atribút `ambulanceId` s hodnotou `bobulova`.
+   Predpokladajme, že chceme vidieť iba záznamy, ktoré sa týkajú výhradne ambulancie `bobulova`. Vďaka tomu, že sme v našom kóde zadefinovali konvenciu, že všetky záznamy týkajúce sa ambulancie budú obsahovat atribút `ambulanceId`, ktorý bude obsahovat identifikátor ambulancie, môžeme tento atribút použiť na filtrovanie záznamov. Do poľa _Log query_ zadefinujeme výraz `k8s.container.name:<pfx>-ambulance-wl-webapi-container AND "ambulanceId":"bobulova"` a stlačíme tlačidlo _Execute query_. V spodnej časti okna sa zobrazí zoznam logov, ktoré boli zaznamenané v posledných piatich minutách s názvem `<pfx>-ambulance-wl-webapi-container` a ktoré obsahujú atribút `ambulanceId` s hodnotou `bobulova`.
 
   >info:> Aby sme boli schopný efektívne využívať štrukturované záznamy, je nutné zjednotiť kódovanie informácii a ich interpretáciu v štrukturovaných záznamoch. Napríklad by sme v našom projekte mohli definovať konvenciu, že všetky záznamy, ktoré sa týkajú ambulancie budú mať v štruktúre záznamu atribút `ambulanceId`, ktorý bude obsahovať identifikátor ambulancie. To nam následne umožní filtrovať záznamy podľa ambulancie a získať tak prehľad o činnosti systému skrz rôzne miroslužby. Dobrým príkladom ako zjednotiť všeobecne používane atribúty je napríklad projekt [OpenTelemetry Semantic Conventions](https://opentelemetry.io/docs/specs/otel/semantic_conventions/overview/), ktorý definuje konvencie pre rôzne atribúty a ich hodnoty, ktoré sa používajú v štrukturovaných záznamoch. V prípade, že sa rozhodnete používať tieto konvencie, je dobré si ich preštudovať a zadefinovať ich rozšírenie pre potreby vašej aplikácie.

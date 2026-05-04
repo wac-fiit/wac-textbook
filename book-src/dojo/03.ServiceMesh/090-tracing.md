@@ -1,6 +1,6 @@
 # Distribuované trasovanie
 
-Analýza logov nám výrazne uľahčí sledovanie stavu systému a analýzu prípadných odchýliek od špecifikovaného správania sa systému. Mimo vývojového prostredia, kedy je nasadený systém pod záťažou, sa ale budeme stretávať so situáciami, kedy je potrebné analyzovať, ako prebieha spracovanie jednotlivých požiadaviek skrz viacero mikroslužieb, prípadne budeme potrebovať nájsť príčinu chyby, ktorú pozorujeme až ako zlyhanie požiadavky v niektorej zo služieb, kde už nie je možné vykonať opravnú operáciu. V zásade potrebujeme nájsť vzťah medzi jednotlivými operačnými záznamami - log-mi - v rôznych častiach nášho systému, pričom takýto systém môže simultánne spracovávať desiatky až tisícky požiadaviek. V takomto prostredí často potrebujeme zodpovedať otázky typu:  prečo niektoré operácie trvajú príliš dlho, kde je potenciál na zvýšenie výkonnosti systému, alebo čo je príčinou chyby, ktorá sa prejavuje až pri zápise nesprávnych údajov do externého systému. Nájsť na ne odpovede v generovaných záznamoch môže zdĺhavé a častokrát až nemožné. Alternatívnym prístupom je vytvorenie záznamu, alebo sady záznamov, kde je zanamenané ako na seba jednotlivé operácie nadväzujú, aka je doba spracovania jednotlivých operácii, a aký je výsledný stav týchto operácií a to skrz jednu alebo viacero (mikro)služieb nášho softvérového riešenia. Na rozdiel od klasických záznamov (_logov_), nebude rozlišovať medzi kritickými a nekritickými záznamami, ale zvolime stratégiu zbierania dostatočného počtu detailnych vzoriek, čo umožní získať detailný pohľad na činnosť systému s prijateľným zaťažením na zber týchto údajov. Takémuto zberu údajov sa hovorí distribuované trasovanie - [_distributed tracing_](https://microservices.io/patterns/observability/distributed-tracing.html). Projekt [Open Telemetry](https://opentelemetry.io/) je v súčasnosti najrozšírenejšou špecifikáciou pre zber a analýzu distribuovaných záznamov a možno ho považovať za de facto štandard pre túto funkcionalitu. Open Telemetry je projekt, ktorý vznikol zlúčením projektov [OpenTracing](https://opentracing.io/) a [OpenCensus](https://opencensus.io/). V súčasnosti je projekt Open Telemetry spravovaný organizáciou [Cloud Native Computing Foundation](https://www.cncf.io/), ktorá sa zaoberá rozvojom technológii pre cloud native aplikácie.
+Analýza logov nám výrazne uľahčí sledovanie stavu systému a analýzu prípadných odchýliek od špecifikovaného správania sa systému. Mimo vývojového prostredia, kedy je nasadený systém pod záťažou, sa ale budeme stretávať so situáciami, kedy je potrebné analyzovať, ako prebieha spracovanie jednotlivých požiadaviek skrz viacero mikroslužieb, prípadne budeme potrebovať nájsť príčinu chyby, ktorú pozorujeme až ako zlyhanie požiadavky v niektorej zo služieb, kde už nie je možné vykonať opravnú operáciu. V zásade potrebujeme nájsť vzťah medzi jednotlivými operačnými záznamami - log-mi - v rôznych častiach nášho systému, pričom takýto systém môže simultánne spracovávať desiatky až tisícky požiadaviek. V takomto prostredí často potrebujeme zodpovedať otázky typu:  prečo niektoré operácie trvajú príliš dlho, kde je potenciál na zvýšenie výkonnosti systému, alebo čo je príčinou chyby, ktorá sa prejavuje až pri zápise nesprávnych údajov do externého systému. Nájsť na ne odpovede v generovaných záznamoch môže byť zdĺhavé a častokrát až nemožné. Alternatívnym prístupom je vytvorenie záznamu, alebo sady záznamov, kde je zanamenané ako na seba jednotlivé operácie nadväzujú, aká je doba spracovania jednotlivých operácii, a aký je výsledný stav týchto operácií a to skrz jednu alebo viacero (mikro) služieb nášho softvérového riešenia. Na rozdiel od klasických záznamov (_logov_), nebudeme rozlišovať medzi kritickými a nekritickými záznamami, ale zvolime stratégiu zbierania dostatočného počtu detailnych vzoriek, čo umožní získať detailný pohľad na činnosť systému s prijateľným zaťažením na zber týchto údajov. Takémuto zberu údajov sa hovorí distribuované trasovanie - [_distributed tracing_](https://microservices.io/patterns/observability/distributed-tracing.html). Projekt [Open Telemetry](https://opentelemetry.io/) je v súčasnosti najrozšírenejšou špecifikáciou pre zber a analýzu distribuovaných záznamov a možno ho považovať za de facto štandard pre túto funkcionalitu. Open Telemetry je projekt, ktorý vznikol zlúčením projektov [OpenTracing](https://opentracing.io/) a [OpenCensus](https://opencensus.io/). V súčasnosti je projekt Open Telemetry spravovaný organizáciou [Cloud Native Computing Foundation](https://www.cncf.io/), ktorá sa zaoberá rozvojom technológii pre cloud native aplikácie.
 
 Zjednodušene opísané, v kontexte distribuovaného trasovania je požiadavke vstupujúcej do systému (prípadne samostatnej požiadavke vzniknutej v rámci systému samotného) priradený takzvaný _trace-id_, ktorý sa propaguje pri volaniach jednotlivých subsystémov - mikroslužieb, knižníc alebo komponentov mikroslužieb. Každý subsystém potom definuje rozsah výpočtu - [_span_](https://opentelemetry.io/docs/concepts/signals/traces/#spans), ktorému priraďuje príslušné [atribúty](https://opentelemetry.io/docs/concepts/signals/traces/#attributes) potrebné pre identifikáciu služby, typu výpočtu, prípadne parametre výpočtu a udalosti vznikajúce počas výpočtu. _Span_ má priradený [_span context_](https://opentelemetry.io/docs/concepts/signals/traces/#span-context) alebo tiež nazývaný [_trace context_](https://opentelemetry.io/docs/concepts/signals/traces/#span-context). Trace context obsahuje identifikátor pôvodnej požiadavky - _trace_id_ - v ktorej kontexte je výpočet vykonávaný, ako aj rozsah výpočtu - _span-id_, ktoré zahŕňajú príslušný výpočet. Tieto záznamy sú následne odoslané do služby - _collector_ - ktorá tieto záznamy odošle na trvalé uloženie pre neskoršiu analýzu. Pre efektívnu analýzu je potrebné aby sa _trace_id_ a _span_id_ propagovali medzi jednotlivými službami, ktoré sa podieľajú na spracovaní požiadavky. V prípade, že niektorá zo služieb neumožňuje prenos týchto identifikátorov, je potrebné ich do tejto služby doplniť, v opačnom prípade budeme mať v záznamoch medzery, ktoré umožnia len čiastočnú analýzu spracovania požiadavky.
 
@@ -149,7 +149,7 @@ V predchádzajúcej kapitole sme nainštalovali aplikáciu [Jaeger v2](https://w
    
      var uri = fmt.Sprintf("mongodb://%v:%v", m.ServerHost, m.ServerPort)
      span.SetAttributes(attribute.String("mongodb.uri", uri)) @_add_@
-	   log.Printf("Using URI: %s", uri)
+     log.Printf("Using URI: %s", uri)
    
      if len(m.UserName) != 0 {
        uri = fmt.Sprintf("mongodb://%v:%v@%v:%v", m.UserName, m.Password, m.ServerHost, m.ServerPort)
@@ -158,8 +158,8 @@ V predchádzajúcej kapitole sme nainštalovali aplikáciu [Jaeger v2](https://w
      opts := options.Client()   @_add_@
      opts.Monitor = otelmongo.NewMonitor()   @_add_@
      opts.ApplyURI(uri).SetConnectTimeout(10 * time.Second)   @_add_@
-     if client, err := mongo.Connect(ctx, opts); err != nil {   @_add_@
      if client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri).SetConnectTimeout(10*time.Second)); err != nil {  @_remove_@
+     if client, err := mongo.Connect(ctx, opts); err != nil {   @_add_@
        span.SetStatus(codes.Error, "MongoDB connection error")   @_add_@
        return nil, err
      } else {
@@ -216,7 +216,7 @@ V predchádzajúcej kapitole sme nainštalovali aplikáciu [Jaeger v2](https://w
    func (m *mongoSvc[DocType]) FindDocument(ctx context.Context, id string) (*DocType, error) {
      ctx, span := m.tracer.Start(   @_add_@
        ctx,   @_add_@
-       "CreateDocument",   @_add_@
+       "FindDocument",   @_add_@
        trace.WithAttributes(   @_add_@
          attribute.String("mongodb.collection", m.Collection),   @_add_@
          attribute.String("entry.id", id),   @_add_@
@@ -256,7 +256,7 @@ V predchádzajúcej kapitole sme nainštalovali aplikáciu [Jaeger v2](https://w
    func (m *mongoSvc[DocType]) UpdateDocument(ctx context.Context, id string, document *DocType) error {
      ctx, span := m.tracer.Start(   @_add_@
        ctx,   @_add_@
-       "CreateDocument",   @_add_@
+       "UpdateDocument",   @_add_@
        trace.WithAttributes(   @_add_@
          attribute.String("mongodb.collection", m.Collection),   @_add_@
          attribute.String("entry.id", id),   @_add_@
@@ -284,8 +284,47 @@ V predchádzajúcej kapitole sme nainštalovali aplikáciu [Jaeger v2](https://w
        return result.Err()
      }
      _, err = collection.ReplaceOne(ctx, bson.D{{Key: "id", Value: id}}, document)
+     span.SetStatus(codes.Ok, "Document updated")   @_add_@
      return err
    }
+   ```
+
+   a nakoniec funkciu `DeleteDocument`:
+
+   ```go
+   func (m *mongoSvc[DocType]) DeleteDocument(ctx context.Context, id string) error {
+     ctx, span := m.tracer.Start(   @_add_@
+       ctx,   @_add_@
+       "DeleteDocument",   @_add_@
+       trace.WithAttributes(   @_add_@
+         attribute.String("mongodb.collection", m.Collection),   @_add_@
+         attribute.String("entry.id", id),   @_add_@
+       ),   @_add_@
+     )   @_add_@
+     defer span.End()   @_add_@
+
+     ctx, contextCancel := context.WithTimeout(ctx, m.Timeout)
+     defer contextCancel()
+     client, err := m.connect(ctx)
+     if err != nil {
+       return err
+     }
+     db := client.Database(m.DbName)
+     collection := db.Collection(m.Collection)
+     result := collection.FindOne(ctx, bson.D{{Key: "id", Value: id}})
+     switch result.Err() {
+     case nil:
+     case mongo.ErrNoDocuments:
+       span.SetStatus(codes.Error, "Document not found")   @_add_@
+       return ErrNotFound
+     default: // other errors - return them
+       span.SetStatus(codes.Error, result.Err().Error())   @_add_@
+       return result.Err()
+     }
+     _, err = collection.DeleteOne(ctx, bson.D{{Key: "id", Value: id}})
+     span.SetStatus(codes.Ok, "Document deleted")   @_add_@
+     return err
+   }   
    ```
 
    Všetky tri funkcie sme doplnili o vytvorenie _span_ záznamu a priradenie atribútov, ktoré budú súčasťou záznamu. Explicitné nastavenie výsledku operácie  - `SetStatus` nie je povinné, ale najme pri chybových stavoch nám pomôže rýchlejšie identifikovať možný zdroj problému. AKo ste si všimli, _trace context_, teda `trace-id` a `span-id` sú predavané medzi operáciu pomocou argumentu typu _context.Context_. Tento kontext je možné predávať medzi jednotlivými operáciami a tak zabezpečiť, že všetky operácie vykonávané v rámci jedného _trace_ budú mať rovnaký _trace-id_ a správnu hierarchiu _span-id_.
